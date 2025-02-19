@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Músicas</title>
+
+    <style type="text/css">
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        table {
+            margin-left: 0 !important;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            padding: 10px 10px 10px 10px !important;
+        }
+
+        .top-menu {
+            display: flex;
+            position: fixed;
+            width: 100vw;
+            height: 47px;
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            top: 0;
+            right: 0;
+            left: 0;
+            background-color: #fff;
+            border-bottom: 2px solid #565656;
+        }
+
+        .top-menu * {
+            width: 40px;
+            height: 25px;
+            border: 1px solid buttonborder;
+            border-radius: 5px;
+            border-image: initial;
+        }
+
+        .top-menu div {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #content {
+            margin-top: 47px;
+            width: 100%;
+        }
+
+        #content * {
+            white-space: nowrap;
+        }
+    </style>
+
+    <script>
+        const keys = [
+            { value: 1, letter: 'C' },
+            { value: 2, letter: 'C#' },
+            { value: 3, letter: 'D' },
+            { value: 4, letter: 'D#' },
+            { value: 5, letter: 'E' },
+            { value: 6, letter: 'F' },
+            { value: 7, letter: 'F#' },
+            { value: 8, letter: 'G' },
+            { value: 9, letter: 'G#' },
+            { value: 10, letter: 'A' },
+            { value: 11, letter: 'A#' },
+            { value: 12, letter: 'B' },
+        ];
+
+        function buildKeySelector(element, index) {
+            element.classList.add('master-key');
+
+            let spans = element.querySelectorAll('span');
+
+            let previousValueName = 'previousValue' + index;
+            let masterKey = element.textContent.split(/\s+/)
+                .map(char => keys.find(k => k.letter === char))
+                .find(k => k !== undefined);
+
+            window[previousValueName] = masterKey.value;
+
+            let span = document.createElement('span');
+            span.textContent = 'Tom: ';
+            span.className = spans[0].className;
+
+            let select = document.createElement('select');
+            select.className = spans[1].className;
+            keys.forEach(key => {
+                let option = document.createElement('option');
+                option.value = key.value;
+                option.selected = key.value == masterKey.value;
+                option.textContent = key.letter;
+                select.appendChild(option);
+            });
+            let keyColor = window.getComputedStyle(spans[1]).color;
+            select.addEventListener('change', (event) => {
+
+                let difference = window[previousValueName] - event.target.value;
+
+                window[previousValueName] = event.target.value;
+
+                let currentElement = element.nextElementSibling;
+                let endElement = elementsWithMasterKeys[index + 1];
+                while (currentElement && currentElement.tagName !== 'HR') {
+                    currentElement.querySelectorAll('*').forEach((currEl) => {
+                        if (window.getComputedStyle(currEl).color != keyColor)
+                            return;
+
+                        let newText = '';
+                        let ignore = null;
+                        let currChar = '';
+                        for (let i = 0; i < currEl.textContent.length; i++) {
+                            if (i == ignore) {
+                                continue;
+                            }
+
+                            currChar = currEl.textContent[i];
+                            if (currEl.textContent[i + 1] == '#') {
+                                currChar += currEl.textContent[i + 1];
+                                ignore = i + 1;
+                            }
+                            let currKey = keys.find(k => k.letter === currChar);
+
+                            if (!currKey) {
+                                newText += currChar;
+                                continue;
+                            }
+
+                            let currAux = currKey.value - difference;
+
+                            if (currAux < 1) {
+                                currAux = 12 + currAux;
+                            } else if (currAux > 12) {
+                                currAux = currAux - 12;
+                            }
+
+                            newText += keys.find(k => k.value === currAux).letter;
+                        }
+
+                        currEl.textContent = newText;
+                    });
+                    currentElement = currentElement.nextElementSibling;
+                }
+            });
+
+            element.textContent = '';
+            element.appendChild(span);
+            element.appendChild(select);
+        }
+
+        function initializeMasterKeys() {
+            window.elementsWithMasterKeys = Array.from(document.querySelectorAll('p'))
+                .filter(element =>
+                    element.textContent.includes("Tom:")
+                );
+
+            elementsWithMasterKeys.forEach((element, index) => {
+                buildKeySelector(element, index);
+            });
+        }
+
+        var scrollSpeed = 0.15;
+        var accumulatedScroll = 0;
+
+        var scrollSpeedRate = 10;
+
+        function autoScroll() {
+            accumulatedScroll += scrollSpeed;
+
+            if (accumulatedScroll >= 1) {
+                window.scrollBy(0, Math.floor(accumulatedScroll));
+                accumulatedScroll -= Math.floor(accumulatedScroll);
+            }
+
+            requestAnimationFrame(autoScroll);
+
+            document.getElementById('scroll-speed').innerHTML = scrollSpeed.toFixed(2);
+        }
+
+        function less() {
+            if (scrollSpeed <= 0) {
+                scrollSpeed = 0;
+                return;
+            }
+
+            let aux = scrollSpeed * 100;
+
+            scrollSpeed = (aux -= scrollSpeedRate) / 100;
+        }
+
+        function more() {
+            let aux = scrollSpeed * 100;
+
+            scrollSpeed = (aux += scrollSpeedRate) / 100;
+        }
+
+        function pause() {
+            scrollSpeed = 0;
+        }
+
+        function setScrollSpeedRate(speed) {
+            const elements = document.querySelectorAll("[id^='rate-']");
+            elements.forEach(element => {
+                element.style.backgroundColor = 'rate-' + speed == element.id ? '#ffc1c1' : 'buttonface';
+            });
+            scrollSpeedRate = speed;
+        }
+
+        function makeLinksTargets() {
+            const links = document.querySelectorAll('a[href^="https://www.google.com/url?"]');
+            links.forEach(element => {
+                element.setAttribute('target', '_blank');
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            requestAnimationFrame(autoScroll);
+            setScrollSpeedRate(10);
+
+            initializeMasterKeys();
+
+            makeLinksTargets();
+        });
+    </script>
+</head>
+
+<body>
+    <div class="top-menu">
+        <button onclick="less()">&#8722;</button>
+        <div id="scroll-speed">1</div>
+        <button onclick="more()">&#43;</button>
+        <button id="rate-5" onclick="setScrollSpeedRate(5)" style="margin-left: 5px;">0.05</button>
+        <button id="rate-10" onclick="setScrollSpeedRate(10)">0.10</button>
+        <button id="rate-20" onclick="setScrollSpeedRate(20)">0.20</button>
+        <button onclick="pause()">&#9616;&#9616;</button>
+        <button onclick="document.querySelector('html').requestFullscreen();">Tela</button>
+    </div>
+
+    <div id="content">
+        <html><head><meta content="text/html; charset=UTF-8" http-equiv="content-type"><style type="text/css">@import url(https://themes.googleusercontent.com/fonts/css?kit=IQHow_FEYlDC4Gzy_m8fciKd_3eRGaAfZPjFZLQkwt03h25Vz0Lny7A-Jjz_n0XP_kmCvy597kDopqFAXvpeaA);.lst-kix_vzdkc1hyngcj-1>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-3>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-2>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-6>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-7>li:before{content:"-  "}ul.lst-kix_ovoly12nr5vx-0{list-style-type:none}ul.lst-kix_ovoly12nr5vx-1{list-style-type:none}.lst-kix_lergvzwxxgrt-6>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-8>li:before{content:"-  "}ul.lst-kix_ovoly12nr5vx-2{list-style-type:none}.lst-kix_vzdkc1hyngcj-7>li:before{content:"-  "}ul.lst-kix_ovoly12nr5vx-3{list-style-type:none}.lst-kix_vzdkc1hyngcj-0>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-8>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-3>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-7>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-2>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-4>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-1>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-5>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-4>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-8>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-5>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-6>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-0>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-5>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-4>li:before{content:"-  "}ul.lst-kix_vzdkc1hyngcj-2{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-1{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-0{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-6{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-5{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-4{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-3{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-1{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-0{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-8{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-3{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-7{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-2{list-style-type:none}.lst-kix_mek1h2ljqvx0-0>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-3>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-1>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-2>li:before{content:"-  "}ul.lst-kix_lergvzwxxgrt-4{list-style-type:none}ul.lst-kix_lergvzwxxgrt-3{list-style-type:none}ul.lst-kix_lergvzwxxgrt-2{list-style-type:none}ul.lst-kix_lergvzwxxgrt-1{list-style-type:none}ul.lst-kix_lergvzwxxgrt-0{list-style-type:none}ul.lst-kix_lergvzwxxgrt-8{list-style-type:none}ul.lst-kix_lergvzwxxgrt-7{list-style-type:none}ul.lst-kix_lergvzwxxgrt-6{list-style-type:none}ul.lst-kix_lergvzwxxgrt-5{list-style-type:none}.lst-kix_jfa2r7ts7hw2-1>li:before{content:"-  "}.lst-kix_jfa2r7ts7hw2-3>li:before{content:"-  "}.lst-kix_jfa2r7ts7hw2-0>li:before{content:"-  "}.lst-kix_jfa2r7ts7hw2-4>li:before{content:"-  "}.lst-kix_jfa2r7ts7hw2-5>li:before{content:"-  "}.lst-kix_jfa2r7ts7hw2-6>li:before{content:"-  "}.lst-kix_jfa2r7ts7hw2-2>li:before{content:"-  "}ul.lst-kix_jfa2r7ts7hw2-8{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-5{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-4{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-7{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-6{list-style-type:none}.lst-kix_jfa2r7ts7hw2-7>li:before{content:"-  "}.lst-kix_jfa2r7ts7hw2-8>li:before{content:"-  "}.lst-kix_k14qto6wlowi-8>li:before{content:"\0025a0   "}.lst-kix_ovoly12nr5vx-1>li:before{content:"-  "}.lst-kix_ovoly12nr5vx-0>li:before{content:"-  "}.lst-kix_ovoly12nr5vx-7>li:before{content:"-  "}.lst-kix_ovoly12nr5vx-8>li:before{content:"-  "}.lst-kix_k14qto6wlowi-2>li:before{content:"\0025a0   "}.lst-kix_k14qto6wlowi-0>li:before{content:"\0025cf   "}.lst-kix_ovoly12nr5vx-2>li:before{content:"-  "}.lst-kix_k14qto6wlowi-1>li:before{content:"\0025cb   "}ul.lst-kix_ovoly12nr5vx-8{list-style-type:none}ul.lst-kix_k14qto6wlowi-4{list-style-type:none}.lst-kix_k14qto6wlowi-6>li:before{content:"\0025cf   "}ul.lst-kix_mek1h2ljqvx0-5{list-style-type:none}ul.lst-kix_k14qto6wlowi-3{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-4{list-style-type:none}ul.lst-kix_k14qto6wlowi-2{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-3{list-style-type:none}ul.lst-kix_k14qto6wlowi-1{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-2{list-style-type:none}.lst-kix_ovoly12nr5vx-3>li:before{content:"-  "}ul.lst-kix_ovoly12nr5vx-4{list-style-type:none}ul.lst-kix_k14qto6wlowi-0{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-1{list-style-type:none}ul.lst-kix_ovoly12nr5vx-5{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-0{list-style-type:none}.lst-kix_ovoly12nr5vx-4>li:before{content:"-  "}ul.lst-kix_ovoly12nr5vx-6{list-style-type:none}.lst-kix_k14qto6wlowi-3>li:before{content:"\0025cf   "}.lst-kix_k14qto6wlowi-7>li:before{content:"\0025cb   "}ul.lst-kix_ovoly12nr5vx-7{list-style-type:none}.lst-kix_ovoly12nr5vx-5>li:before{content:"-  "}.lst-kix_k14qto6wlowi-4>li:before{content:"\0025cb   "}ul.lst-kix_k14qto6wlowi-8{list-style-type:none}ul.lst-kix_k14qto6wlowi-7{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-8{list-style-type:none}.lst-kix_ovoly12nr5vx-6>li:before{content:"-  "}.lst-kix_k14qto6wlowi-5>li:before{content:"\0025a0   "}ul.lst-kix_k14qto6wlowi-6{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-7{list-style-type:none}ul.lst-kix_k14qto6wlowi-5{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-6{list-style-type:none}ol{margin:0;padding:0}table td,table th{padding:0}.c29{border-right-style:solid;padding-top:0pt;border-top-width:0pt;border-right-width:0pt;padding-left:0pt;padding-bottom:0pt;line-height:1.1538461538461537;border-left-width:0pt;border-top-style:solid;background-color:#ffffff;border-left-style:solid;border-bottom-width:0pt;border-bottom-style:solid;orphans:2;widows:2;text-align:left;padding-right:0pt}.c10{border-right-style:solid;padding-top:0pt;border-top-width:0pt;border-right-width:0pt;padding-left:0pt;padding-bottom:0pt;line-height:1.2333333333333334;border-left-width:0pt;border-top-style:solid;background-color:#ffffff;border-left-style:solid;border-bottom-width:0pt;border-bottom-style:solid;orphans:2;widows:2;text-align:left;padding-right:0pt}.c16{border-right-style:solid;padding:5pt 5pt 5pt 5pt;border-bottom-color:#000000;border-top-width:1pt;border-right-width:1pt;border-left-color:#000000;vertical-align:top;border-right-color:#000000;border-left-width:1pt;border-top-style:solid;border-left-style:solid;border-bottom-width:1pt;width:171pt;border-top-color:#000000;border-bottom-style:solid}.c32{border-right-style:solid;padding:5pt 5pt 5pt 5pt;border-bottom-color:#000000;border-top-width:1pt;border-right-width:1pt;border-left-color:#000000;vertical-align:top;border-right-color:#000000;border-left-width:1pt;border-top-style:solid;border-left-style:solid;border-bottom-width:1pt;width:61.5pt;border-top-color:#000000;border-bottom-style:solid}.c0{color:#212121;font-weight:400;text-decoration:none;vertical-align:baseline;font-size:10.5pt;font-family:"Roboto Mono";font-style:normal}.c9{color:#000000;font-weight:400;text-decoration:none;vertical-align:baseline;font-size:11pt;font-family:"Arial";font-style:normal}.c34{background-color:#ffffff;padding-top:10pt;padding-bottom:5pt;line-height:1.6;orphans:2;widows:2;text-align:left}.c7{color:#000000;font-weight:700;text-decoration:none;vertical-align:baseline;font-size:10.5pt;font-family:"Roboto Mono";font-style:normal}.c17{color:#000000;font-weight:700;text-decoration:none;vertical-align:baseline;font-size:22.5pt;font-family:"Montserrat";font-style:normal}.c33{background-color:#ffffff;padding-top:5pt;padding-bottom:10pt;line-height:1.6;orphans:2;widows:2;text-align:left}.c4{padding-top:0pt;padding-bottom:10pt;line-height:1.15;orphans:2;widows:2;text-align:left}.c2{padding-top:15pt;padding-bottom:10pt;line-height:1.15;orphans:2;widows:2;text-align:left}.c1{padding-top:0pt;padding-bottom:0pt;line-height:1.15;orphans:2;widows:2;text-align:left}.c13{padding-top:15pt;padding-bottom:15pt;line-height:1.15;orphans:2;widows:2;text-align:left}.c15{padding-top:10pt;padding-bottom:10pt;line-height:1.15;orphans:2;widows:2;text-align:left}.c23{padding-top:20pt;padding-bottom:20pt;line-height:1.15;orphans:2;widows:2;text-align:left}.c8{padding-top:0pt;padding-bottom:0pt;line-height:1.0;orphans:2;widows:2;text-align:left}.c28{padding-top:0pt;padding-bottom:250pt;line-height:1.6;orphans:2;widows:2;text-align:left}.c30{padding-top:0pt;padding-bottom:15pt;line-height:1.15;orphans:2;widows:2;text-align:left}.c11{padding-top:0pt;padding-bottom:0pt;line-height:1.6;orphans:2;widows:2;text-align:left}.c25{margin-left:186.8pt;border-spacing:0;border-collapse:collapse;margin-right:auto}.c3{font-size:10.5pt;font-family:"Roboto Mono";color:#212121;font-weight:400}.c5{font-size:10.5pt;font-family:"Roboto Mono";color:#ff7700;font-weight:700}.c27{color:#e69138;font-weight:700;font-size:8.5pt;font-family:"Montserrat"}.c22{text-decoration-skip-ink:none;-webkit-text-decoration-skip:none;color:#1155cc;text-decoration:underline}.c26{color:#000000;font-weight:400;font-size:10.5pt;font-family:"Roboto Mono"}.c21{background-color:#ffffff;max-width:451.4pt;padding:72pt 72pt 72pt 72pt}.c12{font-size:10.5pt;font-weight:700;font-family:"Roboto Mono"}.c18{text-decoration:none;vertical-align:baseline;font-style:normal}.c14{font-size:10.5pt;font-weight:700}.c31{font-size:13pt;font-weight:700}.c20{color:inherit;text-decoration:inherit}.c6{height:11pt}.c24{color:#ff7700}.c19{height:0pt}.c35{font-size:19.5pt}.title{border-right-style:solid;color:#000000;border-top-width:0pt;font-weight:700;padding-left:0pt;font-size:22.5pt;background-color:#ffffff;border-left-style:solid;font-family:"Montserrat";orphans:2;text-align:left;padding-top:0pt;border-right-width:0pt;padding-bottom:0pt;line-height:1.15;page-break-after:avoid;border-left-width:0pt;border-top-style:solid;border-bottom-width:0pt;border-bottom-style:solid;widows:2;padding-right:0pt}.subtitle{border-right-style:solid;color:#f57b1d;border-top-width:0pt;font-weight:700;padding-left:0pt;font-size:17.5pt;background-color:#ffffff;border-left-style:solid;font-family:"Montserrat";orphans:2;text-align:left;padding-top:0pt;border-right-width:0pt;padding-bottom:0pt;line-height:1.1538461538461537;page-break-after:avoid;border-left-width:0pt;border-top-style:solid;border-bottom-width:0pt;border-bottom-style:solid;widows:2;padding-right:0pt}li{color:#000000;font-size:11pt;font-family:"Arial"}p{margin:0;color:#000000;font-size:11pt;font-family:"Arial"}h1{border-right-style:solid;color:#000000;border-top-width:0pt;font-weight:700;padding-left:0pt;font-size:22.5pt;background-color:#ffffff;border-left-style:solid;font-family:"Montserrat";orphans:2;text-align:left;padding-top:0pt;border-right-width:0pt;padding-bottom:0pt;line-height:1.15;page-break-after:avoid;border-left-width:0pt;border-top-style:solid;border-bottom-width:0pt;border-bottom-style:solid;widows:2;padding-right:0pt}h2{border-right-style:solid;color:#e69138;border-top-width:0pt;font-weight:700;padding-left:0pt;font-size:17.5pt;background-color:#ffffff;border-left-style:solid;font-family:"Montserrat";orphans:2;text-align:left;padding-top:0pt;border-right-width:0pt;padding-bottom:0pt;line-height:1.1538461538461537;page-break-after:avoid;border-left-width:0pt;border-top-style:solid;border-bottom-width:0pt;border-bottom-style:solid;widows:2;padding-right:0pt}h3{padding-top:0pt;color:#000000;font-weight:700;font-size:22.5pt;padding-bottom:0pt;font-family:"Montserrat";line-height:1.15;page-break-after:avoid;orphans:2;widows:2;text-align:left}h4{padding-top:14pt;color:#666666;font-size:12pt;padding-bottom:4pt;font-family:"Arial";line-height:1.15;page-break-after:avoid;orphans:2;widows:2;text-align:left}h5{padding-top:12pt;color:#666666;font-size:11pt;padding-bottom:4pt;font-family:"Arial";line-height:1.15;page-break-after:avoid;orphans:2;widows:2;text-align:left}h6{padding-top:12pt;color:#666666;font-size:11pt;padding-bottom:4pt;font-family:"Arial";line-height:1.15;page-break-after:avoid;font-style:italic;orphans:2;widows:2;text-align:left}</style></head><body class="c21 doc-content"><div><p class="c1 c6"><span class="c9"></span></p></div><p class="c15"><span class="c31">Sum&aacute;rio e Vers&otilde;es</span></p><table class="c25"><tr class="c19"><td class="c16" colspan="1" rowspan="1"><p class="c8"><span class="c22"><a class="c20" href="#h.a0lpum94jh03">Glorificar</a></span></p></td><td class="c32" colspan="1" rowspan="1"><p class="c8"><span class="c22"><a class="c20" href="https://www.google.com/url?q=https://youtu.be/JCZkKzH5Po0&amp;sa=D&amp;source=editors&amp;ust=1740000802051583&amp;usg=AOvVaw1x_ozV4M5NX9NwR3kxMFh7">Youtube</a></span></p></td></tr></table><p class="c6 c11"><span class="c0"></span></p><h1 class="c10" id="h.a0lpum94jh03"><span class="c17">Glorificar</span></h1><h2 class="c29" id="h.pai4ir1fvhtn"><span class="c35">Projeto Sola</span></h2><p class="c34"><span class="c14">Original:</span><span class="c14 c24">&nbsp;</span><span class="c5 c18">A#</span></p><p class="c33"><span class="c14">Tom:</span><span class="c14 c24">&nbsp;</span><span class="c5 c18">E</span></p><p class="c23"><span class="c12">[Intro]</span><span class="c3">&nbsp;</span><span class="c5">E</span></p><p class="c23"><span class="c12">[Primeira Parte]</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; </span><span class="c5">E</span></p><p class="c1"><span class="c0">Em cada canto deste mundo</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c5">A</span></p><p class="c1"><span class="c0">Cada passo a ecoar seu amor</span></p><p class="c1 c6"><span class="c0"></span></p><p class="c1"><span class="c0">A sua reden&ccedil;&atilde;o</span></p><p class="c1"><span class="c5">&nbsp;E</span></p><p class="c1"><span class="c0">Sempre a mesma bandeira</span></p><p class="c1 c6"><span class="c0"></span></p><p class="c1"><span class="c0">Que n&atilde;o &eacute; sobre n&oacute;s</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c5">A</span><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c5">B</span><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c5">A/C#</span><span class="c3">&nbsp; </span><span class="c5">D</span></p><p class="c1"><span class="c0">Mas &eacute; Cristo, a luz, Senhor e Rei</span></p><p class="c13"><span class="c7">[Refr&atilde;o]</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; </span><span class="c5">E</span></p><p class="c1"><span class="c0">O grande Eu Sou, com Sua voz</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; &nbsp; </span><span class="c5">A</span></p><p class="c1"><span class="c0">Nos chama a existir, com Ele caminhar</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; </span><span class="c5">E</span></p><p class="c1"><span class="c0">Servir e amar a Igreja</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c5">A</span></p><p class="c1"><span class="c0">O Seu santo nome</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c5">E</span></p><p class="c30"><span class="c0">E at&eacute; o fim, sempre glorificar</span></p><p class="c4"><span class="c7">[Interl&uacute;dio]</span></p><p class="c1"><span class="c5">E</span></p><p class="c1"><span class="c0">&nbsp;&ocirc; &ocirc; &ocirc; &ocirc;</span></p><p class="c1"><span class="c5">A</span></p><p class="c1"><span class="c0">&nbsp;&ocirc; &ocirc; &ocirc; &ocirc;</span></p><p class="c13"><span class="c7">[Segunda Parte]</span></p><p class="c1"><span class="c5">E</span></p><p class="c1"><span class="c0">Um tesouro em vasos fr&aacute;geis</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c5">A</span></p><p class="c1"><span class="c0">Sua luz brilhou na escurid&atilde;o</span></p><p class="c1 c6"><span class="c0"></span></p><p class="c1"><span class="c0">Em nossos cora&ccedil;&otilde;es</span></p><p class="c1"><span class="c5">&nbsp;E</span></p><p class="c1"><span class="c0">Somos servos desse amor</span></p><p class="c1 c6"><span class="c0"></span></p><p class="c1"><span class="c0">Mostrar o Seu poder</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c5">A</span><span class="c3">&nbsp; &nbsp;</span><span class="c5">B</span><span class="c3">&nbsp; &nbsp;</span><span class="c5">A/C#</span><span class="c3">&nbsp; &nbsp;</span><span class="c5">D</span></p><p class="c1"><span class="c0">Gra&ccedil;a que &eacute; apesar de n&oacute;s</span></p><p class="c13"><span class="c7">[Refr&atilde;o] [1/2]</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; </span><span class="c5">E</span></p><p class="c1"><span class="c0">O grande Eu Sou, com Sua voz</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; &nbsp; </span><span class="c5">A</span></p><p class="c1"><span class="c0">Nos chama a existir, com Ele caminhar</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; </span><span class="c5">E &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;C#m</span></p><p class="c1"><span class="c0">Servir e amar a Igreja</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c5">A</span></p><p class="c1"><span class="c0">O Seu santo nome</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c5">E</span></p><p class="c30"><span class="c3">E at&eacute; o fim, sempre glorificar</span></p><p class="c13"><span class="c7">[Refr&atilde;o] [2/2]</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; </span><span class="c5">E</span></p><p class="c1"><span class="c0">O grande Eu Sou, com Sua voz</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; &nbsp; </span><span class="c5">A</span></p><p class="c1"><span class="c0">Nos chama a existir, com Ele caminhar</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; </span><span class="c5">C#m</span></p><p class="c1"><span class="c0">Servir e amar a Igreja</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c5">A</span></p><p class="c1"><span class="c0">O Seu santo nome</span></p><p class="c1"><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c5">E </span><span class="c12">&lt;&lt;&lt;</span></p><p class="c30"><span class="c0">E at&eacute; o fim, sempre glorificar</span></p><p class="c13"><span class="c7">[Ponte]</span></p><p class="c1"><span class="c5">G9</span></p><p class="c1"><span class="c0">&nbsp;Em todo lugar</span></p><p class="c1"><span class="c5">D</span></p><p class="c1"><span class="c0">&nbsp;Em cada express&atilde;o</span></p><p class="c1"><span class="c5">A</span><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c5">E</span></p><p class="c1"><span class="c0">&nbsp; Glorificar</span></p><p class="c1"><span class="c5">G9</span><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c5">D</span></p><p class="c1"><span class="c0">&nbsp; Seja aqui ou al&eacute;m, e at&eacute; o final</span></p><p class="c1"><span class="c5">B</span><span class="c3">&nbsp; &nbsp; &nbsp;</span><span class="c5">C#m</span><span class="c3">&nbsp;</span><span class="c5">D</span><span class="c3">&nbsp;</span><span class="c5">B/D#</span></p><p class="c1"><span class="c0">&nbsp; Glorificar</span></p><p class="c2"><span class="c7">[Final] [1/bat]</span></p><p class="c1"><span class="c5">E</span></p><p class="c1"><span class="c0">&nbsp; Ooooh</span></p><p class="c1"><span class="c5">D/E</span></p><p class="c1"><span class="c0">&nbsp; Ooooh</span></p><p class="c1"><span class="c5">A/E</span><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c5">E</span></p><p class="c1"><span class="c0">&nbsp; Glorificar</span></p><p class="c2"><span class="c7">[Final] [2/bat]</span></p><p class="c1"><span class="c5">E</span></p><p class="c1"><span class="c0">&nbsp; Ooooh</span></p><p class="c1"><span class="c5">D/E</span></p><p class="c1"><span class="c0">&nbsp; Ooooh</span></p><p class="c1"><span class="c5">A/E</span><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c5">E</span></p><p class="c1"><span class="c3">&nbsp; Glorificar</span></p><p class="c2"><span class="c7">[Final] [3/bat]</span></p><p class="c1"><span class="c5">E</span></p><p class="c1"><span class="c0">&nbsp; Ooooh</span></p><p class="c1"><span class="c5">D/E</span></p><p class="c1"><span class="c0">&nbsp; Ooooh</span></p><p class="c1"><span class="c5">A/E</span><span class="c3">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c5">E</span></p><p class="c1"><span class="c0">&nbsp; Glorificar</span></p><p class="c2"><span class="c7">[Final] [4/bat]</span></p><p class="c1"><span class="c5">E</span></p><p class="c1"><span class="c0">&nbsp; Ooooh</span></p><p class="c1"><span class="c5">D/E</span></p><p class="c1"><span class="c3">&nbsp; Ooooh</span></p><p class="c1"><span class="c5">A/E</span><span class="c3">&nbsp; &nbsp; &nbsp;</span><span class="c5">A</span><span class="c3">&nbsp; </span><span class="c5">G#m F#m</span><span class="c3">&nbsp;</span><span class="c5">E</span></p><p class="c11"><span class="c3">&nbsp; Glo__ri__fi__i__car</span></p><hr><p class="c6 c28"><span class="c0"></span></p><hr><p class="c11 c6"><span class="c0"></span></p></body></html>
+    </div>
+</body>
+
+</html>
