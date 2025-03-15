@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Músicas</title>
+
+    <style type="text/css">
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        table {
+            margin-left: 0 !important;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            padding: 10px 10px 10px 10px !important;
+        }
+
+        .top-menu {
+            display: flex;
+            position: fixed;
+            width: 100vw;
+            height: 47px;
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            top: 0;
+            right: 0;
+            left: 0;
+            background-color: #fff;
+            border-bottom: 2px solid #565656;
+        }
+
+        .top-menu * {
+            width: 40px;
+            height: 25px;
+            border: 1px solid buttonborder;
+            border-radius: 5px;
+            border-image: initial;
+        }
+
+        .top-menu div {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #content {
+            margin-top: 47px;
+            width: 100%;
+        }
+
+        #content * {
+            white-space: nowrap;
+        }
+    </style>
+
+    <script>
+        const keys = [
+            { value: 1, letter: 'C' },
+            { value: 2, letter: 'C#' },
+            { value: 3, letter: 'D' },
+            { value: 4, letter: 'D#' },
+            { value: 5, letter: 'E' },
+            { value: 6, letter: 'F' },
+            { value: 7, letter: 'F#' },
+            { value: 8, letter: 'G' },
+            { value: 9, letter: 'G#' },
+            { value: 10, letter: 'A' },
+            { value: 11, letter: 'A#' },
+            { value: 12, letter: 'B' },
+        ];
+
+        function buildKeySelector(element, index) {
+            element.classList.add('master-key');
+
+            let spans = element.querySelectorAll('span');
+
+            let previousValueName = 'previousValue' + index;
+            let masterKey = element.textContent.split(/\s+/)
+                .map(char => keys.find(k => k.letter === char))
+                .find(k => k !== undefined);
+
+            window[previousValueName] = masterKey.value;
+
+            let span = document.createElement('span');
+            span.textContent = 'Tom: ';
+            span.className = spans[0].className;
+
+            let select = document.createElement('select');
+            select.className = spans[1].className;
+            keys.forEach(key => {
+                let option = document.createElement('option');
+                option.value = key.value;
+                option.selected = key.value == masterKey.value;
+                option.textContent = key.letter;
+                select.appendChild(option);
+            });
+            let keyColor = window.getComputedStyle(spans[1]).color;
+            select.addEventListener('change', (event) => {
+
+                let difference = window[previousValueName] - event.target.value;
+
+                window[previousValueName] = event.target.value;
+
+                let currentElement = element.nextElementSibling;
+                let endElement = elementsWithMasterKeys[index + 1];
+                while (currentElement && currentElement.tagName !== 'HR') {
+                    currentElement.querySelectorAll('*').forEach((currEl) => {
+                        if (window.getComputedStyle(currEl).color != keyColor)
+                            return;
+
+                        let newText = '';
+                        let ignore = null;
+                        let currChar = '';
+                        for (let i = 0; i < currEl.textContent.length; i++) {
+                            if (i == ignore) {
+                                continue;
+                            }
+
+                            currChar = currEl.textContent[i];
+                            if (currEl.textContent[i + 1] == '#') {
+                                currChar += currEl.textContent[i + 1];
+                                ignore = i + 1;
+                            }
+                            let currKey = keys.find(k => k.letter === currChar);
+
+                            if (!currKey) {
+                                newText += currChar;
+                                continue;
+                            }
+
+                            let currAux = currKey.value - difference;
+
+                            if (currAux < 1) {
+                                currAux = 12 + currAux;
+                            } else if (currAux > 12) {
+                                currAux = currAux - 12;
+                            }
+
+                            newText += keys.find(k => k.value === currAux).letter;
+                        }
+
+                        currEl.textContent = newText;
+                    });
+                    currentElement = currentElement.nextElementSibling;
+                }
+            });
+
+            element.textContent = '';
+            element.appendChild(span);
+            element.appendChild(select);
+        }
+
+        function initializeMasterKeys() {
+            window.elementsWithMasterKeys = Array.from(document.querySelectorAll('p'))
+                .filter(element =>
+                    element.textContent.includes("Tom:")
+                );
+
+            elementsWithMasterKeys.forEach((element, index) => {
+                buildKeySelector(element, index);
+            });
+        }
+
+        var scrollSpeed = 0.15;
+        var accumulatedScroll = 0;
+
+        var scrollSpeedRate = 10;
+
+        function autoScroll() {
+            accumulatedScroll += scrollSpeed;
+
+            if (accumulatedScroll >= 1) {
+                window.scrollBy(0, Math.floor(accumulatedScroll));
+                accumulatedScroll -= Math.floor(accumulatedScroll);
+            }
+
+            requestAnimationFrame(autoScroll);
+
+            document.getElementById('scroll-speed').innerHTML = scrollSpeed.toFixed(2);
+        }
+
+        function less() {
+            if (scrollSpeed <= 0) {
+                scrollSpeed = 0;
+                return;
+            }
+
+            let aux = scrollSpeed * 100;
+
+            scrollSpeed = (aux -= scrollSpeedRate) / 100;
+        }
+
+        function more() {
+            let aux = scrollSpeed * 100;
+
+            scrollSpeed = (aux += scrollSpeedRate) / 100;
+        }
+
+        function pause() {
+            scrollSpeed = 0;
+        }
+
+        function setScrollSpeedRate(speed) {
+            const elements = document.querySelectorAll("[id^='rate-']");
+            elements.forEach(element => {
+                element.style.backgroundColor = 'rate-' + speed == element.id ? '#ffc1c1' : 'buttonface';
+            });
+            scrollSpeedRate = speed;
+        }
+
+        function makeLinksTargets() {
+            const links = document.querySelectorAll('a[href^="https://www.google.com/url?"]');
+            links.forEach(element => {
+                element.setAttribute('target', '_blank');
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            requestAnimationFrame(autoScroll);
+            setScrollSpeedRate(10);
+
+            initializeMasterKeys();
+
+            makeLinksTargets();
+        });
+    </script>
+</head>
+
+<body>
+    <div class="top-menu">
+        <button onclick="less()">&#8722;</button>
+        <div id="scroll-speed">1</div>
+        <button onclick="more()">&#43;</button>
+        <button id="rate-5" onclick="setScrollSpeedRate(5)" style="margin-left: 5px;">0.05</button>
+        <button id="rate-10" onclick="setScrollSpeedRate(10)">0.10</button>
+        <button id="rate-20" onclick="setScrollSpeedRate(20)">0.20</button>
+        <button onclick="pause()">&#9616;&#9616;</button>
+        <button onclick="document.querySelector('html').requestFullscreen();">Tela</button>
+    </div>
+
+    <div id="content">
+        <html><head><meta content="text/html; charset=UTF-8" http-equiv="content-type"><style type="text/css">@import url(https://themes.googleusercontent.com/fonts/css?kit=IQHow_FEYlDC4Gzy_m8fciKd_3eRGaAfZPjFZLQkwt03h25Vz0Lny7A-Jjz_n0XP_kmCvy597kDopqFAXvpeaA);.lst-kix_vzdkc1hyngcj-1>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-3>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-2>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-6>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-7>li:before{content:"-  "}ul.lst-kix_ovoly12nr5vx-0{list-style-type:none}ul.lst-kix_ovoly12nr5vx-1{list-style-type:none}.lst-kix_lergvzwxxgrt-6>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-8>li:before{content:"-  "}ul.lst-kix_ovoly12nr5vx-2{list-style-type:none}.lst-kix_vzdkc1hyngcj-7>li:before{content:"-  "}ul.lst-kix_ovoly12nr5vx-3{list-style-type:none}.lst-kix_vzdkc1hyngcj-0>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-8>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-3>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-7>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-2>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-4>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-1>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-5>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-4>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-8>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-5>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-6>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-0>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-5>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-4>li:before{content:"-  "}ul.lst-kix_vzdkc1hyngcj-2{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-1{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-0{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-6{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-5{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-4{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-3{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-1{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-0{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-8{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-3{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-7{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-2{list-style-type:none}.lst-kix_mek1h2ljqvx0-0>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-3>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-1>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-2>li:before{content:"-  "}ul.lst-kix_lergvzwxxgrt-4{list-style-type:none}ul.lst-kix_lergvzwxxgrt-3{list-style-type:none}ul.lst-kix_lergvzwxxgrt-2{list-style-type:none}ul.lst-kix_lergvzwxxgrt-1{list-style-type:none}ul.lst-kix_lergvzwxxgrt-0{list-style-type:none}ul.lst-kix_lergvzwxxgrt-8{list-style-type:none}ul.lst-kix_lergvzwxxgrt-7{list-style-type:none}ul.lst-kix_lergvzwxxgrt-6{list-style-type:none}ul.lst-kix_lergvzwxxgrt-5{list-style-type:none}.lst-kix_jfa2r7ts7hw2-1>li:before{content:"-  "}.lst-kix_jfa2r7ts7hw2-3>li:before{content:"-  "}.lst-kix_jfa2r7ts7hw2-0>li:before{content:"-  "}.lst-kix_jfa2r7ts7hw2-4>li:before{content:"-  "}.lst-kix_jfa2r7ts7hw2-5>li:before{content:"-  "}.lst-kix_jfa2r7ts7hw2-6>li:before{content:"-  "}.lst-kix_jfa2r7ts7hw2-2>li:before{content:"-  "}ul.lst-kix_jfa2r7ts7hw2-8{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-5{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-4{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-7{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-6{list-style-type:none}.lst-kix_jfa2r7ts7hw2-7>li:before{content:"-  "}.lst-kix_jfa2r7ts7hw2-8>li:before{content:"-  "}.lst-kix_k14qto6wlowi-8>li:before{content:"\0025a0   "}.lst-kix_ovoly12nr5vx-1>li:before{content:"-  "}.lst-kix_ovoly12nr5vx-0>li:before{content:"-  "}.lst-kix_ovoly12nr5vx-7>li:before{content:"-  "}.lst-kix_ovoly12nr5vx-8>li:before{content:"-  "}.lst-kix_k14qto6wlowi-2>li:before{content:"\0025a0   "}.lst-kix_k14qto6wlowi-0>li:before{content:"\0025cf   "}.lst-kix_ovoly12nr5vx-2>li:before{content:"-  "}.lst-kix_k14qto6wlowi-1>li:before{content:"\0025cb   "}ul.lst-kix_ovoly12nr5vx-8{list-style-type:none}ul.lst-kix_k14qto6wlowi-4{list-style-type:none}.lst-kix_k14qto6wlowi-6>li:before{content:"\0025cf   "}ul.lst-kix_mek1h2ljqvx0-5{list-style-type:none}ul.lst-kix_k14qto6wlowi-3{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-4{list-style-type:none}ul.lst-kix_k14qto6wlowi-2{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-3{list-style-type:none}ul.lst-kix_k14qto6wlowi-1{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-2{list-style-type:none}.lst-kix_ovoly12nr5vx-3>li:before{content:"-  "}ul.lst-kix_ovoly12nr5vx-4{list-style-type:none}ul.lst-kix_k14qto6wlowi-0{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-1{list-style-type:none}ul.lst-kix_ovoly12nr5vx-5{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-0{list-style-type:none}.lst-kix_ovoly12nr5vx-4>li:before{content:"-  "}ul.lst-kix_ovoly12nr5vx-6{list-style-type:none}.lst-kix_k14qto6wlowi-3>li:before{content:"\0025cf   "}.lst-kix_k14qto6wlowi-7>li:before{content:"\0025cb   "}ul.lst-kix_ovoly12nr5vx-7{list-style-type:none}.lst-kix_ovoly12nr5vx-5>li:before{content:"-  "}.lst-kix_k14qto6wlowi-4>li:before{content:"\0025cb   "}ul.lst-kix_k14qto6wlowi-8{list-style-type:none}ul.lst-kix_k14qto6wlowi-7{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-8{list-style-type:none}.lst-kix_ovoly12nr5vx-6>li:before{content:"-  "}.lst-kix_k14qto6wlowi-5>li:before{content:"\0025a0   "}ul.lst-kix_k14qto6wlowi-6{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-7{list-style-type:none}ul.lst-kix_k14qto6wlowi-5{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-6{list-style-type:none}ol{margin:0;padding:0}table td,table th{padding:0}.c22{border-right-style:solid;padding-top:0pt;border-top-width:0pt;border-right-width:0pt;padding-left:0pt;padding-bottom:0pt;line-height:1.1538461538461537;border-left-width:0pt;border-top-style:solid;background-color:#ffffff;border-left-style:solid;border-bottom-width:0pt;border-bottom-style:solid;orphans:2;widows:2;text-align:left;padding-right:0pt}.c27{border-right-style:solid;padding-top:0pt;border-top-width:0pt;border-right-width:0pt;padding-left:0pt;padding-bottom:0pt;line-height:1.2333333333333334;border-left-width:0pt;border-top-style:solid;background-color:#ffffff;border-left-style:solid;border-bottom-width:0pt;border-bottom-style:solid;orphans:2;widows:2;text-align:left;padding-right:0pt}.c4{border-right-style:solid;padding:5pt 5pt 5pt 5pt;border-bottom-color:#000000;border-top-width:1pt;border-right-width:1pt;border-left-color:#000000;vertical-align:top;border-right-color:#000000;border-left-width:1pt;border-top-style:solid;border-left-style:solid;border-bottom-width:1pt;width:171pt;border-top-color:#000000;border-bottom-style:solid}.c6{border-right-style:solid;padding:5pt 5pt 5pt 5pt;border-bottom-color:#000000;border-top-width:1pt;border-right-width:1pt;border-left-color:#000000;vertical-align:top;border-right-color:#000000;border-left-width:1pt;border-top-style:solid;border-left-style:solid;border-bottom-width:1pt;width:61.5pt;border-top-color:#000000;border-bottom-style:solid}.c20{background-color:#ffffff;padding-top:10pt;padding-bottom:5pt;line-height:1.15;orphans:2;widows:2;text-align:left}.c0{color:#212121;font-weight:400;text-decoration:none;vertical-align:baseline;font-size:10.5pt;font-family:"Roboto Mono";font-style:normal}.c32{background-color:#ffffff;padding-top:5pt;padding-bottom:10pt;line-height:1.15;orphans:2;widows:2;text-align:left}.c12{color:#ea9999;font-weight:400;text-decoration:none;vertical-align:baseline;font-size:10.5pt;font-family:"Roboto Mono";font-style:normal}.c17{color:#000000;font-weight:700;text-decoration:none;vertical-align:baseline;font-size:22.5pt;font-family:"Montserrat";font-style:normal}.c30{background-color:#ffffff;padding-top:10pt;padding-bottom:5pt;line-height:1.6;orphans:2;widows:2;text-align:left}.c5{color:#000000;font-weight:700;text-decoration:none;vertical-align:baseline;font-size:10.5pt;font-family:"Roboto Mono";font-style:normal}.c9{color:#000000;font-weight:400;text-decoration:none;vertical-align:baseline;font-size:11pt;font-family:"Arial";font-style:normal}.c23{background-color:#ffffff;padding-top:5pt;padding-bottom:10pt;line-height:1.6;orphans:2;widows:2;text-align:left}.c1{padding-top:0pt;padding-bottom:0pt;line-height:1.15;orphans:2;widows:2;text-align:left}.c28{padding-top:0pt;padding-bottom:250pt;line-height:1.6;orphans:2;widows:2;text-align:left}.c14{padding-top:0pt;padding-bottom:0pt;line-height:1.6;orphans:2;widows:2;text-align:left}.c31{padding-top:10pt;padding-bottom:10pt;line-height:1.15;orphans:2;widows:2;text-align:left}.c16{padding-top:0pt;padding-bottom:0pt;line-height:1.0;text-align:left}.c7{text-decoration-skip-ink:none;-webkit-text-decoration-skip:none;color:#1155cc;text-decoration:underline}.c25{color:#e69138;font-weight:700;font-size:8.5pt;font-family:"Montserrat"}.c11{margin-left:186.8pt;border-spacing:0;border-collapse:collapse;margin-right:auto}.c3{font-size:10.5pt;font-family:"Roboto Mono";color:#ff7700;font-weight:700}.c2{font-size:10.5pt;font-family:"Roboto Mono";color:#212121;font-weight:400}.c15{font-size:10.5pt;font-weight:700;font-family:"Roboto Mono"}.c10{color:#ff7700;font-size:10.5pt;font-weight:700}.c29{background-color:#ffffff;max-width:451.4pt;padding:72pt 72pt 72pt 72pt}.c19{text-decoration:none;vertical-align:baseline;font-style:normal}.c21{color:inherit;text-decoration:inherit}.c18{font-size:10.5pt;font-weight:700}.c26{font-size:13pt;font-weight:700}.c8{height:11pt}.c13{height:0pt}.c24{font-size:19.5pt}.title{border-right-style:solid;color:#000000;border-top-width:0pt;font-weight:700;padding-left:0pt;font-size:22.5pt;background-color:#ffffff;border-left-style:solid;font-family:"Montserrat";orphans:2;text-align:left;padding-top:0pt;border-right-width:0pt;padding-bottom:0pt;line-height:1.15;page-break-after:avoid;border-left-width:0pt;border-top-style:solid;border-bottom-width:0pt;border-bottom-style:solid;widows:2;padding-right:0pt}.subtitle{border-right-style:solid;color:#f57b1d;border-top-width:0pt;font-weight:700;padding-left:0pt;font-size:17.5pt;background-color:#ffffff;border-left-style:solid;font-family:"Montserrat";orphans:2;text-align:left;padding-top:0pt;border-right-width:0pt;padding-bottom:0pt;line-height:1.1538461538461537;page-break-after:avoid;border-left-width:0pt;border-top-style:solid;border-bottom-width:0pt;border-bottom-style:solid;widows:2;padding-right:0pt}li{color:#000000;font-size:11pt;font-family:"Arial"}p{margin:0;color:#000000;font-size:11pt;font-family:"Arial"}h1{border-right-style:solid;color:#000000;border-top-width:0pt;font-weight:700;padding-left:0pt;font-size:22.5pt;background-color:#ffffff;border-left-style:solid;font-family:"Montserrat";orphans:2;text-align:left;padding-top:0pt;border-right-width:0pt;padding-bottom:0pt;line-height:1.15;page-break-after:avoid;border-left-width:0pt;border-top-style:solid;border-bottom-width:0pt;border-bottom-style:solid;widows:2;padding-right:0pt}h2{border-right-style:solid;color:#e69138;border-top-width:0pt;font-weight:700;padding-left:0pt;font-size:17.5pt;background-color:#ffffff;border-left-style:solid;font-family:"Montserrat";orphans:2;text-align:left;padding-top:0pt;border-right-width:0pt;padding-bottom:0pt;line-height:1.1538461538461537;page-break-after:avoid;border-left-width:0pt;border-top-style:solid;border-bottom-width:0pt;border-bottom-style:solid;widows:2;padding-right:0pt}h3{padding-top:0pt;color:#000000;font-weight:700;font-size:22.5pt;padding-bottom:0pt;font-family:"Montserrat";line-height:1.15;page-break-after:avoid;orphans:2;widows:2;text-align:left}h4{padding-top:14pt;color:#666666;font-size:12pt;padding-bottom:4pt;font-family:"Arial";line-height:1.15;page-break-after:avoid;orphans:2;widows:2;text-align:left}h5{padding-top:12pt;color:#666666;font-size:11pt;padding-bottom:4pt;font-family:"Arial";line-height:1.15;page-break-after:avoid;orphans:2;widows:2;text-align:left}h6{padding-top:12pt;color:#666666;font-size:11pt;padding-bottom:4pt;font-family:"Arial";line-height:1.15;page-break-after:avoid;font-style:italic;orphans:2;widows:2;text-align:left}</style></head><body class="c29 doc-content"><div><p class="c1 c8"><span class="c9"></span></p></div><p class="c31"><span class="c26">Sum&aacute;rio e Vers&otilde;es</span></p><table class="c11"><tr class="c13"><td class="c4" colspan="1" rowspan="1"><p class="c16"><span class="c7"><a class="c21" href="#h.cpqfxk5rqevt">13 &middot; Contempla&ccedil;&atilde;o</a></span></p></td><td class="c6" colspan="1" rowspan="1"><p class="c16"><span class="c7"><a class="c21" href="https://www.google.com/url?q=https://youtu.be/gn5hiLve-4E&amp;sa=D&amp;source=editors&amp;ust=1742049386552530&amp;usg=AOvVaw2W_YBlfmn_y2fhXZ58bDx7">Youtube</a></span></p></td></tr><tr class="c13"><td class="c4" colspan="1" rowspan="1"><p class="c16"><span class="c7"><a class="c21" href="#h.a0lpum94jh03">Poder Pra Salvar</a></span></p></td><td class="c6" colspan="1" rowspan="1"><p class="c16"><span class="c7"><a class="c21" href="https://www.google.com/url?q=https://youtu.be/u5i4X1v__4Y&amp;sa=D&amp;source=editors&amp;ust=1742049386552858&amp;usg=AOvVaw2hu0a8WYNxND5IIDYlHTPZ">Youtube</a></span></p></td></tr></table><p class="c8 c14"><span class="c0"></span></p><h1 class="c27" id="h.cpqfxk5rqevt"><span class="c17">13 &middot; Contempla&ccedil;&atilde;o</span></h1><h2 class="c22" id="h.duryxtdel9yw"><span class="c24">Novo c&acirc;ntico</span></h2><p class="c20"><span class="c18">Original:</span><span class="c10">&nbsp;</span><span class="c3 c19">D#</span></p><p class="c32"><span class="c18">Tom:</span><span class="c10">&nbsp;</span><span class="c3 c19">C</span></p><p class="c1"><span class="c5">[Intro, final da estrofe]</span></p><p class="c1 c8"><span class="c12"></span></p><p class="c1"><span class="c2">&nbsp;</span><span class="c3">F</span><span class="c2">&nbsp; &nbsp;</span><span class="c3">&nbsp; </span><span class="c2">&nbsp; &nbsp; &nbsp; </span><span class="c3">C</span></p><p class="c1"><span class="c12">Nem Ad&atilde;o chegou a v&ecirc;-lo</span></p><p class="c1"><span class="c3">G</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">&nbsp; </span><span class="c2">&nbsp; &nbsp; </span><span class="c3">C</span></p><p class="c1"><span class="c12">Antes mesmo de pecar!</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c5">[1&ordf; Estrofe]</span></p><p class="c1 c8"><span class="c5"></span></p><p class="c1"><span class="c3">&nbsp;C</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">G</span><span class="c0">&nbsp; &nbsp;</span></p><p class="c1"><span class="c0">Se nos cega o sol ardente</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">F</span><span class="c2">&nbsp; &nbsp; &nbsp; </span><span class="c3">C</span></p><p class="c1"><span class="c0">Quando visto em seu fulgor</span></p><p class="c1"><span class="c2">&nbsp; </span><span class="c3">C</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">G</span><span class="c0">&nbsp;</span></p><p class="c1"><span class="c0">Quem contemplar&aacute; Aquele</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">&nbsp; &nbsp;</span><span class="c2">&nbsp;</span><span class="c3">C</span><span class="c0">&nbsp;</span></p><p class="c1"><span class="c0">Que do sol &eacute; Criador?</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c3">&nbsp;F</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">C</span><span class="c0">&nbsp; &nbsp;</span></p><p class="c1"><span class="c0">Patriarcas n&atilde;o puderam</span></p><p class="c1"><span class="c3">G</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">F</span><span class="c2">&nbsp; &nbsp; &nbsp; </span><span class="c3">C</span></p><p class="c1"><span class="c0">O seu rosto contemplar</span></p><p class="c1"><span class="c2">&nbsp;</span><span class="c3">F</span><span class="c2">&nbsp; &nbsp;</span><span class="c3">&nbsp; </span><span class="c2">&nbsp; &nbsp; &nbsp; </span><span class="c3">C</span></p><p class="c1"><span class="c0">Nem Ad&atilde;o chegou a v&ecirc;-lo</span></p><p class="c1"><span class="c3">G</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">&nbsp; </span><span class="c2">&nbsp; &nbsp; </span><span class="c3">C</span></p><p class="c1"><span class="c0">Antes mesmo de pecar!</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c5">[2&ordf; Estrofe]</span></p><p class="c1 c8"><span class="c5"></span></p><p class="c1"><span class="c3">&nbsp;C</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">G</span><span class="c2">&nbsp; </span></p><p class="c1"><span class="c0">Luz perante a qual &eacute; trevas</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">F</span><span class="c2">&nbsp; &nbsp; </span><span class="c3">C</span></p><p class="c1"><span class="c0">Mesmo o sol a fulgurar!</span></p><p class="c1"><span class="c2">&nbsp;</span><span class="c3">C</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">G</span></p><p class="c1"><span class="c0">Nossos olhos pecadores</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">&nbsp; </span><span class="c2">&nbsp; &nbsp; &nbsp; </span><span class="c3">C</span><span class="c0">&nbsp;</span></p><p class="c1"><span class="c0">N&atilde;o te podem contemplar!</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c3">&nbsp;F</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">C</span><span class="c0">&nbsp; </span></p><p class="c1"><span class="c0">Fogo em cima da arca santa</span></p><p class="c1"><span class="c3">&nbsp;G</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">F</span><span class="c2">&nbsp; &nbsp; </span><span class="c3">C</span></p><p class="c1"><span class="c0">Sar&ccedil;a ardente do Sinai</span></p><p class="c1"><span class="c2">&nbsp;</span><span class="c3">F</span><span class="c2">&nbsp; &nbsp;</span><span class="c3">&nbsp; </span><span class="c2">&nbsp; &nbsp; &nbsp; </span><span class="c3">C</span></p><p class="c1"><span class="c0">S&atilde;o figuras desta gl&oacute;ria</span></p><p class="c1"><span class="c3">&nbsp;G</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">&nbsp; </span><span class="c2">&nbsp; &nbsp; &nbsp;</span><span class="c3">C</span></p><p class="c1"><span class="c0">Do Senhor e Eterno Pai</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c5">[Solo, final da estrofe]</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c2">&nbsp;</span><span class="c3">F</span><span class="c2">&nbsp; &nbsp;</span><span class="c3">&nbsp; </span><span class="c2">&nbsp; &nbsp; &nbsp; </span><span class="c3">C</span></p><p class="c1"><span class="c12">S&atilde;o figuras desta gl&oacute;ria</span></p><p class="c1"><span class="c3">&nbsp;G</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">&nbsp; </span><span class="c2">&nbsp; &nbsp; &nbsp;</span><span class="c3">C</span></p><p class="c1"><span class="c12">Do Senhor e Eterno Pai</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c5">[3&ordf; Estrofe]</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c3">&nbsp;C</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">G</span></p><p class="c1"><span class="c0">Para termos n&oacute;s com ele</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">F</span><span class="c2">&nbsp; &nbsp; </span><span class="c3">C</span></p><p class="c1"><span class="c0">Franca e doce comunh&atilde;o</span></p><p class="c1"><span class="c2">&nbsp; </span><span class="c3">C</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">G</span></p><p class="c1"><span class="c0">Cristo, o Filho fez-se carne</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">C</span><span class="c0">&nbsp;</span></p><p class="c1"><span class="c0">Fez-se nossa Reden&ccedil;&atilde;o!</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c3">&nbsp;F</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">C</span><span class="c0">&nbsp; </span></p><p class="c1"><span class="c0">Para que na gl&oacute;ria eterna</span></p><p class="c1"><span class="c3">G</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">F</span><span class="c2">&nbsp; &nbsp; &nbsp; </span><span class="c3">C</span></p><p class="c1"><span class="c0">O vejamos j&aacute; sem v&eacute;u</span></p><p class="c1"><span class="c2">&nbsp; </span><span class="c3">F</span><span class="c2">&nbsp; &nbsp;</span><span class="c3">&nbsp; </span><span class="c2">&nbsp; &nbsp; </span><span class="c3">C</span></p><p class="c1"><span class="c0">Cristo padeceu a morte</span></p><p class="c1"><span class="c3">G</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">&nbsp; </span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">C</span></p><p class="c1"><span class="c2">O caminho abrindo ao c&eacute;u</span></p><hr><p class="c14 c8"><span class="c3 c19"></span></p><h1 class="c27" id="h.a0lpum94jh03"><span class="c17">Poder Pra Salvar</span></h1><h2 class="c22" id="h.pai4ir1fvhtn"><span class="c24">Hillsong em portugu&ecirc;s</span></h2><p class="c30"><span class="c18">Original:</span><span class="c10">&nbsp;</span><span class="c3 c19">A</span></p><p class="c23"><span class="c18">Tom:</span><span class="c10">&nbsp;</span><span class="c3 c19">E</span></p><p class="c1"><span class="c15">[Intro]</span><span class="c3 c19">&nbsp;A &nbsp;E &nbsp;C#m &nbsp;B</span></p><p class="c1"><span class="c3 c19">&nbsp; &nbsp; &nbsp; &nbsp; A &nbsp;E &nbsp;C#m &nbsp;B</span></p><p class="c1 c8"><span class="c3 c19"></span></p><p class="c1"><span class="c3">A9</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">E</span></p><p class="c1"><span class="c0">&nbsp;Todos necessitam</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">C#m7</span></p><p class="c1"><span class="c0">De um amor perfeito</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; </span><span class="c3">B</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">A9</span></p><p class="c1"><span class="c0">Perd&atilde;o e compaix&atilde;o</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">E</span></p><p class="c1"><span class="c0">Todos necessitam</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">C#m7</span></p><p class="c1"><span class="c0">De gra&ccedil;a e esperan&ccedil;a</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">B</span><span class="c0">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span></p><p class="c1"><span class="c0">De um Deus que salva</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c15">[Passagem]</span><span class="c3">&nbsp;A</span><span class="c2">&nbsp; </span><span class="c3">B</span><span class="c2">&nbsp; </span><span class="c3">A</span><span class="c2">&nbsp; </span><span class="c3">B</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c5">[Refr&atilde;o]</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c3">&nbsp; E</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">B/E</span></p><p class="c1"><span class="c0">Cristo move as montanhas</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">A</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">E</span></p><p class="c1"><span class="c0">E tem poder pra salvar</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">C#m7</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">B</span></p><p class="c1"><span class="c0">Tem poder pra salvar</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp;</span><span class="c3">E</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">B/E</span></p><p class="c1"><span class="c0">Pra sempre, autor da salva&ccedil;&atilde;o</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">A</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">E</span></p><p class="c1"><span class="c0">Jesus a morte venceu</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">C#m7</span><span class="c2">&nbsp; &nbsp; &nbsp;</span><span class="c3">B</span></p><p class="c1"><span class="c0">Sobre a morte venceu</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c15">[Intro]</span><span class="c3">&nbsp;A</span><span class="c2">&nbsp; </span><span class="c3">E</span><span class="c2">&nbsp; </span><span class="c3">C#m7</span><span class="c2">&nbsp; </span><span class="c3">B</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c3">A9</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">E</span></p><p class="c1"><span class="c0">&nbsp; Me aceitas com meus medos</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">C#m7</span></p><p class="c1"><span class="c0">Falhas e temores</span></p><p class="c1"><span class="c3">B</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">A9</span></p><p class="c1"><span class="c0">Enche meu viver</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">E</span></p><p class="c1"><span class="c0">A minha vida entrego</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">C#m7</span></p><p class="c1"><span class="c0">Pra seguir Teus passos</span></p><p class="c1"><span class="c2">&nbsp; &nbsp;</span><span class="c3">B</span><span class="c0">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span></p><p class="c1"><span class="c0">A ti me rendo</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c15">[Passagem]</span><span class="c3">&nbsp;A</span><span class="c2">&nbsp; </span><span class="c3">B</span><span class="c2">&nbsp; </span><span class="c3">A</span><span class="c2">&nbsp; </span><span class="c3">B</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c5">[Refr&atilde;o]</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c3">&nbsp; E</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">B/E</span></p><p class="c1"><span class="c0">Cristo move as montanhas</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">A</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">E</span></p><p class="c1"><span class="c0">E tem poder pra salvar</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">C#m7</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">B</span></p><p class="c1"><span class="c0">Tem poder pra salvar</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp;</span><span class="c3">E</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">B/E</span></p><p class="c1"><span class="c0">Pra sempre, autor da salva&ccedil;&atilde;o</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">A</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">E</span></p><p class="c1"><span class="c0">Jesus a morte venceu</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">C#m7</span><span class="c2">&nbsp; &nbsp; &nbsp;</span><span class="c3">B</span></p><p class="c1"><span class="c0">Sobre a morte venceu</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c15">[Solo]</span><span class="c2">&nbsp;</span><span class="c3">A9</span><span class="c2">&nbsp; </span><span class="c3">E</span><span class="c2">&nbsp; </span><span class="c3">B &nbsp;</span><span class="c2">(</span><span class="c3">C#m</span><span class="c0">)</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">A9</span><span class="c2">&nbsp; </span><span class="c3">E</span><span class="c2">&nbsp; </span><span class="c3">B &nbsp;</span><span class="c2">(</span><span class="c3">C#m</span><span class="c0">)</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c5">[Ponte] [1/2]</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c3">A</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">E</span></p><p class="c1"><span class="c0">&nbsp;Possa o mundo </span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">B</span><span class="c2">&nbsp; </span><span class="c3">&nbsp; </span></p><p class="c1"><span class="c0">Ver brilhar a luz</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; </span><span class="c3">C#m</span><span class="c2">&nbsp;</span><span class="c3">A</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">E</span></p><p class="c1"><span class="c0">Cantamos para a gl&oacute;ria</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">B &nbsp; &nbsp; &nbsp;C#m</span></p><p class="c1"><span class="c0">Do Senhor Jesus Cristo</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c5">[Ponte] [2/2]</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c3">A</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">E</span></p><p class="c1"><span class="c0">&nbsp;Possa o mundo </span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">B</span><span class="c2">&nbsp; </span><span class="c3">&nbsp; </span></p><p class="c1"><span class="c0">Ver brilhar a luz</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; </span><span class="c3">C#m</span><span class="c2">&nbsp;</span><span class="c3">A</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">E</span></p><p class="c1"><span class="c0">Cantamos para a gl&oacute;ria</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">B</span></p><p class="c1"><span class="c0">Do Senhor Jesus</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c5">[Refr&atilde;o] [1/2]</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c3">&nbsp; E</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">B/E</span></p><p class="c1"><span class="c0">Cristo move as montanhas</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">A</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">E</span></p><p class="c1"><span class="c0">E tem poder pra salvar</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">C#m7</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">B</span></p><p class="c1"><span class="c0">Tem poder pra salvar</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp;</span><span class="c3">E</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">B/E</span></p><p class="c1"><span class="c0">Pra sempre, autor da salva&ccedil;&atilde;o</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">A</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">E</span></p><p class="c1"><span class="c0">Jesus a morte venceu</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">C#m7</span><span class="c2">&nbsp; &nbsp; &nbsp;</span><span class="c3">B</span></p><p class="c1"><span class="c0">Sobre a morte venceu</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c5">[Refr&atilde;o] [2/2]</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c3">&nbsp; E</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">B/E</span></p><p class="c1"><span class="c0">Cristo move as montanhas</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">A</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">E</span></p><p class="c1"><span class="c0">E tem poder pra salvar</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">C#m7</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">B</span></p><p class="c1"><span class="c0">Tem poder pra salvar</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp;</span><span class="c3">E</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">B/E</span></p><p class="c1"><span class="c0">Pra sempre, autor da salva&ccedil;&atilde;o</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">A</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">E</span></p><p class="c1"><span class="c0">Jesus a morte venceu</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">C#m7</span><span class="c2">&nbsp; &nbsp; &nbsp;</span><span class="c3">B</span></p><p class="c1"><span class="c0">Sobre a morte venceu</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c5">[Final] [1/2]</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c3">A</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">E</span></p><p class="c1"><span class="c0">&nbsp;Possa o mundo </span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">B</span><span class="c2">&nbsp; </span><span class="c3">&nbsp; </span></p><p class="c1"><span class="c0">Ver brilhar a luz</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; </span><span class="c3">C#m</span><span class="c2">&nbsp;</span><span class="c3">A</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">E</span></p><p class="c1"><span class="c0">Cantamos para a gl&oacute;ria</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">B</span></p><p class="c1"><span class="c0">Do Senhor Jesus</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c5">[Final] [2/2]</span></p><p class="c1 c8"><span class="c0"></span></p><p class="c1"><span class="c3">A</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">E</span></p><p class="c1"><span class="c0">&nbsp;Possa o mundo </span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="c3">B</span><span class="c2">&nbsp; </span><span class="c3">&nbsp; </span></p><p class="c1"><span class="c0">Ver brilhar a luz</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; </span><span class="c3">C#m</span><span class="c2">&nbsp;</span><span class="c3">A</span><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">E</span></p><p class="c1"><span class="c0">Cantamos para a gl&oacute;ria</span></p><p class="c1"><span class="c2">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="c3">B</span></p><p class="c1"><span class="c2">Do Senhor Jesus</span></p><hr><p class="c8 c28"><span class="c0"></span></p><hr><p class="c14 c8"><span class="c0"></span></p></body></html>
+    </div>
+</body>
+
+</html>
