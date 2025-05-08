@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Como ajudar nas cifras</title>
+
+    <style type="text/css">
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        table {
+            margin-left: 0 !important;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            padding: 10px 10px 10px 10px !important;
+        }
+
+        .top-menu {
+            display: flex;
+            position: fixed;
+            width: 100vw;
+            height: 47px;
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            top: 0;
+            right: 0;
+            left: 0;
+            background-color: #fff;
+            border-bottom: 2px solid #565656;
+        }
+
+        .top-menu * {
+            width: 40px;
+            height: 25px;
+            border: 1px solid buttonborder;
+            border-radius: 5px;
+            border-image: initial;
+        }
+
+        .top-menu div {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #content {
+            margin-top: 47px;
+            width: 100%;
+        }
+
+        #content * {
+            white-space: nowrap;
+        }
+    </style>
+
+    <script>
+        const keys = [
+            { value: 1, letter: 'C' },
+            { value: 2, letter: 'C#' },
+            { value: 3, letter: 'D' },
+            { value: 4, letter: 'D#' },
+            { value: 5, letter: 'E' },
+            { value: 6, letter: 'F' },
+            { value: 7, letter: 'F#' },
+            { value: 8, letter: 'G' },
+            { value: 9, letter: 'G#' },
+            { value: 10, letter: 'A' },
+            { value: 11, letter: 'A#' },
+            { value: 12, letter: 'B' },
+        ];
+
+        function buildKeySelector(element, index) {
+            element.classList.add('master-key');
+
+            let spans = element.querySelectorAll('span');
+
+            let previousValueName = 'previousValue' + index;
+            let masterKey = element.textContent.split(/\s+/)
+                .map(char => keys.find(k => k.letter === char))
+                .find(k => k !== undefined);
+
+            window[previousValueName] = masterKey.value;
+
+            let span = document.createElement('span');
+            span.textContent = 'Tom: ';
+            span.className = spans[0].className;
+
+            let select = document.createElement('select');
+            select.className = spans[1].className;
+            keys.forEach(key => {
+                let option = document.createElement('option');
+                option.value = key.value;
+                option.selected = key.value == masterKey.value;
+                option.textContent = key.letter;
+                select.appendChild(option);
+            });
+            let keyColor = window.getComputedStyle(spans[1]).color;
+            select.addEventListener('change', (event) => {
+
+                let difference = window[previousValueName] - event.target.value;
+
+                window[previousValueName] = event.target.value;
+
+                let currentElement = element.nextElementSibling;
+                let endElement = elementsWithMasterKeys[index + 1];
+                while (currentElement && currentElement.tagName !== 'HR') {
+                    currentElement.querySelectorAll('*').forEach((currEl) => {
+                        if (window.getComputedStyle(currEl).color != keyColor)
+                            return;
+
+                        let newText = '';
+                        let ignore = null;
+                        let currChar = '';
+                        for (let i = 0; i < currEl.textContent.length; i++) {
+                            if (i == ignore) {
+                                continue;
+                            }
+
+                            currChar = currEl.textContent[i];
+                            if (currEl.textContent[i + 1] == '#') {
+                                currChar += currEl.textContent[i + 1];
+                                ignore = i + 1;
+                            }
+                            let currKey = keys.find(k => k.letter === currChar);
+
+                            if (!currKey) {
+                                newText += currChar;
+                                continue;
+                            }
+
+                            let currAux = currKey.value - difference;
+
+                            if (currAux < 1) {
+                                currAux = 12 + currAux;
+                            } else if (currAux > 12) {
+                                currAux = currAux - 12;
+                            }
+
+                            newText += keys.find(k => k.value === currAux).letter;
+                        }
+
+                        currEl.textContent = newText;
+                    });
+                    currentElement = currentElement.nextElementSibling;
+                }
+            });
+
+            element.textContent = '';
+            element.appendChild(span);
+            element.appendChild(select);
+        }
+
+        function initializeMasterKeys() {
+            window.elementsWithMasterKeys = Array.from(document.querySelectorAll('p'))
+                .filter(element =>
+                    element.textContent.includes("Tom:")
+                );
+
+            elementsWithMasterKeys.forEach((element, index) => {
+                buildKeySelector(element, index);
+            });
+        }
+
+        var scrollSpeed = 0.15;
+        var accumulatedScroll = 0;
+
+        var scrollSpeedRate = 10;
+
+        function autoScroll() {
+            accumulatedScroll += scrollSpeed;
+
+            if (accumulatedScroll >= 1) {
+                window.scrollBy(0, Math.floor(accumulatedScroll));
+                accumulatedScroll -= Math.floor(accumulatedScroll);
+            }
+
+            requestAnimationFrame(autoScroll);
+
+            document.getElementById('scroll-speed').innerHTML = scrollSpeed.toFixed(2);
+        }
+
+        function less() {
+            if (scrollSpeed <= 0) {
+                scrollSpeed = 0;
+                return;
+            }
+
+            let aux = scrollSpeed * 100;
+
+            scrollSpeed = (aux -= scrollSpeedRate) / 100;
+        }
+
+        function more() {
+            let aux = scrollSpeed * 100;
+
+            scrollSpeed = (aux += scrollSpeedRate) / 100;
+        }
+
+        function pause() {
+            scrollSpeed = 0;
+        }
+
+        function setScrollSpeedRate(speed) {
+            const elements = document.querySelectorAll("[id^='rate-']");
+            elements.forEach(element => {
+                element.style.backgroundColor = 'rate-' + speed == element.id ? '#ffc1c1' : 'buttonface';
+            });
+            scrollSpeedRate = speed;
+        }
+
+        function makeLinksTargets() {
+            const links = document.querySelectorAll('a[href^="https://www.google.com/url?"]');
+            links.forEach(element => {
+                element.setAttribute('target', '_blank');
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            requestAnimationFrame(autoScroll);
+            setScrollSpeedRate(10);
+
+            initializeMasterKeys();
+
+            makeLinksTargets();
+        });
+    </script>
+</head>
+
+<body>
+    <div class="top-menu">
+        <button onclick="less()">&#8722;</button>
+        <div id="scroll-speed">1</div>
+        <button onclick="more()">&#43;</button>
+        <button id="rate-5" onclick="setScrollSpeedRate(5)" style="margin-left: 5px;">0.05</button>
+        <button id="rate-10" onclick="setScrollSpeedRate(10)">0.10</button>
+        <button id="rate-20" onclick="setScrollSpeedRate(20)">0.20</button>
+        <button onclick="pause()">&#9616;&#9616;</button>
+        <button onclick="document.querySelector('html').requestFullscreen();">Tela</button>
+    </div>
+
+    <div id="content">
+        <html><head><meta content="text/html; charset=UTF-8" http-equiv="content-type"><style type="text/css">@import url(https://themes.googleusercontent.com/fonts/css?kit=IQHow_FEYlDC4Gzy_m8fciKd_3eRGaAfZPjFZLQkwt33rGVtsTkPsbDajuO5ueQw);.lst-kix_vzdkc1hyngcj-1>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-3>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-2>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-6>li:before{content:"-  "}ul.lst-kix_ovoly12nr5vx-0{list-style-type:none}ul.lst-kix_ovoly12nr5vx-1{list-style-type:none}ul.lst-kix_ovoly12nr5vx-2{list-style-type:none}.lst-kix_vzdkc1hyngcj-7>li:before{content:"-  "}ul.lst-kix_ovoly12nr5vx-3{list-style-type:none}.lst-kix_1sk1nvkbxe7-7>li{counter-increment:lst-ctn-kix_1sk1nvkbxe7-7}.lst-kix_vzdkc1hyngcj-0>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-8>li:before{content:"-  "}ol.lst-kix_1sk1nvkbxe7-6.start{counter-reset:lst-ctn-kix_1sk1nvkbxe7-6 0}.lst-kix_wbtdtardzvkk-7>li{counter-increment:lst-ctn-kix_wbtdtardzvkk-7}ol.lst-kix_1sk1nvkbxe7-0.start{counter-reset:lst-ctn-kix_1sk1nvkbxe7-0 0}ol.lst-kix_wqymm6y0epne-3.start{counter-reset:lst-ctn-kix_wqymm6y0epne-3 0}ol.lst-kix_elunpnh36vs5-4.start{counter-reset:lst-ctn-kix_elunpnh36vs5-4 0}.lst-kix_vzdkc1hyngcj-5>li:before{content:"-  "}.lst-kix_vzdkc1hyngcj-4>li:before{content:"-  "}ul.lst-kix_vzdkc1hyngcj-2{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-1{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-0{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-6{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-5{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-4{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-3{list-style-type:none}ul.lst-kix_vzdkc1hyngcj-8{list-style-type:none}.lst-kix_wbtdtardzvkk-3>li{counter-increment:lst-ctn-kix_wbtdtardzvkk-3}ul.lst-kix_vzdkc1hyngcj-7{list-style-type:none}.lst-kix_wqymm6y0epne-1>li{counter-increment:lst-ctn-kix_wqymm6y0epne-1}ol.lst-kix_elunpnh36vs5-8.start{counter-reset:lst-ctn-kix_elunpnh36vs5-8 0}.lst-kix_wbtdtardzvkk-1>li:before{content:"" counter(lst-ctn-kix_wbtdtardzvkk-1,lower-roman) ". "}.lst-kix_wbtdtardzvkk-3>li:before{content:"" counter(lst-ctn-kix_wbtdtardzvkk-3,lower-latin) ". "}ol.lst-kix_elunpnh36vs5-3.start{counter-reset:lst-ctn-kix_elunpnh36vs5-3 0}.lst-kix_wbtdtardzvkk-0>li:before{content:"" counter(lst-ctn-kix_wbtdtardzvkk-0,lower-latin) ". "}.lst-kix_wbtdtardzvkk-4>li:before{content:"" counter(lst-ctn-kix_wbtdtardzvkk-4,lower-roman) ". "}.lst-kix_elunpnh36vs5-8>li{counter-increment:lst-ctn-kix_elunpnh36vs5-8}.lst-kix_wbtdtardzvkk-2>li:before{content:"" counter(lst-ctn-kix_wbtdtardzvkk-2,decimal) ". "}ol.lst-kix_wqymm6y0epne-2.start{counter-reset:lst-ctn-kix_wqymm6y0epne-2 0}ol.lst-kix_wqymm6y0epne-8.start{counter-reset:lst-ctn-kix_wqymm6y0epne-8 0}.lst-kix_wbtdtardzvkk-8>li:before{content:"" counter(lst-ctn-kix_wbtdtardzvkk-8,decimal) ". "}.lst-kix_wbtdtardzvkk-5>li:before{content:"" counter(lst-ctn-kix_wbtdtardzvkk-5,decimal) ". "}.lst-kix_wbtdtardzvkk-7>li:before{content:"" counter(lst-ctn-kix_wbtdtardzvkk-7,lower-roman) ". "}ol.lst-kix_1sk1nvkbxe7-5.start{counter-reset:lst-ctn-kix_1sk1nvkbxe7-5 0}.lst-kix_wbtdtardzvkk-6>li:before{content:"" counter(lst-ctn-kix_wbtdtardzvkk-6,lower-latin) ". "}.lst-kix_jfa2r7ts7hw2-1>li:before{content:"-  "}.lst-kix_wqymm6y0epne-5>li{counter-increment:lst-ctn-kix_wqymm6y0epne-5}ol.lst-kix_1sk1nvkbxe7-2.start{counter-reset:lst-ctn-kix_1sk1nvkbxe7-2 0}.lst-kix_jfa2r7ts7hw2-3>li:before{content:"-  "}.lst-kix_jfa2r7ts7hw2-5>li:before{content:"-  "}.lst-kix_elunpnh36vs5-3>li{counter-increment:lst-ctn-kix_elunpnh36vs5-3}.lst-kix_wbtdtardzvkk-0>li{counter-increment:lst-ctn-kix_wbtdtardzvkk-0}ol.lst-kix_elunpnh36vs5-5.start{counter-reset:lst-ctn-kix_elunpnh36vs5-5 0}ol.lst-kix_wbtdtardzvkk-8.start{counter-reset:lst-ctn-kix_wbtdtardzvkk-8 0}.lst-kix_wqymm6y0epne-0>li:before{content:"" counter(lst-ctn-kix_wqymm6y0epne-0,lower-latin) ". "}.lst-kix_jfa2r7ts7hw2-7>li:before{content:"-  "}.lst-kix_wqymm6y0epne-2>li:before{content:"" counter(lst-ctn-kix_wqymm6y0epne-2,decimal) ". "}.lst-kix_wqymm6y0epne-4>li:before{content:"" counter(lst-ctn-kix_wqymm6y0epne-4,lower-roman) ". "}.lst-kix_wqymm6y0epne-6>li{counter-increment:lst-ctn-kix_wqymm6y0epne-6}.lst-kix_1sk1nvkbxe7-0>li{counter-increment:lst-ctn-kix_1sk1nvkbxe7-0}.lst-kix_elunpnh36vs5-4>li{counter-increment:lst-ctn-kix_elunpnh36vs5-4}.lst-kix_elunpnh36vs5-3>li:before{content:"" counter(lst-ctn-kix_elunpnh36vs5-3,decimal) ". "}.lst-kix_elunpnh36vs5-5>li:before{content:"" counter(lst-ctn-kix_elunpnh36vs5-5,lower-roman) ". "}.lst-kix_wqymm6y0epne-6>li:before{content:"" counter(lst-ctn-kix_wqymm6y0epne-6,lower-latin) ". "}.lst-kix_wqymm6y0epne-8>li:before{content:"" counter(lst-ctn-kix_wqymm6y0epne-8,decimal) ". "}ol.lst-kix_elunpnh36vs5-7.start{counter-reset:lst-ctn-kix_elunpnh36vs5-7 0}.lst-kix_elunpnh36vs5-1>li:before{content:"" counter(lst-ctn-kix_elunpnh36vs5-1,lower-latin) ". "}.lst-kix_elunpnh36vs5-7>li:before{content:"" counter(lst-ctn-kix_elunpnh36vs5-7,lower-latin) ". "}ol.lst-kix_elunpnh36vs5-2{list-style-type:none}ol.lst-kix_elunpnh36vs5-3{list-style-type:none}ol.lst-kix_elunpnh36vs5-0{list-style-type:none}ol.lst-kix_elunpnh36vs5-1{list-style-type:none}.lst-kix_ovoly12nr5vx-0>li:before{content:"-  "}.lst-kix_1sk1nvkbxe7-5>li{counter-increment:lst-ctn-kix_1sk1nvkbxe7-5}ol.lst-kix_elunpnh36vs5-8{list-style-type:none}ol.lst-kix_1sk1nvkbxe7-1.start{counter-reset:lst-ctn-kix_1sk1nvkbxe7-1 0}ol.lst-kix_elunpnh36vs5-6{list-style-type:none}ol.lst-kix_elunpnh36vs5-7{list-style-type:none}ol.lst-kix_elunpnh36vs5-4{list-style-type:none}ol.lst-kix_elunpnh36vs5-5{list-style-type:none}.lst-kix_wbtdtardzvkk-5>li{counter-increment:lst-ctn-kix_wbtdtardzvkk-5}.lst-kix_1sk1nvkbxe7-1>li:before{content:"" counter(lst-ctn-kix_1sk1nvkbxe7-1,lower-roman) ". "}.lst-kix_1sk1nvkbxe7-3>li:before{content:"" counter(lst-ctn-kix_1sk1nvkbxe7-3,lower-latin) ". "}.lst-kix_ovoly12nr5vx-8>li:before{content:"-  "}.lst-kix_1sk1nvkbxe7-5>li:before{content:"" counter(lst-ctn-kix_1sk1nvkbxe7-5,decimal) ". "}.lst-kix_1sk1nvkbxe7-7>li:before{content:"" counter(lst-ctn-kix_1sk1nvkbxe7-7,lower-roman) ". "}.lst-kix_ovoly12nr5vx-2>li:before{content:"-  "}ol.lst-kix_elunpnh36vs5-6.start{counter-reset:lst-ctn-kix_elunpnh36vs5-6 0}.lst-kix_k14qto6wlowi-1>li:before{content:"\0025cb   "}.lst-kix_ovoly12nr5vx-4>li:before{content:"-  "}.lst-kix_k14qto6wlowi-3>li:before{content:"\0025cf   "}.lst-kix_k14qto6wlowi-7>li:before{content:"\0025cb   "}.lst-kix_ovoly12nr5vx-6>li:before{content:"-  "}.lst-kix_k14qto6wlowi-5>li:before{content:"\0025a0   "}.lst-kix_lergvzwxxgrt-7>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-6>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-8>li:before{content:"-  "}.lst-kix_wbtdtardzvkk-6>li{counter-increment:lst-ctn-kix_wbtdtardzvkk-6}ol.lst-kix_wbtdtardzvkk-1.start{counter-reset:lst-ctn-kix_wbtdtardzvkk-1 0}.lst-kix_lergvzwxxgrt-3>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-7>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-2>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-4>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-1>li:before{content:"-  "}.lst-kix_lergvzwxxgrt-5>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-4>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-8>li:before{content:"-  "}.lst-kix_1sk1nvkbxe7-8>li{counter-increment:lst-ctn-kix_1sk1nvkbxe7-8}.lst-kix_mek1h2ljqvx0-5>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-6>li:before{content:"-  "}ol.lst-kix_wqymm6y0epne-6.start{counter-reset:lst-ctn-kix_wqymm6y0epne-6 0}ol.lst-kix_elunpnh36vs5-1.start{counter-reset:lst-ctn-kix_elunpnh36vs5-1 0}.lst-kix_lergvzwxxgrt-0>li:before{content:"-  "}ol.lst-kix_1sk1nvkbxe7-3.start{counter-reset:lst-ctn-kix_1sk1nvkbxe7-3 0}.lst-kix_elunpnh36vs5-7>li{counter-increment:lst-ctn-kix_elunpnh36vs5-7}.lst-kix_wqymm6y0epne-0>li{counter-increment:lst-ctn-kix_wqymm6y0epne-0}.lst-kix_1sk1nvkbxe7-6>li{counter-increment:lst-ctn-kix_1sk1nvkbxe7-6}ol.lst-kix_wqymm6y0epne-0.start{counter-reset:lst-ctn-kix_wqymm6y0epne-0 0}ol.lst-kix_wqymm6y0epne-0{list-style-type:none}.lst-kix_1sk1nvkbxe7-4>li{counter-increment:lst-ctn-kix_1sk1nvkbxe7-4}ol.lst-kix_wqymm6y0epne-2{list-style-type:none}ol.lst-kix_wbtdtardzvkk-6.start{counter-reset:lst-ctn-kix_wbtdtardzvkk-6 0}ol.lst-kix_wqymm6y0epne-1{list-style-type:none}ol.lst-kix_wqymm6y0epne-4{list-style-type:none}ol.lst-kix_wqymm6y0epne-3{list-style-type:none}ol.lst-kix_wqymm6y0epne-6{list-style-type:none}ol.lst-kix_wqymm6y0epne-5{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-1{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-0{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-3{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-2{list-style-type:none}.lst-kix_wbtdtardzvkk-4>li{counter-increment:lst-ctn-kix_wbtdtardzvkk-4}ol.lst-kix_wqymm6y0epne-8{list-style-type:none}ol.lst-kix_1sk1nvkbxe7-4.start{counter-reset:lst-ctn-kix_1sk1nvkbxe7-4 0}ol.lst-kix_wqymm6y0epne-1.start{counter-reset:lst-ctn-kix_wqymm6y0epne-1 0}ol.lst-kix_wqymm6y0epne-7{list-style-type:none}.lst-kix_elunpnh36vs5-2>li{counter-increment:lst-ctn-kix_elunpnh36vs5-2}.lst-kix_elunpnh36vs5-5>li{counter-increment:lst-ctn-kix_elunpnh36vs5-5}ol.lst-kix_wbtdtardzvkk-0.start{counter-reset:lst-ctn-kix_wbtdtardzvkk-0 0}.lst-kix_mek1h2ljqvx0-0>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-3>li:before{content:"-  "}.lst-kix_wqymm6y0epne-4>li{counter-increment:lst-ctn-kix_wqymm6y0epne-4}.lst-kix_wqymm6y0epne-7>li{counter-increment:lst-ctn-kix_wqymm6y0epne-7}.lst-kix_mek1h2ljqvx0-1>li:before{content:"-  "}.lst-kix_mek1h2ljqvx0-2>li:before{content:"-  "}ul.lst-kix_lergvzwxxgrt-4{list-style-type:none}ul.lst-kix_lergvzwxxgrt-3{list-style-type:none}ul.lst-kix_lergvzwxxgrt-2{list-style-type:none}ul.lst-kix_lergvzwxxgrt-1{list-style-type:none}ul.lst-kix_lergvzwxxgrt-0{list-style-type:none}ol.lst-kix_wbtdtardzvkk-7.start{counter-reset:lst-ctn-kix_wbtdtardzvkk-7 0}ul.lst-kix_lergvzwxxgrt-8{list-style-type:none}ul.lst-kix_lergvzwxxgrt-7{list-style-type:none}ul.lst-kix_lergvzwxxgrt-6{list-style-type:none}ul.lst-kix_lergvzwxxgrt-5{list-style-type:none}.lst-kix_1sk1nvkbxe7-1>li{counter-increment:lst-ctn-kix_1sk1nvkbxe7-1}.lst-kix_jfa2r7ts7hw2-0>li:before{content:"-  "}.lst-kix_jfa2r7ts7hw2-4>li:before{content:"-  "}ol.lst-kix_wqymm6y0epne-7.start{counter-reset:lst-ctn-kix_wqymm6y0epne-7 0}.lst-kix_wbtdtardzvkk-1>li{counter-increment:lst-ctn-kix_wbtdtardzvkk-1}ol.lst-kix_elunpnh36vs5-2.start{counter-reset:lst-ctn-kix_elunpnh36vs5-2 0}.lst-kix_jfa2r7ts7hw2-6>li:before{content:"-  "}.lst-kix_1sk1nvkbxe7-2>li{counter-increment:lst-ctn-kix_1sk1nvkbxe7-2}.lst-kix_1sk1nvkbxe7-8>li:before{content:"" counter(lst-ctn-kix_1sk1nvkbxe7-8,decimal) ". "}ol.lst-kix_wqymm6y0epne-4.start{counter-reset:lst-ctn-kix_wqymm6y0epne-4 0}.lst-kix_jfa2r7ts7hw2-2>li:before{content:"-  "}ul.lst-kix_jfa2r7ts7hw2-8{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-5{list-style-type:none}ol.lst-kix_wbtdtardzvkk-5.start{counter-reset:lst-ctn-kix_wbtdtardzvkk-5 0}ul.lst-kix_jfa2r7ts7hw2-4{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-7{list-style-type:none}ul.lst-kix_jfa2r7ts7hw2-6{list-style-type:none}ol.lst-kix_wbtdtardzvkk-2.start{counter-reset:lst-ctn-kix_wbtdtardzvkk-2 0}.lst-kix_wqymm6y0epne-1>li:before{content:"" counter(lst-ctn-kix_wqymm6y0epne-1,lower-roman) ". "}.lst-kix_elunpnh36vs5-1>li{counter-increment:lst-ctn-kix_elunpnh36vs5-1}.lst-kix_jfa2r7ts7hw2-8>li:before{content:"-  "}.lst-kix_wqymm6y0epne-3>li:before{content:"" counter(lst-ctn-kix_wqymm6y0epne-3,lower-latin) ". "}.lst-kix_wqymm6y0epne-3>li{counter-increment:lst-ctn-kix_wqymm6y0epne-3}.lst-kix_1sk1nvkbxe7-3>li{counter-increment:lst-ctn-kix_1sk1nvkbxe7-3}.lst-kix_elunpnh36vs5-4>li:before{content:"" counter(lst-ctn-kix_elunpnh36vs5-4,lower-latin) ". "}.lst-kix_wqymm6y0epne-7>li:before{content:"" counter(lst-ctn-kix_wqymm6y0epne-7,lower-roman) ". "}.lst-kix_wqymm6y0epne-2>li{counter-increment:lst-ctn-kix_wqymm6y0epne-2}ol.lst-kix_wqymm6y0epne-5.start{counter-reset:lst-ctn-kix_wqymm6y0epne-5 0}.lst-kix_wqymm6y0epne-8>li{counter-increment:lst-ctn-kix_wqymm6y0epne-8}.lst-kix_elunpnh36vs5-2>li:before{content:"" counter(lst-ctn-kix_elunpnh36vs5-2,lower-roman) ". "}.lst-kix_elunpnh36vs5-6>li:before{content:"" counter(lst-ctn-kix_elunpnh36vs5-6,decimal) ". "}.lst-kix_wqymm6y0epne-5>li:before{content:"" counter(lst-ctn-kix_wqymm6y0epne-5,decimal) ". "}.lst-kix_elunpnh36vs5-0>li:before{content:"" counter(lst-ctn-kix_elunpnh36vs5-0,decimal) ". "}.lst-kix_elunpnh36vs5-8>li:before{content:"" counter(lst-ctn-kix_elunpnh36vs5-8,lower-roman) ". "}ol.lst-kix_1sk1nvkbxe7-7.start{counter-reset:lst-ctn-kix_1sk1nvkbxe7-7 0}.lst-kix_elunpnh36vs5-6>li{counter-increment:lst-ctn-kix_elunpnh36vs5-6}.lst-kix_elunpnh36vs5-0>li{counter-increment:lst-ctn-kix_elunpnh36vs5-0}.lst-kix_k14qto6wlowi-8>li:before{content:"\0025a0   "}.lst-kix_ovoly12nr5vx-1>li:before{content:"-  "}ol.lst-kix_wbtdtardzvkk-3.start{counter-reset:lst-ctn-kix_wbtdtardzvkk-3 0}ol.lst-kix_elunpnh36vs5-0.start{counter-reset:lst-ctn-kix_elunpnh36vs5-0 0}.lst-kix_wbtdtardzvkk-8>li{counter-increment:lst-ctn-kix_wbtdtardzvkk-8}.lst-kix_1sk1nvkbxe7-2>li:before{content:"" counter(lst-ctn-kix_1sk1nvkbxe7-2,decimal) ". "}.lst-kix_ovoly12nr5vx-7>li:before{content:"-  "}.lst-kix_1sk1nvkbxe7-0>li:before{content:"" counter(lst-ctn-kix_1sk1nvkbxe7-0,lower-latin) ". "}ol.lst-kix_1sk1nvkbxe7-8.start{counter-reset:lst-ctn-kix_1sk1nvkbxe7-8 0}.lst-kix_1sk1nvkbxe7-4>li:before{content:"" counter(lst-ctn-kix_1sk1nvkbxe7-4,lower-roman) ". "}ol.lst-kix_wbtdtardzvkk-8{list-style-type:none}.lst-kix_k14qto6wlowi-2>li:before{content:"\0025a0   "}ol.lst-kix_wbtdtardzvkk-7{list-style-type:none}ol.lst-kix_wbtdtardzvkk-6{list-style-type:none}ol.lst-kix_wbtdtardzvkk-5{list-style-type:none}ol.lst-kix_wbtdtardzvkk-4{list-style-type:none}.lst-kix_k14qto6wlowi-0>li:before{content:"\0025cf   "}ol.lst-kix_wbtdtardzvkk-3{list-style-type:none}li.li-bullet-0:before{margin-left:-18pt;white-space:nowrap;display:inline-block;min-width:18pt}ol.lst-kix_wbtdtardzvkk-2{list-style-type:none}ol.lst-kix_wbtdtardzvkk-1{list-style-type:none}.lst-kix_1sk1nvkbxe7-6>li:before{content:"" counter(lst-ctn-kix_1sk1nvkbxe7-6,lower-latin) ". "}ul.lst-kix_ovoly12nr5vx-8{list-style-type:none}ol.lst-kix_wbtdtardzvkk-0{list-style-type:none}ul.lst-kix_k14qto6wlowi-4{list-style-type:none}.lst-kix_k14qto6wlowi-6>li:before{content:"\0025cf   "}ul.lst-kix_mek1h2ljqvx0-5{list-style-type:none}ul.lst-kix_k14qto6wlowi-3{list-style-type:none}ol.lst-kix_1sk1nvkbxe7-8{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-4{list-style-type:none}ul.lst-kix_k14qto6wlowi-2{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-3{list-style-type:none}ul.lst-kix_k14qto6wlowi-1{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-2{list-style-type:none}.lst-kix_ovoly12nr5vx-3>li:before{content:"-  "}ul.lst-kix_ovoly12nr5vx-4{list-style-type:none}ul.lst-kix_k14qto6wlowi-0{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-1{list-style-type:none}ul.lst-kix_ovoly12nr5vx-5{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-0{list-style-type:none}ul.lst-kix_ovoly12nr5vx-6{list-style-type:none}ul.lst-kix_ovoly12nr5vx-7{list-style-type:none}.lst-kix_ovoly12nr5vx-5>li:before{content:"-  "}ol.lst-kix_1sk1nvkbxe7-1{list-style-type:none}ol.lst-kix_wbtdtardzvkk-4.start{counter-reset:lst-ctn-kix_wbtdtardzvkk-4 0}ol.lst-kix_1sk1nvkbxe7-0{list-style-type:none}ol.lst-kix_1sk1nvkbxe7-3{list-style-type:none}ol.lst-kix_1sk1nvkbxe7-2{list-style-type:none}.lst-kix_k14qto6wlowi-4>li:before{content:"\0025cb   "}ul.lst-kix_k14qto6wlowi-8{list-style-type:none}ol.lst-kix_1sk1nvkbxe7-5{list-style-type:none}ul.lst-kix_k14qto6wlowi-7{list-style-type:none}ol.lst-kix_1sk1nvkbxe7-4{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-8{list-style-type:none}ul.lst-kix_k14qto6wlowi-6{list-style-type:none}ol.lst-kix_1sk1nvkbxe7-7{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-7{list-style-type:none}.lst-kix_wbtdtardzvkk-2>li{counter-increment:lst-ctn-kix_wbtdtardzvkk-2}ul.lst-kix_k14qto6wlowi-5{list-style-type:none}ol.lst-kix_1sk1nvkbxe7-6{list-style-type:none}ul.lst-kix_mek1h2ljqvx0-6{list-style-type:none}ol{margin:0;padding:0}table td,table th{padding:0}.c16{border-right-style:solid;padding-top:0pt;border-top-width:0pt;border-right-width:0pt;padding-left:0pt;padding-bottom:0pt;line-height:1.2333333333333334;border-left-width:0pt;border-top-style:solid;background-color:#ffffff;border-left-style:solid;border-bottom-width:0pt;border-bottom-style:solid;orphans:2;widows:2;text-align:left;padding-right:0pt}.c1{background-color:#ffffff;margin-left:36pt;padding-top:0pt;padding-left:0pt;padding-bottom:0pt;line-height:1.15;orphans:2;widows:2;text-align:left}.c11{color:#000000;font-weight:400;text-decoration:none;vertical-align:baseline;font-size:11pt;font-family:"Arial";font-style:normal}.c15{color:#000000;font-weight:400;text-decoration:none;vertical-align:baseline;font-size:10.5pt;font-family:"Roboto Mono";font-style:normal}.c2{color:#000000;font-weight:700;text-decoration:none;vertical-align:baseline;font-size:10.5pt;font-family:"Arial";font-style:normal}.c4{color:#ffffff;font-weight:400;text-decoration:none;vertical-align:baseline;font-size:10.5pt;font-family:"Roboto Mono";font-style:normal}.c3{color:#212121;font-weight:400;text-decoration:none;vertical-align:baseline;font-size:10.5pt;font-family:"Roboto Mono";font-style:normal}.c13{color:#000000;font-weight:700;text-decoration:none;vertical-align:baseline;font-size:8.5pt;font-family:"Montserrat";font-style:normal}.c12{text-decoration-skip-ink:none;font-family:"Roboto Mono";-webkit-text-decoration-skip:none;color:#1155cc;font-weight:400;text-decoration:underline}.c5{padding-top:0pt;padding-bottom:0pt;line-height:1.15;orphans:2;widows:2;text-align:left}.c7{font-size:10.5pt;font-family:"Roboto Mono";color:#ffffff;font-weight:400}.c14{font-size:10.5pt;font-family:"Roboto Mono";color:#212121;font-weight:400}.c0{background-color:#ffffff;max-width:451.4pt;padding:72pt 72pt 72pt 72pt}.c6{margin-left:72pt;padding-left:0pt}.c10{padding:0;margin:0}.c8{color:inherit;text-decoration:inherit}.c9{height:11pt}.title{padding-top:10pt;color:#000000;font-weight:700;font-size:13pt;padding-bottom:10pt;font-family:"Arial";line-height:1.15;page-break-after:avoid;orphans:2;widows:2;text-align:left}.subtitle{border-right-style:solid;color:#f57b1d;border-top-width:0pt;font-weight:700;padding-left:0pt;font-size:17.5pt;background-color:#ffffff;border-left-style:solid;font-family:"Montserrat";orphans:2;text-align:left;padding-top:0pt;border-right-width:0pt;padding-bottom:0pt;line-height:1.1538461538461537;page-break-after:avoid;border-left-width:0pt;border-top-style:solid;border-bottom-width:0pt;border-bottom-style:solid;widows:2;padding-right:0pt}li{color:#000000;font-size:11pt;font-family:"Arial"}p{margin:0;color:#000000;font-size:11pt;font-family:"Arial"}h1{border-right-style:solid;color:#000000;border-top-width:0pt;font-weight:700;padding-left:0pt;font-size:22.5pt;background-color:#ffffff;border-left-style:solid;font-family:"Montserrat";orphans:2;text-align:left;padding-top:0pt;border-right-width:0pt;padding-bottom:0pt;line-height:1.15;page-break-after:avoid;border-left-width:0pt;border-top-style:solid;border-bottom-width:0pt;border-bottom-style:solid;widows:2;padding-right:0pt}h2{border-right-style:solid;color:#e69138;border-top-width:0pt;font-weight:700;padding-left:0pt;font-size:17.5pt;background-color:#ffffff;border-left-style:solid;font-family:"Montserrat";orphans:2;text-align:left;padding-top:0pt;border-right-width:0pt;padding-bottom:0pt;line-height:1.1538461538461537;page-break-after:avoid;border-left-width:0pt;border-top-style:solid;border-bottom-width:0pt;border-bottom-style:solid;widows:2;padding-right:0pt}h3{padding-top:10pt;color:#000000;font-weight:700;font-size:13pt;padding-bottom:10pt;font-family:"Arial";line-height:1.15;page-break-after:avoid;orphans:2;widows:2;text-align:left}h4{padding-top:14pt;color:#666666;font-size:12pt;padding-bottom:4pt;font-family:"Arial";line-height:1.15;page-break-after:avoid;orphans:2;widows:2;text-align:left}h5{padding-top:12pt;color:#666666;font-size:11pt;padding-bottom:4pt;font-family:"Arial";line-height:1.15;page-break-after:avoid;orphans:2;widows:2;text-align:left}h6{padding-top:12pt;color:#666666;font-size:11pt;padding-bottom:4pt;font-family:"Arial";line-height:1.15;page-break-after:avoid;font-style:italic;orphans:2;widows:2;text-align:left}</style></head><body class="c0 doc-content"><div><p class="c5 c9"><span class="c11"></span></p></div><h1 class="c16" id="h.6jrcurrdsb4e"><span>Como ajudar nas cifras</span></h1><p class="c5"><span class="c7">quebra</span></p><ol class="c10 lst-kix_elunpnh36vs5-0 start" start="1"><li class="c1 li-bullet-0"><span class="c2">Como s&atilde;o feitas as cifras?</span></li></ol><p class="c5"><span class="c7">quebra</span></p><ol class="c10 lst-kix_wbtdtardzvkk-0 start" start="1"><li class="c5 c6 li-bullet-0"><span class="c12"><a class="c8" href="https://www.google.com/url?q=https://docs.google.com/spreadsheets/d/1C7fFALq_aZmdyRsNeef3zbJpWr2xQgWzyjSE74wBQOU/edit?usp%3Dsharing&amp;sa=D&amp;source=editors&amp;ust=1746724177973654&amp;usg=AOvVaw30364zqLMfzBScq5JAjeJI">Tutorial</a></span></li></ol><p class="c5"><span class="c7">quebra</span></p><ol class="c10 lst-kix_elunpnh36vs5-0" start="2"><li class="c1 li-bullet-0"><span class="c2">Alguns passos ao fazer as cifras.</span></li></ol><p class="c5"><span class="c4">quebra</span></p><ol class="c10 lst-kix_wqymm6y0epne-0 start" start="1"><li class="c5 c6 li-bullet-0"><span class="c3">Definir a vers&atilde;o que ser&aacute; tocada;</span></li><li class="c5 c6 li-bullet-0"><span class="c3">Definir sequ&ecirc;ncia da m&uacute;sica;</span></li><li class="c5 c6 li-bullet-0"><span class="c3">Definir quantidade de repeti&ccedil;&otilde;es, adi&ccedil;&otilde;es e cortes;</span></li><li class="c5 c6 li-bullet-0"><span class="c3">Definir as notas da m&uacute;sica, (simplificar ou n&atilde;o) e revisar/corrigir cifra que veio da internet;</span></li><li class="c5 c6 li-bullet-0"><span class="c3">Formata&ccedil;&atilde;o do arquivo;</span></li><li class="c5 c6 li-bullet-0"><span class="c3">Subir o arquivo final da cifra para a internet;</span></li></ol><p class="c5"><span class="c7">quebra</span></p><ol class="c10 lst-kix_elunpnh36vs5-0" start="3"><li class="c1 li-bullet-0"><span class="c2">Como posso ajudar</span></li></ol><p class="c5"><span class="c4">quebra</span></p><ol class="c10 lst-kix_1sk1nvkbxe7-0 start" start="1"><li class="c5 c6 li-bullet-0"><span class="c3">Voc&ecirc; pode copiar a cifra do cifraclub ou escrev&ecirc;-la, e definir: sequ&ecirc;ncia, corre&ccedil;&otilde;es, repeti&ccedil;&otilde;es..., se puder fazer algum desses passos, outros detalhes da cifra poder&atilde;o ser revisados por outra pessoa. Fazer as cifras &eacute; uma &oacute;tima forma de se preparar para o louvor, com mais pessoas envolvidas podemos discutir com mais anteced&ecirc;ncia sobre as m&uacute;sicas.</span></li></ol><p class="c5"><span class="c4">quebra</span></p><ol class="c10 lst-kix_1sk1nvkbxe7-0" start="2"><li class="c5 c6 li-bullet-0"><span class="c14">Voc&ecirc; pode contribuir, fazendo uma ou mais m&uacute;sicas do culto. Estou dispon&iacute;vel para tirar as d&uacute;vidas.</span></li></ol><p class="c5 c9"><span class="c4"></span></p></body></html>
+    </div>
+</body>
+
+</html>
