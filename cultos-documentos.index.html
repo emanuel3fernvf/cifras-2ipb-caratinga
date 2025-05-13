@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentos Cultos 2IPB</title>
+
+    <style type="text/css">
+
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
+
+        * {
+            font-family: "Roboto Mono", serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+        }
+
+        .box-center {
+            max-width: 500px;
+            margin-top: 40px;
+            border: 2px solid gray;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            padding-top: 0;
+            margin-left: 20px;
+            margin-right: 20px;
+            overflow-y: auto;
+            height: calc(100vh - 80px);
+        }
+
+        .top {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .top h2 {
+            font-size: 32px;
+            color: #ff7700;
+        }
+
+        #content {
+            margin-top: 20px;
+        }
+
+        #content table {
+            border-spacing: 0;
+        }
+
+        #content .text-left {
+            text-align: left;
+        }
+
+        #content .text-center {
+            text-align: center;
+        }
+
+        #content .text-right {
+            text-align: right;
+        }
+
+        #content th,
+        #content td {
+            padding: 5px;
+            border: 1px solid #00000059;
+        }
+
+        .n-lg {
+            font-size: 30px;
+            margin-left: 5px;
+        }
+
+        .mb-lg {
+            margin-bottom: 30px !important;
+        }
+
+        .principal-menu {
+            display: flex;
+            width: 100%;
+            justify-content: space-evenly;
+            gap: 10px;
+            border-bottom: 2px solid #0000005c;
+            padding-bottom: 15px;
+            padding-top: 20px;
+            position: sticky;
+            top: 0;
+            background-color: #fff;
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .principal-menu a {
+            padding-top: 5px;
+            padding-bottom: 5px;
+            padding-right: 15px;
+            padding-left: 15px;
+            background-color: #0000001f;
+            border-radius: 5px;
+            font-weight: bold;
+            text-decoration: none;
+            color: #000;
+        }
+
+        .principal-menu a:hover {
+            background-color: #0000004f;
+        }
+
+        .principal-menu a.active {
+            background-color: #00000014;
+            pointer-events: none;
+            color: #00000091;
+        }
+
+        hr {
+            width: 100%;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box-center">
+        <nav class="principal-menu">
+            <a href="/cifras-2ipb-caratinga/cultos-cifras.code.html">
+                Cifras
+            </a>
+            <a class="active" href="/cifras-2ipb-caratinga/cultos-documentos.code.html">
+                Cultos Documentos
+            </a>
+            <a target="_blank"
+                href="https://docs.google.com/spreadsheets/d/1_5sWxIGAGc3DpNZbQmXspK20VwKS2QhsNktyodSWu_4/edit?usp=sharing">
+                Escala
+            </a>
+            <a href="/cifras-2ipb-caratinga/como_ajudar_nas_cifras.code.html">
+                Colaborar com as cifras
+            </a>
+        </nav>
+        <div class="top">
+            <h1>Cultos 2IPB</h1>
+            <h2>Documentos do google</h2>
+        </div>
+
+        <div id="content">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="text-left">Dia</th>
+                        <th class="text-left">Data</th>
+                        <th class="text-left">Período</th>
+                        <th class="text-left">Link</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td rowspan="2" class="text-left">Domingo</td>
+                        <td rowspan="2" class="text-left">18/05/2025</td>
+                        <td class="text-left">Noite</td>
+                        <td class="text-left">
+                            <a target="_blank" href="https://docs.google.com/document/d/1-vvRxrTDE3Pl85QBkcGXx5-exJ74YlvMAMXt2zNaTv4/edit?usp=sharing">
+                                Documento
+                            </a>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="text-left">Manhã</td>
+                        <td class="text-left">
+                            <a target="_blank" href="https://docs.google.com/document/d/1gqWoMlvWk3lPycd6kTtSFFOcjijFQYPjQonxoDvYTLc/edit?usp=sharing">
+                                Documento
+                            </a>
+                        </td class="text-left">
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>
