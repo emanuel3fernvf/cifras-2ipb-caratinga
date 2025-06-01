@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baralho Musical</title>
+
+    <style type="text/css">
+        .card {
+            width: 200px;
+            height: 300px;
+            border: 1px solid #000;
+            border-radius: 10px;
+            margin: 10px;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            background-color: #FFF;
+            text-shadow: -1px -1px 0 black,
+                        1px -1px 0 black,
+                        -1px 1px 0 black,
+                        1px 1px 0 black;
+            display: flex;
+        }
+        .inside {
+            display: flex;
+            position: relative;
+            background-color: #267ac1;
+            flex: 1;
+            margin: 8px;
+            border-radius: 6px;
+        }
+        .colorful {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin-top: 70px;
+            margin-bottom: 70px;
+            margin-left: 20px;
+            margin-right: 20px;
+            color: #267ac1;
+        }
+        .top-left-text,
+        .bottom-right-text {
+            position: absolute;
+            font-size: 30px;
+            font-weight: bold;
+            border-radius: 10px;
+            padding-left: 5px;
+            padding-right: 5px;
+            color: #fff;
+        }
+        .top-left-text {
+            top: 0;
+            left: 0;
+        }
+        .principal-text,
+        .principal-text.top,
+        .principal-text.bottom {
+            font-size: 49px;
+            font-weight: bold;
+        }
+        .principal-text.top {
+            rotate: 0deg;
+        }
+        .principal-text.bottom {
+            rotate: 180deg;
+            margin-top: -11px;
+            margin-bottom: -8px;
+        }
+        .piano {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+        }
+        .white-key {
+            width: 12px;
+            height: 36px;
+            background-color: white;
+            border: 1px solid #000;
+        }
+        .black-key {
+            width: 7px;
+            height: 20.33px;
+            background-color: black;
+            z-index: 1;
+            margin-left: -5px;
+            margin-right: -5px;
+            border: 1px solid #000;
+        }
+        .highlighted {
+            background-color: yellow;
+        }
+        .bottom-right-text {
+            bottom: 0;
+            right: 0;
+            rotate: 180deg;
+        }
+        #deck {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 20px;
+        }
+
+    </style>
+
+    <script>
+
+        window.cards = [
+            {
+                edgeText: 'C',
+                principalText: 'Dó',
+            },
+            {
+                edgeText: ['C♯', 'D♭'],
+                principalText: ['Dó♯', 'Ré♭'],
+            },
+            {
+                edgeText: 'D',
+                principalText: 'Ré',
+            },
+            {
+                edgeText: ['D♯', 'E♭'],
+                principalText: ['Ré♯', 'Mi♭'],
+            },
+            {
+                edgeText: 'E',
+                principalText: 'Mi',
+            },
+            {
+                edgeText: 'F',
+                principalText: 'Fá',
+            },
+            {
+                edgeText: ['F♯', 'G♭'],
+                principalText: ['Fá♯', 'Sol♭'],
+            },
+            {
+                edgeText: 'G',
+                principalText: 'Sol',
+            },
+            {
+                edgeText: ['G♯', 'A♭'],
+                principalText: ['Sol♯', 'Lá♭'],
+            },
+            {
+                edgeText: 'A',
+                principalText: 'Lá',
+            },
+            {
+                edgeText: ['A♯', 'B♭'],
+                principalText: ['Lá♯', 'Si♭'],
+            },
+            {
+                edgeText: 'B',
+                principalText: 'Si',
+            },
+        ];
+
+        function declareGlobalElements() {
+            window.deck = document.getElementById('deck');
+        }
+
+        function makePianoElement(index) {
+            const pianoElement = document.createElement('div');
+            
+            pianoElement.className = 'piano';
+            
+            const blackKeys = [1, 3, 6, 8, 10];
+
+            for (let i = 0; i < 12; i++) {
+                const keyElement = document.createElement('div');
+                
+                if (blackKeys.includes(i)) {
+                    keyElement.className = 'black-key';
+                } else {
+                    keyElement.className = 'white-key';
+                }
+
+                if (i === index) {
+                    keyElement.classList.add('highlighted');
+                }
+
+                pianoElement.appendChild(keyElement);
+            }
+
+            return pianoElement;
+        }
+
+        function renderDeck() {
+            window.deck.innerHTML = '';
+
+            window.cards.forEach(function (card, index) {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card';
+
+                const insideElement = document.createElement('div');
+                insideElement.className = 'inside';
+
+                const edgeIsArray = Array.isArray(card.edgeText);
+                const principalIsArray = Array.isArray(card.principalText);
+
+                const colorfulElement = document.createElement('div');
+                colorfulElement.className = 'colorful';
+
+                const topLeftTextElement = document.createElement('div');
+                topLeftTextElement.className = 'top-left-text';
+                topLeftTextElement.textContent = edgeIsArray ? card.edgeText[0] : card.edgeText;
+
+                const pianoElement = makePianoElement(index);
+
+                const bottomRightTextElement = document.createElement('div');
+                bottomRightTextElement.className = 'bottom-right-text';
+                bottomRightTextElement.textContent = edgeIsArray ? card.edgeText[1] : card.edgeText;
+
+                if (principalIsArray) {
+                    const principalTextElement1 = document.createElement('div');
+                    principalTextElement1.className = 'principal-text';
+                    principalTextElement1.classList.add('top');
+                    principalTextElement1.textContent = card.principalText[0];
+
+                    const principalTextElement2 = document.createElement('div');
+                    principalTextElement2.className = 'principal-text';
+                    principalTextElement2.classList.add('bottom');
+                    principalTextElement2.textContent = card.principalText[1];
+
+                    colorfulElement.appendChild(principalTextElement1);
+                    colorfulElement.appendChild(pianoElement);
+                    colorfulElement.appendChild(principalTextElement2);
+                } else {
+                    const principalTextElement = document.createElement('div');
+                    principalTextElement.className = 'principal-text';
+                    principalTextElement.textContent = card.principalText;
+                    
+                    colorfulElement.appendChild(principalTextElement);
+                    colorfulElement.appendChild(pianoElement);
+                }
+
+                insideElement.appendChild(topLeftTextElement);
+                insideElement.appendChild(colorfulElement);
+                insideElement.appendChild(bottomRightTextElement);
+
+                cardElement.appendChild(insideElement);
+
+                window.deck.appendChild(cardElement);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            declareGlobalElements();
+
+            renderDeck();
+        });
+    </script>
+</head>
+<body>
+    <div>
+        <div id="deck">
+        </div>
+    </div>
+</body>
+
+</html>
