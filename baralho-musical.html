@@ -21,11 +21,11 @@
                         -1px 1px 0 black,
                         1px 1px 0 black;
             display: flex;
+            page-break-inside: avoid;
         }
         .inside {
             display: flex;
             position: relative;
-            background-color: #267ac1;
             flex: 1;
             margin: 8px;
             border-radius: 6px;
@@ -42,7 +42,6 @@
             margin-bottom: 70px;
             margin-left: 20px;
             margin-right: 20px;
-            color: #267ac1;
         }
         .top-left-text,
         .bottom-right-text {
@@ -69,8 +68,6 @@
         }
         .principal-text.bottom {
             rotate: 180deg;
-            margin-top: -11px;
-            margin-bottom: -8px;
         }
         .piano {
             display: flex;
@@ -92,9 +89,6 @@
             margin-right: -5px;
             border: 1px solid #000;
         }
-        .highlighted {
-            background-color: yellow;
-        }
         .bottom-right-text {
             bottom: 0;
             right: 0;
@@ -104,61 +98,81 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            padding: 20px;
+            padding-right: 20px;
+            padding-left: 20px;
+        }
+
+        @media print {
+            .select-color {
+                display: none;
+            }
         }
 
     </style>
 
     <script>
 
-        window.cards = [
+        window.params = new URLSearchParams(window.location.search);
+        window.color = window.params.get('color') || 'red';
+
+        window.jokerCards = [            
             {
-                edgeText: 'C',
-                principalText: 'Dó',
+                edgeText: ['b', '#'],
+                principalText: ['b', '#'],
             },
             {
-                edgeText: ['C♯', 'D♭'],
-                principalText: ['Dó♯', 'Ré♭'],
+                edgeText: ['b', '#'],
+                principalText: ['b', '#'],
+            },
+        ];
+        window.normalCards = [
+            {
+                edgeText: ['C', 'C'],
+                principalText: ['Dó', 'Dó'],
             },
             {
-                edgeText: 'D',
-                principalText: 'Ré',
+                edgeText: ['C#', 'Db'],
+                principalText: ['Dó#', 'Réb'],
             },
             {
-                edgeText: ['D♯', 'E♭'],
-                principalText: ['Ré♯', 'Mi♭'],
+                edgeText: ['D', 'D'],
+                principalText: ['Ré', 'Ré'],
             },
             {
-                edgeText: 'E',
-                principalText: 'Mi',
+                edgeText: ['D#', 'Eb'],
+                principalText: ['Ré#', 'Mib'],
             },
             {
-                edgeText: 'F',
-                principalText: 'Fá',
+                edgeText: ['E', 'E'],
+                principalText: ['Mi', 'Mi'],
             },
             {
-                edgeText: ['F♯', 'G♭'],
-                principalText: ['Fá♯', 'Sol♭'],
+                edgeText: ['F', 'F'],
+                principalText: ['Fá', 'Fá'],
             },
             {
-                edgeText: 'G',
-                principalText: 'Sol',
+                edgeText: ['F#', 'Gb'],
+                principalText: ['Fá#', 'Solb'],
             },
             {
-                edgeText: ['G♯', 'A♭'],
-                principalText: ['Sol♯', 'Lá♭'],
+                edgeText: ['G', 'G'],
+                principalText: ['Sol', 'Sol'],
             },
             {
-                edgeText: 'A',
-                principalText: 'Lá',
+                edgeText: ['G#', 'Ab'],
+                principalText: ['Sol#', 'Láb'],
             },
             {
-                edgeText: ['A♯', 'B♭'],
-                principalText: ['Lá♯', 'Si♭'],
+                edgeText: ['A', 'A'],
+                principalText: ['Lá', 'Lá'],
             },
             {
-                edgeText: 'B',
-                principalText: 'Si',
+                edgeText: ['A#', 'Bb'],
+                principalText: ['Lá#', 'Sib'],
+            },
+            {
+                edgeText: ['B', 'B'],
+                principalText: ['Si', 'Si'],
             },
         ];
 
@@ -166,7 +180,7 @@
             window.deck = document.getElementById('deck');
         }
 
-        function makePianoElement(index) {
+        function makePianoElement(index, highlightedColor = '') {
             const pianoElement = document.createElement('div');
             
             pianoElement.className = 'piano';
@@ -182,8 +196,8 @@
                     keyElement.className = 'white-key';
                 }
 
-                if (i === index) {
-                    keyElement.classList.add('highlighted');
+                if ((i === index || index > 11) && highlightedColor) {
+                    keyElement.style.backgroundColor = highlightedColor;
                 }
 
                 pianoElement.appendChild(keyElement);
@@ -195,7 +209,9 @@
         function renderDeck() {
             window.deck.innerHTML = '';
 
-            window.cards.forEach(function (card, index) {
+            const cards = window.color === 'joker' ? window.jokerCards : window.normalCards;
+
+            cards.forEach(function (card, index) {
                 const cardElement = document.createElement('div');
                 cardElement.className = 'card';
 
@@ -212,11 +228,35 @@
                 topLeftTextElement.className = 'top-left-text';
                 topLeftTextElement.textContent = edgeIsArray ? card.edgeText[0] : card.edgeText;
 
-                const pianoElement = makePianoElement(index);
-
                 const bottomRightTextElement = document.createElement('div');
                 bottomRightTextElement.className = 'bottom-right-text';
                 bottomRightTextElement.textContent = edgeIsArray ? card.edgeText[1] : card.edgeText;
+                
+                insideElement.style.backgroundColor = '#267ac1';
+                colorfulElement.style.color = '#267ac1';
+                var pianoElement = makePianoElement(index, '#267ac1');
+
+                if (window.color === 'red') {
+                    insideElement.style.backgroundColor = '#f14248';
+                    colorfulElement.style.color = '#f14248';
+                    pianoElement = makePianoElement(index, '#f14248');
+                } else if (window.color === 'green') {
+                    insideElement.style.backgroundColor = '#45ad6a';
+                    colorfulElement.style.color = '#45ad6a';
+                    pianoElement = makePianoElement(index, '#45ad6a');
+                } else if (window.color === 'blue') {
+                    insideElement.style.backgroundColor = '#267ac1';
+                    colorfulElement.style.color = '#267ac1';
+                    pianoElement = makePianoElement(index, '#267ac1');
+                } else if (window.color === 'yellow') {
+                    insideElement.style.backgroundColor = '#f7ab09';
+                    colorfulElement.style.color = '#f7ab09';
+                    pianoElement = makePianoElement(index, '#f7ab09');
+                } else if (window.color === 'joker') {
+                    insideElement.style.backgroundColor = '#474747';
+                    colorfulElement.style.color = '#474747';
+                    pianoElement = makePianoElement(index);
+                }
 
                 if (principalIsArray) {
                     const principalTextElement1 = document.createElement('div');
@@ -241,6 +281,9 @@
                     colorfulElement.appendChild(pianoElement);
                 }
 
+                topLeftTextElement.style.color = 'white';
+                bottomRightTextElement.style.color = 'white';
+
                 insideElement.appendChild(topLeftTextElement);
                 insideElement.appendChild(colorfulElement);
                 insideElement.appendChild(bottomRightTextElement);
@@ -260,6 +303,13 @@
 </head>
 <body>
     <div>
+        <div class="select-color">
+            <a href="?color=red">Vermelho</a> |
+            <a href="?color=green">Verde</a> |
+            <a href="?color=blue">Azul</a> |
+            <a href="?color=yellow">Amarelo</a> |
+            <a href="?color=joker">Coringa</a>
+        </div>
         <div id="deck">
         </div>
     </div>
