@@ -27,6 +27,7 @@
             display: flex;
             position: relative;
             flex: 1;
+            align-items: center;
             margin: 8px;
             border-radius: 6px;
         }
@@ -38,11 +39,12 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
+            align-items: center;
             margin-top: 70px;
             margin-bottom: 70px;
             margin-left: 20px;
             margin-right: 20px;
-            height: 104px;
+            height: 146px;
         }
         .top-left-text,
         .bottom-right-text {
@@ -122,8 +124,8 @@
                 principalText: ['b', '#'],
             },
             {
-                edgeText: ['b', '#'],
-                principalText: ['b', '#'],
+                edgeText: ['#', 'b'],
+                principalText: ['#', 'b'],
             },
         ];
         window.normalCards = [
@@ -235,29 +237,38 @@
                 
                 insideElement.style.backgroundColor = '#267ac1';
                 colorfulElement.style.color = '#267ac1';
-                var pianoElement = makePianoElement(index, '#267ac1');
+                var pianoElement1 = makePianoElement(index, '#267ac1');
+                var pianoElement2 = makePianoElement(index, '#267ac1');
 
                 if (window.color === 'red') {
                     insideElement.style.backgroundColor = '#f14248';
                     colorfulElement.style.color = '#f14248';
-                    pianoElement = makePianoElement(index, '#f14248');
+                    pianoElement1 = makePianoElement(index, '#f14248');
+                    pianoElement2 = makePianoElement(index, '#f14248');
                 } else if (window.color === 'green') {
                     insideElement.style.backgroundColor = '#45ad6a';
                     colorfulElement.style.color = '#45ad6a';
-                    pianoElement = makePianoElement(index, '#45ad6a');
+                    pianoElement1 = makePianoElement(index, '#45ad6a');
+                    pianoElement2 = makePianoElement(index, '#45ad6a');
                 } else if (window.color === 'blue') {
                     insideElement.style.backgroundColor = '#267ac1';
                     colorfulElement.style.color = '#267ac1';
-                    pianoElement = makePianoElement(index, '#267ac1');
+                    pianoElement1 = makePianoElement(index, '#267ac1');
+                    pianoElement2 = makePianoElement(index, '#267ac1');
                 } else if (window.color === 'yellow') {
                     insideElement.style.backgroundColor = '#f7ab09';
                     colorfulElement.style.color = '#f7ab09';
-                    pianoElement = makePianoElement(index, '#f7ab09');
+                    pianoElement1 = makePianoElement(index, '#f7ab09');
+                    pianoElement2 = makePianoElement(index, '#f7ab09');
                 } else if (window.color === 'joker') {
                     insideElement.style.backgroundColor = '#474747';
                     colorfulElement.style.color = '#474747';
-                    pianoElement = makePianoElement(index);
+                    pianoElement1 = makePianoElement(index);
+                    pianoElement2 = makePianoElement(index);
                 }
+
+                pianoElement1.style.marginBottom = '7px';
+                pianoElement2.style.rotate = '180deg';
 
                 if (principalIsArray) {
                     const principalTextElement1 = document.createElement('div');
@@ -271,7 +282,8 @@
                     principalTextElement2.textContent = card.principalText[1];
 
                     colorfulElement.appendChild(principalTextElement1);
-                    colorfulElement.appendChild(pianoElement);
+                    colorfulElement.appendChild(pianoElement1);
+                    colorfulElement.appendChild(pianoElement2);
                     colorfulElement.appendChild(principalTextElement2);
                 } else {
                     const principalTextElement = document.createElement('div');
