@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Script para extrair todos os capítulos da Bíblia em Dari
+Salva o HTML do elemento #scripture de cada página
+"""
+
+import json
+from pathlib import Path
+
+CHAPTERS_DIR = Path("dari-bible-chapters")
+CHAPTERS_DIR.mkdir(exist_ok=True)
+
+# Salvar o primeiro capítulo
+first_chapter = {
+    "url": "https://afghanbibles.org/eng/dari-bible/genesis/genesis-1",
+    "html": """<div id="scripture" class="scripture altzoom xbzar ayahtdv08" dir="rtl" lang="fa-af"><h1 class="title">کتاب پیدایش</h1><h2 class="chapter">فصل اول</h2>
+
+<h3 class="sectiontitle">آفرینش جهان</h3>
+<p class="swv">
+<span class="verseno" id="v1" data-name="Gen.1.1">۱</span>در ابتدا خدا آسمان ها و زمین را آفرید.
+<span class="endverse"></span><span class="verseno" id="v2" data-name="Gen.1.2">۲</span>زمین خالی و بدون شکل بود. همه جا آب بود و تاریکی آنرا پوشانیده بود و روح خدا بر روی آبها حرکت می کرد.
+<span class="endverse"></span><span class="verseno" id="v3" data-name="Gen.1.3">۳</span>خدا فرمود: «روشنی بشود» و روشنی شد.
+<span class="endverse"></span><span class="verseno" id="v4" data-name="Gen.1.4">۴</span>خدا دید که روشنی نیکوست و روشنی را از تاریکی جدا کرد.
+<span class="endverse"></span><span class="verseno" id="v5" data-name="Gen.1.5">۵</span>خدا روشنی را روز و تاریکی را شب نام گذاشت. شب گذشت و صبح شد. این بود روز اول.<span class="endverse"></span>
+</p><p class="swv"><span class="verseno" id="v6" data-name="Gen.1.6">۶</span>خدا فرمود: «فضا ساخته شود تا آبها را از یکدیگر جدا کند.»
+<span class="endverse"></span><span class="verseno" id="v7" data-name="Gen.1.7">۷</span>خدا فضا را ساخت و آب های زیر فضا را از آب های بالای فضا جدا کرد.
+<span class="endverse"></span><span class="verseno" id="v8" data-name="Gen.1.8">۸</span>خدا فضا را آسمان نامید. شب گذشت و صبح شد. این بود روز دوم.<span class="endverse"></span>
+</p><p class="swv"><span class="verseno" id="v9" data-name="Gen.1.9">۹</span>خدا فرمود: «آب های زیر آسمان در یک جا جمع شوند تا خشکه ظاهر گردد» و چنان شد.
+<span class="endverse"></span><span class="verseno" id="v10" data-name="Gen.1.10">۱۰</span>خدا خشکه را زمین نامید و آبها را که در یک جا جمع شده بودند بحر نام گذاشت. خدا دید که آنچه انجام شده بود نیکوست.
+<span class="endverse"></span><span class="verseno" id="v11" data-name="Gen.1.11">۱۱</span>سپس خدا فرمود: «زمین همه نوع نبات برویاند. نباتاتی که غلات و حبوبات بیاورند و نباتاتی که میوه بار آورند» و چنین شد.
+<span class="endverse"></span><span class="verseno" id="v12" data-name="Gen.1.12">۱۲</span>پس زمین همه نوع نبات رویانید و خدا دید که آنچه بوجود آمده بود نیکوست.
+<span class="endverse"></span><span class="verseno" id="v13" data-name="Gen.1.13">۱۳</span>شب گذشت و صبح شد. این بود روز سوم.<span class="endverse"></span>
+</p><p class="swv"><span class="verseno" id="v14" data-name="Gen.1.14">۱۴</span>بعد از آن خدا فرمود: «اجسام نورانی در آسمان بوجود آیند تا روز را از شب جدا کنند و روز ها، سال ها، آیات و زمان ها را نشان دهند.
+<span class="endverse"></span><span class="verseno" id="v15" data-name="Gen.1.15">۱۵</span>آن ها در آسمان بدرخشند تا بر زمین روشنی دهند» و چنین شد.
+<span class="endverse"></span><span class="verseno" id="v16" data-name="Gen.1.16">۱۶</span>پس از آن، خدا دو جسم نورانی بزرگتر ساخت، یکی آفتاب برای سلطنت در روز و یکی ماهتاب برای سلطنت در شب. همچنین ستارگان را ساخت.
+<span class="endverse"></span><span class="verseno" id="v17" data-name="Gen.1.17">۱۷</span>آن ها را در آسمان قرار داد تا بر زمین روشنی دهند
+<span class="endverse"></span><span class="verseno" id="v18" data-name="Gen.1.18">۱۸</span>و بر روز و شب سلطنت نمایند و روشنی را از تاریکی جدا کنند. خدا دید که نیکوست.
+<span class="endverse"></span><span class="verseno" id="v19" data-name="Gen.1.19">۱۹</span>شب گذشت و صبح شد. این بود روز چهارم.<span class="endverse"></span>
+</p><p class="swv"><span class="verseno" id="v20" data-name="Gen.1.20">۲۰</span>پس از آن خدا فرمود: «آبها از انواع حیوانات و آسمان از انواع پرندگان پُر شوند.»
+<span class="endverse"></span><span class="verseno" id="v21" data-name="Gen.1.21">۲۱</span>پس خدا جانداران بزرگ بحری و همۀ حیواناتی که در آب زندگی می کنند و تمام پرندگان آسمان را آفرید. خدا دید که آنچه کرده بود نیکوست.
+<span class="endverse"></span><span class="verseno" id="v22" data-name="Gen.1.22">۲۲</span>و همۀ آن ها را برکت داد و فرمود: «بارور و زیاد شوید و آب های بحر را پُر سازید و پرندگان در زمین زیاد شوند.»
+<span class="endverse"></span><span class="verseno" id="v23" data-name="Gen.1.23">۲۳</span>شب گذشت و صبح شد. این بود روز پنجم.<span class="endverse"></span>
+</p><p class="swv"><span class="verseno" id="v24" data-name="Gen.1.24">۲۴</span>بعد از آن خدا فرمود: «زمین همه نوع حیوانات بوجود آوَرَد، اهلی و وحشی، بزرگ و کوچک» و چنین شد.
+<span class="endverse"></span><span class="verseno" id="v25" data-name="Gen.1.25">۲۵</span>پس خدا همۀ آن ها را ساخت و دید که آنچه انجام داده بود نیکوست.<span class="endverse"></span>
+</p><p class="swv"><span class="verseno" id="v26" data-name="Gen.1.26">۲۶</span>پس از آن خدا فرمود: «حالا انسان را می سازیم. آن ها به صورت ما و به شکل ما باشند و بر ماهیان بحری و پرندگان آسمان و همۀ حیوانات، اهلی و وحشی، بزرگ و کوچک و تمام زمین حکومت کنند.»
+<span class="endverse"></span><span class="verseno" id="v27" data-name="Gen.1.27">۲۷</span>پس خدا انسان را به صورت خود آفرید. انسان را به صورت خدا آفرید. آن ها را زن و مرد آفرید.
+<span class="endverse"></span><span class="verseno" id="v28" data-name="Gen.1.28">۲۸</span>آن ها را برکت داد و فرمود: «بارور و زیاد شوید، زمین را پُر سازید و در آن تسلط نمائید. بر ماهیان و پرندگان و تمام حیوانات روی زمین حکومت کنید.»
+<span class="endverse"></span><span class="verseno" id="v29" data-name="Gen.1.29">۲۹</span>و خدا گفت: «هر نوع گیاهی را که غلات و حبوبات بیاورد و هر نوع درختی را که میوه بیاورد به شما دادم تا برای شما خوراک باشد.
+<span class="endverse"></span><span class="verseno" id="v30" data-name="Gen.1.30">۳۰</span>اما هر نوع علف سبز را برای خوراک تمام حیوانات و پرندگان آماده کرده ام.» و چنین شد.
+<span class="endverse"></span><span class="verseno" id="v31" data-name="Gen.1.31">۳۱</span>آنگاه خدا کارهای آفرینش را ملاحظه کرد و همه را از هر جهت عالی یافت. شب گذشت و صبح شد، این بود روز ششم.
+<span class="endverse"></span></p></div>""",
+    "next_url": "https://afghanbibles.org/eng/dari-bible/genesis/genesis-2"
+}
+
+# Salvar primeiro capítulo
+filepath = CHAPTERS_DIR / "genesis-1.html"
+with open(filepath, 'w', encoding='utf-8') as f:
+    f.write(f"<!-- URL: {first_chapter['url']} -->\n")
+    f.write(first_chapter['html'])
+
+print(f"Primeiro capítulo salvo em: {filepath}")
+print(f"Próximo capítulo: {first_chapter['next_url']}")
+
