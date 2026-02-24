@@ -1,8 +1,8 @@
 Pra Sempre - Cifra
 Avivah (Feat. Fernanda Madaloni)
 
+[Intro]
 G  D  Am  C
-Intro
 
 G              D                Em
   O universo chora o sol se apagou
@@ -76,11 +76,12 @@ Pra sempre ele vive
          Em           C
 ressuscitou, ressuscitou
 
+[Solo]
 G  D  Em  C
-Solo
+G  D  Em  C
 
+[Suave]
 G  D  Em  C
------Suave-----
 
 [1/6]
 G              D    
