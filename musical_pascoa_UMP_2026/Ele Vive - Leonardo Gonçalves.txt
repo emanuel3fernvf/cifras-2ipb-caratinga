@@ -55,7 +55,7 @@ Em mim, em mim
 Morte e peca---do
  A        E/G# D/F#
 Foi derrota---do
-           F#m           C#   
+           F#m           C#7
 E eu sou livre, eu sou livre
    D       Dm
 Enfim, de mim
@@ -79,6 +79,7 @@ Pois Ele vi---ve
 Ele vive, Ele reina, em mim
              G
 E os que descansam no Senhor
+
           A
 Quando voltar, despertarão
             G                
