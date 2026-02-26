@@ -50,7 +50,7 @@ C
   G           D
 E eu Te adorarei
 
-[Solo]
+[Solo 1]
 D  Am7  C   G
 
 D               
@@ -83,7 +83,7 @@ C
   G           D
 E eu Te adorarei
 
-[Solo]
+[Solo 2]
 D  Am7  C   G
 
 D             Am7
