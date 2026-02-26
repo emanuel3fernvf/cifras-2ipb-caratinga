@@ -61,6 +61,23 @@
             justify-content: center;
         }
 
+        #content a.revisado {
+            position: relative;
+        }
+
+        #content a.revisado::after {
+            content: "Revisado";
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #00c853;
+            color: #fff;
+            font-size: 10px;
+            padding: 3px 6px;
+            border-radius: 4px;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+        }
+
         #content a:hover {
             background-color: #0052c9;
         }
@@ -84,8 +101,12 @@
         </div>
 
         <div id="content">
-            <a class="mb-lg" href="Ele%20Vive%20-%20Leonardo%20Gon%C3%A7alves.txt">Ele Vive - Leonardo Gonçalves</a>
-            <a href="Pra%20Sempre%20-%20Avivah.txt">Pra Sempre - Avivah</a>
+            <a class="mb-lg revisado" href="Ele%20Vive%20-%20Leonardo%20Gon%C3%A7alves.txt">Ele Vive - Leonardo Gonçalves</a>
+            <a class="revisado" href="Pra%20Sempre%20-%20Avivah.txt">Pra Sempre - Avivah</a>
+            <a href="Digno%20%C3%A9%20o%20Senhor%20-%20Felipe%20Rodrigues.txt">Digno é o Senhor - Felipe Rodrigues</a>
+            <a href="Isa%C3%ADas%2053%20-%20Projeto%20Sola.txt">Isaías 53 - Projeto Sola</a>
+            <a href="Autor%20da%20Vida%20-%20Aline%20Barros.txt">Autor da Vida - Aline Barros</a>
+            <a href="Jesus%2C%20o%20Plano%20Perfeito%20-%20Renascer%20Praise.txt">Jesus, o Plano Perfeito - Renascer Praise</a>
         </div>
     </div>
 </body>
