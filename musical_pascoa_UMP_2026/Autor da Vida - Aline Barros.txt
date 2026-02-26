@@ -3,9 +3,8 @@ Aline Barros
 
 [Intro]
 F# D#m  C  B
-F# D#m  C  B
 
-F#       
+F#
   Tentaram me parar
 D#m7
   Me fazer desistir
@@ -23,14 +22,23 @@ G#m
 C#4          C#
   Do evangelho da cruz
 
-F#                         D#m7
-  Mesmo que pedras venham contra mim
-G#m                       C#4  C# 
-  E com palavras queiram me intimidar
-A#m                     D#m7
-  Maior é aquele que está em mim
- G#m              C#4    C#    
-Com Jesus sempre vou me levantar
+F#                 
+  Mesmo que pedras
+        A#m7
+Venham contra mim
+G#m              
+  E com palavras
+         C#4  C# 
+Queiram me intimidar
+
+F#/A#            
+  Maior é aquele
+       D#m7
+Que está em mim
+ G#m             
+Com Jesus sempre
+ C#4    C#    
+Vou me levantar
 
 F# 
   Eu olho pra Jesus
@@ -45,20 +53,32 @@ F#
   Eu olho pra Jesus
 D#m7
   Pro amor de Deus na cruz
-G#m              C#4          C#
-  Nada pode parar o autor da vida
+G#m              
+  Nada pode parar
+C#4          C#
+ O autor da vida
 
-( F#  A#m  B )
-( F#  A#m  B )
+[Interlúdio]
+D#m7  C  B  G#m
+D#m7  C  B
 
-F#                         D#m7
-  Mesmo que pedras venham contra mim
-G#m                       C#4  C# 
-  E com palavras queiram me intimidar
-A#m                     D#m7
-  Maior é aquele que está em mim
- G#m              C#4    C#    
-Com Jesus sempre vou me levantar
+F#                 
+  Mesmo que pedras
+        A#m7
+Venham contra mim
+G#m              
+  E com palavras
+         C#4  C# 
+Queiram me intimidar
+
+F#/A#            
+  Maior é aquele
+       D#m7
+Que está em mim
+ G#m       F#/A#
+Com Jesus sempre
+ B      C#    
+Vou me levantar
 
 F# 
   Eu olho pra Jesus
@@ -73,8 +93,10 @@ F#
   Eu olho pra Jesus
 D#m7
   Pro amor de Deus na cruz
-G#m              C#4          C#
-  Nada pode parar o autor da vida
+G#m              
+  Nada pode parar
+C#4          C#
+ O autor da vida
 
 D#m7                 B        
   Pode o silêncio até gritar 
@@ -83,9 +105,9 @@ Que Deus me abandonou
 D#m7             B                
   Eu vivo pela fé e tenho um Deus 
                F# 
-Que estende a mão pra me 
-      A#m
-Levantar
+Que estende a mão
+             A#m
+Pra me Levantar
 
  D#m7                  B
 Sei em quem eu tenho crido
@@ -95,14 +117,14 @@ E que é poderoso pra fazer além
 E essa é a hora
       B                  F# 
 Deus toca, renova, transforma
-               A#m
+               C#
 Tenho vida em Deus
 
-         B
+         B   G#m
 Vida em Deus
                 C#
 Tenho força em Deus
-              B
+              B   G#m
 Esperança em Deus
                C#
 Tenho tudo em Deus
@@ -120,8 +142,15 @@ F#
   Eu olho pra Jesus
 D#m7
   Pro amor de Deus na cruz
-G#m              C#4          C#
-  Nada pode parar o autor da vida
+G#m              
+  Nada pode parar
+C#4          C#
+ O autor da vida
 
 [Final]
-F#  A#m  B  F#9
+D#m  C#  B  G#m
+D#m  C#  B
+D#m  C#  B  G#m
+D#m  C#
+B              F#
+ O autor da vida
