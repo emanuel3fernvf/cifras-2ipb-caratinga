@@ -8,3 +8,9 @@
     height: 150px;
 }
 
+@media print {
+    .sticky-top {
+        display: none;
+    }
+}
+
