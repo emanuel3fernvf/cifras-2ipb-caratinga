@@ -145,12 +145,52 @@
     document.body.appendChild(panel);
   }
 
+  function createVideoStickyToggle() {
+    if (document.querySelector('.video-sticky-toggle')) return;
+
+    var iframe = document.querySelector('iframe.sticky-top');
+    if (!iframe) return;
+
+    // Garante que começa não fixo
+    iframe.classList.remove('sticky-fixed');
+
+    var container = document.createElement('div');
+    container.style.textAlign = 'right';
+    container.style.margin = '4px 0 8px 0';
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'video-sticky-toggle';
+    btn.textContent = 'Fixar vídeo';
+
+    var fixed = false;
+    btn.addEventListener('click', function () {
+      fixed = !fixed;
+      if (fixed) {
+        iframe.classList.add('sticky-fixed');
+        btn.textContent = 'Soltar vídeo';
+      } else {
+        iframe.classList.remove('sticky-fixed');
+        btn.textContent = 'Fixar vídeo';
+      }
+    });
+
+    container.appendChild(btn);
+    // Insere logo após o iframe
+    if (iframe.parentNode) {
+      iframe.parentNode.insertBefore(container, iframe.nextSibling);
+    } else {
+      document.body.insertBefore(container, document.body.firstChild);
+    }
+  }
+
   function init() {
     var pres = document.querySelectorAll('body > pre');
     for (var i = 0; i < pres.length; i++) {
       processPre(pres[i]);
     }
     createAutoScrollPanel();
+    createVideoStickyToggle();
   }
 
   if (document.readyState === 'loading') {

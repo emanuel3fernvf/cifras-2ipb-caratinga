@@ -1,11 +1,14 @@
 .sticky-top {
+    display: block;
+    width: 200px;
+    height: 150px;
+}
+
+.sticky-top.sticky-fixed {
     position: sticky;
     top: 0;
     z-index: 100;
     background: white;
-    display: block;
-    width: 200px;
-    height: 150px;
 }
 
 .line-chord {
@@ -45,6 +48,20 @@
 .auto-scroll-speed {
     min-width: 40px;
     text-align: center;
+}
+
+.video-sticky-toggle {
+    border: none;
+    background: #ff7700;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.video-sticky-toggle:hover {
+    background: #e56600;
 }
 
 @media print {
