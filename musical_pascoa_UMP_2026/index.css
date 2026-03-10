@@ -8,6 +8,11 @@
     height: 150px;
 }
 
+.line-chord {
+    color: #ff7700;
+    font-weight: bold;
+}
+
 @media print {
     .sticky-top {
         display: none;
