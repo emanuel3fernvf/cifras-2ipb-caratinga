@@ -5,8 +5,8 @@
 (function () {
   'use strict';
 
-  // Acorde: nota (A-G, opcional #/b) + qualidade (m, maj, dim, etc.) + número + opcional /baixo
-  var CHORD_REGEX = /[A-G][#b]?(?:m|maj|min|dim|aug|sus|add|M)?[0-9]*(?:\/[A-G][#b]?)?/g;
+  // Acorde: nota (A-G, opcional #/b) + qualidade (m, maj, dim, etc.) + número (+ opcional M, ex: G7M) + opcional /baixo
+  var CHORD_REGEX = /[A-G][#b]?(?:m|min|maj|dim|aug|sus|add)?[0-9]*(?:M)?(?:\/[A-G][#b]?)?/g;
 
   function escapeHtml(text) {
     var div = document.createElement('div');
@@ -44,11 +44,113 @@
     pre.innerHTML = html;
   }
 
+  // --- Scroll automático ---
+  var isScrolling = false;
+  var speed = 20; // pixels por segundo (valor inicial)
+  var minSpeed = 5;
+  var maxSpeed = 200;
+  var lastTs = null;
+  var pendingScroll = 0; // acumula frações de pixel para velocidades baixas
+
+  function stepScroll(timestamp) {
+    if (!isScrolling) {
+      lastTs = null;
+      return;
+    }
+
+    if (lastTs == null) {
+      lastTs = timestamp;
+    }
+
+    var delta = (timestamp - lastTs) / 1000; // segundos
+    lastTs = timestamp;
+
+    // Acumula distância para evitar perder frações de pixel em velocidades baixas
+    pendingScroll += speed * delta;
+    var step = Math.floor(pendingScroll);
+    if (step >= 1) {
+      pendingScroll -= step;
+      window.scrollBy(0, step);
+    }
+
+    // Para se chegar no final da página
+    if (window.innerHeight + window.scrollY >= document.body.scrollHeight) {
+      isScrolling = false;
+      lastTs = null;
+      return;
+    }
+
+    window.requestAnimationFrame(stepScroll);
+  }
+
+  function updateSpeedDisplay(span) {
+    span.textContent = speed + ' px/s';
+  }
+
+  function createAutoScrollPanel() {
+    if (document.querySelector('.auto-scroll-panel')) return;
+
+    var panel = document.createElement('div');
+    panel.className = 'auto-scroll-panel';
+
+    var label = document.createElement('span');
+    label.textContent = 'Rolagem:';
+
+    var btnToggle = document.createElement('button');
+    btnToggle.type = 'button';
+    btnToggle.textContent = 'Iniciar';
+
+    var btnSlower = document.createElement('button');
+    btnSlower.type = 'button';
+    btnSlower.textContent = '-';
+
+    var speedSpan = document.createElement('span');
+    speedSpan.className = 'auto-scroll-speed';
+
+    var btnFaster = document.createElement('button');
+    btnFaster.type = 'button';
+    btnFaster.textContent = '+';
+
+    updateSpeedDisplay(speedSpan);
+
+    btnToggle.addEventListener('click', function () {
+      if (!isScrolling) {
+        isScrolling = true;
+        lastTs = null;
+        btnToggle.textContent = 'Parar';
+        window.requestAnimationFrame(stepScroll);
+      } else {
+        isScrolling = false;
+        lastTs = null;
+        btnToggle.textContent = 'Iniciar';
+      }
+    });
+
+    btnSlower.addEventListener('click', function () {
+      speed = Math.max(minSpeed, speed - 5);
+      updateSpeedDisplay(speedSpan);
+    });
+
+    btnFaster.addEventListener('click', function () {
+      speed = Math.min(maxSpeed, speed + 5);
+      updateSpeedDisplay(speedSpan);
+    });
+
+    panel.appendChild(label);
+    panel.appendChild(btnToggle);
+    panel.appendChild(btnSlower);
+    panel.appendChild(speedSpan);
+    panel.appendChild(btnFaster);
+
+    document.body.appendChild(panel);
+  }
+
   function init() {
     var pres = document.querySelectorAll('body > pre');
     for (var i = 0; i < pres.length; i++) {
       processPre(pres[i]);
     }
+    createAutoScrollPanel();
   }
 
   if (document.readyState === 'loading') {
