@@ -85,21 +85,43 @@
     }
 
     var lines = originalText.split('\n');
-    var html = lines.map(function (line) {
-      var chordOnly = isChordLine(line);
-      var workingLine = line;
+    var strophes = [];
+    var current = [];
 
-      // Só transpõe linhas que são inteiramente de cifra
-      if (semitones !== 0 && chordOnly) {
-        workingLine = line.replace(CHORD_REGEX, function (ch) {
-          return transposeChordSymbol(ch, semitones);
-        });
+    function flushStrophe() {
+      if (current.length) {
+        strophes.push(current);
+        current = [];
       }
+    }
 
-      var escaped = escapeHtml(workingLine);
-      var chordLine = chordOnly;
-      var spanClass = chordLine ? ' line-chord' : '';
-      return '<span class="line' + spanClass + '">' + escaped + '</span>';
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (line.trim() === '') {
+        // Linha vazia: apenas separa estrofes, não entra em nenhuma
+        flushStrophe();
+      } else {
+        current.push(line);
+      }
+    }
+    flushStrophe();
+
+    var html = strophes.map(function (stropheLines) {
+      var inner = stropheLines.map(function (line) {
+        var chordOnly = isChordLine(line);
+        var workingLine = line;
+
+        if (semitones !== 0 && chordOnly) {
+          workingLine = line.replace(CHORD_REGEX, function (ch) {
+            return transposeChordSymbol(ch, semitones);
+          });
+        }
+
+        var escaped = escapeHtml(workingLine);
+        var spanClass = chordOnly ? ' line-chord' : '';
+        return '<span class="line' + spanClass + '">' + escaped + '</span>';
+      }).join('\n');
+      return '<div class="strophe">' + inner + '</div>';
     }).join('\n');
     pre.innerHTML = html;
   }

@@ -66,9 +66,19 @@
     background: #e56600;
 }
 
+.strophe {
+    margin: 0;
+    padding: 0;
+}
+
 @media print {
-    .sticky-top {
-        display: none;
+    body > :not(pre) {
+        display: none !important;
+    }
+
+    .strophe {
+        page-break-inside: avoid;
+        break-inside: avoid;
     }
 }
 
