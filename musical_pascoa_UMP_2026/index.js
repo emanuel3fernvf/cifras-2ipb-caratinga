@@ -8,6 +8,49 @@
   // Acorde: nota (A-G, opcional #/b) + qualidade (m, maj, dim, etc.) + número (+ opcional M, ex: G7M) + opcional /baixo
   var CHORD_REGEX = /[A-G][#b]?(?:m|min|maj|dim|aug|sus|add)?[0-9]*(?:M)?(?:\/[A-G][#b]?)?/g;
 
+  // Notas cromáticas em sustenidos (usadas para transposição)
+  var NOTES_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+  function normalizeNote(note) {
+    // Converte bemóis para equivalentes em sustenido
+    switch (note) {
+      case 'Db': return 'C#';
+      case 'Eb': return 'D#';
+      case 'Gb': return 'F#';
+      case 'Ab': return 'G#';
+      case 'Bb': return 'A#';
+      default: return note;
+    }
+  }
+
+  function transposeNote(note, semitones) {
+    var norm = normalizeNote(note);
+    var idx = NOTES_SHARP.indexOf(norm);
+    if (idx === -1) return note;
+    var newIndex = (idx + semitones) % 12;
+    if (newIndex < 0) newIndex += 12;
+    return NOTES_SHARP[newIndex];
+  }
+
+  function transposeChordSymbol(chord, semitones) {
+    if (!semitones) return chord;
+    var match = chord.match(/^([A-G][#b]?)(.*?)(?:\/([A-G][#b]?))?$/);
+    if (!match) return chord;
+    var root = match[1];
+    var body = match[2] || '';
+    var bass = match[3];
+
+    var newRoot = transposeNote(root, semitones);
+    var result = newRoot + body;
+
+    if (bass) {
+      var newBass = transposeNote(bass, semitones);
+      result += '/' + newBass;
+    }
+
+    return result;
+  }
+
   function escapeHtml(text) {
     var div = document.createElement('div');
     div.textContent = text;
@@ -32,12 +75,29 @@
     return true;
   }
 
-  function processPre(pre) {
-    var text = pre.textContent || '';
-    var lines = text.split('\n');
+  function processPre(pre, semitones) {
+    if (typeof semitones !== 'number') semitones = 0;
+
+    var originalText = pre.getAttribute('data-original-text');
+    if (originalText == null) {
+      originalText = pre.textContent || '';
+      pre.setAttribute('data-original-text', originalText);
+    }
+
+    var lines = originalText.split('\n');
     var html = lines.map(function (line) {
-      var escaped = escapeHtml(line);
-      var chordLine = isChordLine(line);
+      var chordOnly = isChordLine(line);
+      var workingLine = line;
+
+      // Só transpõe linhas que são inteiramente de cifra
+      if (semitones !== 0 && chordOnly) {
+        workingLine = line.replace(CHORD_REGEX, function (ch) {
+          return transposeChordSymbol(ch, semitones);
+        });
+      }
+
+      var escaped = escapeHtml(workingLine);
+      var chordLine = chordOnly;
       var spanClass = chordLine ? ' line-chord' : '';
       return '<span class="line' + spanClass + '">' + escaped + '</span>';
     }).join('\n');
@@ -46,11 +106,15 @@
 
   // --- Scroll automático ---
   var isScrolling = false;
-  var speed = 20; // pixels por segundo (valor inicial)
+  var speed = 5; // pixels por segundo (valor inicial)
   var minSpeed = 5;
   var maxSpeed = 200;
   var lastTs = null;
   var pendingScroll = 0; // acumula frações de pixel para velocidades baixas
+
+  // --- Transposição de tom ---
+  var currentTranspose = 0;
+  var transposeDisplayEl = null;
 
   function stepScroll(timestamp) {
     if (!isScrolling) {
@@ -81,6 +145,47 @@
     }
 
     window.requestAnimationFrame(stepScroll);
+  }
+
+  // --- Utilidades de transposição na URL ---
+  function getTransposeFromUrl() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var value = parseInt(params.get('tr'), 10);
+      return isNaN(value) ? 0 : value;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function setTransposeInUrl(value) {
+    try {
+      var url = new URL(window.location.href);
+      if (value === 0) {
+        url.searchParams.delete('tr');
+      } else {
+        url.searchParams.set('tr', String(value));
+      }
+      window.history.replaceState(null, '', url.toString());
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function formatTranspose(value) {
+    if (value === 0) return '0';
+    return (value > 0 ? '+' : '') + String(value);
+  }
+
+  function applyTransposeToAllPres() {
+    var pres = document.querySelectorAll('body > pre');
+    for (var i = 0; i < pres.length; i++) {
+      processPre(pres[i], currentTranspose);
+    }
+    if (transposeDisplayEl) {
+      transposeDisplayEl.textContent = formatTranspose(currentTranspose);
+    }
+    setTransposeInUrl(currentTranspose);
   }
 
   function updateSpeedDisplay(span) {
@@ -155,27 +260,72 @@
     iframe.classList.remove('sticky-fixed');
 
     var container = document.createElement('div');
-    container.style.textAlign = 'right';
+    container.style.textAlign = 'left';
     container.style.margin = '4px 0 8px 0';
 
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'video-sticky-toggle';
-    btn.textContent = 'Fixar vídeo';
+    var btnSticky = document.createElement('button');
+    btnSticky.type = 'button';
+    btnSticky.className = 'video-sticky-toggle';
+    btnSticky.textContent = 'Fixar vídeo';
+
+    var toneLabel = document.createElement('span');
+    toneLabel.style.marginLeft = '0';
+    toneLabel.style.marginRight = '4px';
+    toneLabel.textContent = 'Tom: ';
+
+    var toneValue = document.createElement('span');
+    toneValue.style.marginRight = '8px';
+    transposeDisplayEl = toneValue;
+    transposeDisplayEl.textContent = formatTranspose(currentTranspose);
+
+    var btnToneDown = document.createElement('button');
+    btnToneDown.type = 'button';
+    btnToneDown.className = 'video-sticky-toggle';
+    btnToneDown.textContent = '−';
+
+    var btnToneUp = document.createElement('button');
+    btnToneUp.type = 'button';
+    btnToneUp.className = 'video-sticky-toggle';
+    btnToneUp.textContent = '+';
+
+    var btnToneReset = document.createElement('button');
+    btnToneReset.type = 'button';
+    btnToneReset.className = 'video-sticky-toggle';
+    btnToneReset.textContent = 'Reset';
 
     var fixed = false;
-    btn.addEventListener('click', function () {
+    btnSticky.addEventListener('click', function () {
       fixed = !fixed;
       if (fixed) {
         iframe.classList.add('sticky-fixed');
-        btn.textContent = 'Soltar vídeo';
+        btnSticky.textContent = 'Soltar vídeo';
       } else {
         iframe.classList.remove('sticky-fixed');
-        btn.textContent = 'Fixar vídeo';
+        btnSticky.textContent = 'Fixar vídeo';
       }
     });
 
-    container.appendChild(btn);
+    btnToneDown.addEventListener('click', function () {
+      currentTranspose -= 1;
+      applyTransposeToAllPres();
+    });
+
+    btnToneUp.addEventListener('click', function () {
+      currentTranspose += 1;
+      applyTransposeToAllPres();
+    });
+
+    container.appendChild(toneLabel);
+    container.appendChild(toneValue);
+    container.appendChild(btnToneDown);
+    container.appendChild(btnToneUp);
+    btnToneReset.addEventListener('click', function () {
+      currentTranspose = 0;
+      applyTransposeToAllPres();
+    });
+    container.appendChild(btnToneReset);
+    container.appendChild(btnSticky);
+
     // Insere logo após o iframe
     if (iframe.parentNode) {
       iframe.parentNode.insertBefore(container, iframe.nextSibling);
@@ -185,12 +335,18 @@
   }
 
   function init() {
+    // Carrega transposição inicial da URL (parâmetro ?tr=)
+    currentTranspose = getTransposeFromUrl();
+
     var pres = document.querySelectorAll('body > pre');
     for (var i = 0; i < pres.length; i++) {
-      processPre(pres[i]);
+      processPre(pres[i], currentTranspose);
     }
     createAutoScrollPanel();
     createVideoStickyToggle();
+
+    // Garante que o display de tom e a URL estejam sincronizados
+    applyTransposeToAllPres();
   }
 
   if (document.readyState === 'loading') {
