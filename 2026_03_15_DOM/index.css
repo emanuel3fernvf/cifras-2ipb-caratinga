@@ -71,6 +71,10 @@
     padding: 0;
 }
 
+pre {
+    padding-bottom: 50px;
+}
+
 @media print {
     body > :not(pre) {
         display: none !important;
