@@ -1,0 +1,1025 @@
+[
+  {
+    "id": 1770693000000,
+    "title": "Canção do Apocalipse",
+    "artist": "Musical de Páscoa 2026",
+    "author": "",
+    "note": "",
+    "copyright": "",
+    "language": "",
+    "key": "",
+    "bpm": 0.0,
+    "time_sig": "",
+    "midi": null,
+    "order": "",
+    "arrangements": [],
+    "lyrics": {
+      "full_text": "Digno é o Cordeiro\nQue foi morto\nSanto, Santo Ele é\n\nUm novo cântico\nAo que se assenta\nSobre o trono do céu\n\nDigno é o Cordeiro\nQue foi morto\nSanto, Santo Ele é\n\nUm novo cântico\nAo que se assenta\nSobre o trono do céu\n\nSanto, Santo, Santo\nDeus Todo Poderoso\nQue era e é e há de vir\n\nCom a criação eu canto\nLouvores ao Rei dos reis\nÉs tudo para mim\nE eu Te adorarei\n\nEstá vestido\nDo arco-íris\nSons de trovão, luzes, relâmpagos\n\nLouvores, honra e glória\nForça e poder pra sempre\nAo único Rei eternamente\n\nSanto, Santo, Santo\nDeus Todo Poderoso\nQue era e é e há de vir\n\nCom a criação eu canto\nLouvores ao Rei dos reis\nÉs tudo para mim\nE eu Te adorarei\n\nMaravilhado, extasiado\nEu fico ao ouvir Teu nome\n\nMaravilhado, extasiado\nEu fico ao ouvir Teu nome\n\nJesus, Teu nome é força\nÉ fôlego de vida\nMisteriosa água viva \n\nSanto, Santo, Santo\nDeus Todo Poderoso\nQue era e é e há de vir\n\nCom a criação eu canto\nLouvores ao Rei dos reis\nÉs tudo para mim\nE eu Te adorarei\n\nSanto, Santo, Santo\nDeus Todo Poderoso\nQue era e é e há de vir\n\nCom a criação eu canto\nLouvores ao Rei dos reis\nÉs tudo para mim\nE eu Te adorarei\n\nSanto, Santo, Santo\nDeus Todo Poderoso\nQue era e é e há de vir\n\nCom a criação eu canto\nLouvores ao Rei dos reis\nÉs tudo para mim\nE eu Te adorarei",
+      "full_text_with_comment": null,
+      "paragraphs": [
+        {
+          "number": 1,
+          "description": "",
+          "text": "Digno é o Cordeiro\nQue foi morto\nSanto, Santo Ele é",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 2,
+          "description": "",
+          "text": "Um novo cântico\nAo que se assenta\nSobre o trono do céu",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 3,
+          "description": "",
+          "text": "Digno é o Cordeiro\nQue foi morto\nSanto, Santo Ele é",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 4,
+          "description": "",
+          "text": "Um novo cântico\nAo que se assenta\nSobre o trono do céu",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 5,
+          "description": "",
+          "text": "Santo, Santo, Santo\nDeus Todo Poderoso\nQue era e é e há de vir",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 6,
+          "description": "",
+          "text": "Com a criação eu canto\nLouvores ao Rei dos reis\nÉs tudo para mim\nE eu Te adorarei",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 7,
+          "description": "",
+          "text": "Está vestido\nDo arco-íris\nSons de trovão, luzes, relâmpagos",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 8,
+          "description": "",
+          "text": "Louvores, honra e glória\nForça e poder pra sempre\nAo único Rei eternamente",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 9,
+          "description": "",
+          "text": "Santo, Santo, Santo\nDeus Todo Poderoso\nQue era e é e há de vir",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 10,
+          "description": "",
+          "text": "Com a criação eu canto\nLouvores ao Rei dos reis\nÉs tudo para mim\nE eu Te adorarei",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 11,
+          "description": "",
+          "text": "Maravilhado, extasiado\nEu fico ao ouvir Teu nome",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 12,
+          "description": "",
+          "text": "Maravilhado, extasiado\nEu fico ao ouvir Teu nome",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 13,
+          "description": "",
+          "text": "Jesus, Teu nome é força\nÉ fôlego de vida\nMisteriosa água viva",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 14,
+          "description": "",
+          "text": "Santo, Santo, Santo\nDeus Todo Poderoso\nQue era e é e há de vir",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 15,
+          "description": "",
+          "text": "Com a criação eu canto\nLouvores ao Rei dos reis\nÉs tudo para mim\nE eu Te adorarei",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 16,
+          "description": "",
+          "text": "Santo, Santo, Santo\nDeus Todo Poderoso\nQue era e é e há de vir",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 17,
+          "description": "",
+          "text": "Com a criação eu canto\nLouvores ao Rei dos reis\nÉs tudo para mim\nE eu Te adorarei",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 18,
+          "description": "",
+          "text": "Santo, Santo, Santo\nDeus Todo Poderoso\nQue era e é e há de vir",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 19,
+          "description": "",
+          "text": "Com a criação eu canto\nLouvores ao Rei dos reis\nÉs tudo para mim\nE eu Te adorarei",
+          "text_with_comment": null,
+          "translations": null
+        }
+      ]
+    },
+    "streaming": {
+      "audio": {
+        "spotify": "",
+        "youtube": "",
+        "deezer": ""
+      },
+      "backing_track": {
+        "spotify": "",
+        "youtube": "",
+        "deezer": ""
+      }
+    },
+    "extras": {
+      "extra": ""
+    }
+  },
+  {
+    "id": 1770693001000,
+    "title": "Digno é o Senhor",
+    "artist": "Musical de Páscoa 2026",
+    "author": "",
+    "note": "",
+    "copyright": "",
+    "language": "",
+    "key": "",
+    "bpm": 0.0,
+    "time_sig": "",
+    "midi": null,
+    "order": "",
+    "arrangements": [],
+    "lyrics": {
+      "full_text": "Graças eu te dou o pai\nPelo preço que pagou\nSacrifício de amor\nQue me comprou\nUngido do Senhor\n\nPelos cravos em suas mãos\nGraças eu te dou ó meu Senhor\nLavou minha mente e coração\nMe deu perdão\nRestaurou-me a comunhão\n\nDigno é o Senhor\nSobre o trono está\nSoberano, criador\nVou sempre te adorar\n\nElevo minhas mãos\nAo Cristo que venceu\nCordeiro de Deus\nMorreu por mim\nMas ressuscitou\n\nPelos cravos em suas mãos\nGraças eu te dou ó meu Senhor\nLavou minha mente e coração\nMe deu perdão\nRestaurou-me a comunhão\n\nDigno é o Senhor\nSobre o trono está\nSoberano, criador\nVou sempre te adorar\n\nElevo minhas mãos\nAo Cristo que venceu\nCordeiro de Deus\nMorreu por mim\n\nMas ressuscitou\nDigno é o Senhor\nMas ressuscitou\nDigno é o Senhor\n\nDigno é o Se_nhor\nSobre o trono está\nSoberano, criador\nVou sempre te adorar\n\nElevo minhas mãos\nAo Cristo que venceu\nCordeiro de Deus\nMorreu por mim\n\nMas ressuscitou\nDigno é o Senhor\nMas ressuscitou\nDigno é o Senhor\n\nDigno é o Senhor\nSobre o trono está\nSoberano, criador\nVou sempre te adorar\n\nElevo minhas mãos\nAo Cristo que venceu\nCordeiro de Deus\nMorreu por mim\n\nMas ressuscitou\nDigno é o Senhor\nMas ressuscitou\nDigno é o Senhor",
+      "full_text_with_comment": null,
+      "paragraphs": [
+        {
+          "number": 1,
+          "description": "",
+          "text": "Graças eu te dou o pai\nPelo preço que pagou\nSacrifício de amor\nQue me comprou\nUngido do Senhor",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 2,
+          "description": "",
+          "text": "Pelos cravos em suas mãos\nGraças eu te dou ó meu Senhor\nLavou minha mente e coração\nMe deu perdão\nRestaurou-me a comunhão",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 3,
+          "description": "",
+          "text": "Digno é o Senhor\nSobre o trono está\nSoberano, criador\nVou sempre te adorar",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 4,
+          "description": "",
+          "text": "Elevo minhas mãos\nAo Cristo que venceu\nCordeiro de Deus\nMorreu por mim\nMas ressuscitou",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 5,
+          "description": "",
+          "text": "Pelos cravos em suas mãos\nGraças eu te dou ó meu Senhor\nLavou minha mente e coração\nMe deu perdão\nRestaurou-me a comunhão",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 6,
+          "description": "",
+          "text": "Digno é o Senhor\nSobre o trono está\nSoberano, criador\nVou sempre te adorar",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 7,
+          "description": "",
+          "text": "Elevo minhas mãos\nAo Cristo que venceu\nCordeiro de Deus\nMorreu por mim",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 8,
+          "description": "",
+          "text": "Mas ressuscitou\nDigno é o Senhor\nMas ressuscitou\nDigno é o Senhor",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 9,
+          "description": "",
+          "text": "Digno é o Se_nhor\nSobre o trono está\nSoberano, criador\nVou sempre te adorar",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 10,
+          "description": "",
+          "text": "Elevo minhas mãos\nAo Cristo que venceu\nCordeiro de Deus\nMorreu por mim",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 11,
+          "description": "",
+          "text": "Mas ressuscitou\nDigno é o Senhor\nMas ressuscitou\nDigno é o Senhor",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 12,
+          "description": "",
+          "text": "Digno é o Senhor\nSobre o trono está\nSoberano, criador\nVou sempre te adorar",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 13,
+          "description": "",
+          "text": "Elevo minhas mãos\nAo Cristo que venceu\nCordeiro de Deus\nMorreu por mim",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 14,
+          "description": "",
+          "text": "Mas ressuscitou\nDigno é o Senhor\nMas ressuscitou\nDigno é o Senhor",
+          "text_with_comment": null,
+          "translations": null
+        }
+      ]
+    },
+    "streaming": {
+      "audio": {
+        "spotify": "",
+        "youtube": "",
+        "deezer": ""
+      },
+      "backing_track": {
+        "spotify": "",
+        "youtube": "",
+        "deezer": ""
+      }
+    },
+    "extras": {
+      "extra": ""
+    }
+  },
+  {
+    "id": 1770693002000,
+    "title": "Ele Vive",
+    "artist": "Musical de Páscoa 2026",
+    "author": "",
+    "note": "",
+    "copyright": "",
+    "language": "",
+    "key": "",
+    "bpm": 0.0,
+    "time_sig": "",
+    "midi": null,
+    "order": "",
+    "arrangements": [],
+    "lyrics": {
+      "full_text": "Hoje é domingo de manhã\nHoje o Sol não quer brilhar\nTudo é solidão\nE elas vêm dizer:\nDe madrugada ressurgiu\n\nNão acredito em ilusões\nO Sol da justiça se apa-gou\nO mundo inteiro viu\n\nOs cravos em Suas mãos\nO Seu corpo a sofrer\nSua morte lá na cruz\nNão consigo entender\n\nE agora este túmulo vazio\nE este anjo a questionar\nPorque procuro entre os mortos\nQuem vivo está?\n\nE hoje sou livre\nPois Ele vive\nEle vive, Ele reina\nEm mim, em mim\n\nMorte e pecado\nFoi derrotado\nE eu sou livre, eu sou livre\nEnfim, de mim\n\nComo Jesus ressuscitou\nDa morte eterna para luz\nDa água renasci\nE faz sentido servir\nAlguém melhor que eu\n\nE hoje sou livre\nPois Ele vive\nEle vive, Ele reina, em mim\nE os que descansam no Senhor\n\nQuando voltar, despertarão\nE, em Sua carne, enfim, verão\nA Deus\n\nE hoje sou livre\nPois Ele vive\nEle vive, Ele reina\nEm mim, em mim\n\nMorte e pecado\nFoi derrotado\nE eu sou livre, eu sou livre\nEnfim, de mim\n\nTodos os dias de manhã\nQuero renascer",
+      "full_text_with_comment": null,
+      "paragraphs": [
+        {
+          "number": 1,
+          "description": "",
+          "text": "Hoje é domingo de manhã\nHoje o Sol não quer brilhar\nTudo é solidão\nE elas vêm dizer:\nDe madrugada ressurgiu",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 2,
+          "description": "",
+          "text": "Não acredito em ilusões\nO Sol da justiça se apa-gou\nO mundo inteiro viu",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 3,
+          "description": "",
+          "text": "Os cravos em Suas mãos\nO Seu corpo a sofrer\nSua morte lá na cruz\nNão consigo entender",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 4,
+          "description": "",
+          "text": "E agora este túmulo vazio\nE este anjo a questionar\nPorque procuro entre os mortos\nQuem vivo está?",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 5,
+          "description": "",
+          "text": "E hoje sou livre\nPois Ele vive\nEle vive, Ele reina\nEm mim, em mim",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 6,
+          "description": "",
+          "text": "Morte e pecado\nFoi derrotado\nE eu sou livre, eu sou livre\nEnfim, de mim",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 7,
+          "description": "",
+          "text": "Como Jesus ressuscitou\nDa morte eterna para luz\nDa água renasci\nE faz sentido servir\nAlguém melhor que eu",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 8,
+          "description": "",
+          "text": "E hoje sou livre\nPois Ele vive\nEle vive, Ele reina, em mim\nE os que descansam no Senhor",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 9,
+          "description": "",
+          "text": "Quando voltar, despertarão\nE, em Sua carne, enfim, verão\nA Deus",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 10,
+          "description": "",
+          "text": "E hoje sou livre\nPois Ele vive\nEle vive, Ele reina\nEm mim, em mim",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 11,
+          "description": "",
+          "text": "Morte e pecado\nFoi derrotado\nE eu sou livre, eu sou livre\nEnfim, de mim",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 12,
+          "description": "",
+          "text": "Todos os dias de manhã\nQuero renascer",
+          "text_with_comment": null,
+          "translations": null
+        }
+      ]
+    },
+    "streaming": {
+      "audio": {
+        "spotify": "",
+        "youtube": "",
+        "deezer": ""
+      },
+      "backing_track": {
+        "spotify": "",
+        "youtube": "",
+        "deezer": ""
+      }
+    },
+    "extras": {
+      "extra": ""
+    }
+  },
+  {
+    "id": 1770693003000,
+    "title": "Getsêmani",
+    "artist": "Musical de Páscoa 2026",
+    "author": "",
+    "note": "",
+    "copyright": "",
+    "language": "",
+    "key": "",
+    "bpm": 0.0,
+    "time_sig": "",
+    "midi": null,
+    "order": "",
+    "arrangements": [],
+    "lyrics": {
+      "full_text": "No Getsêmani foi que meu Jesus orou\nSe entregando ao Pai \nMais uma vez\n\nLogo vieram pessoas para o levar\nPara a maior das provações\n\nEle tanto amou,\nTudo suportou,\nEle carregou a nossa cruz\n\nVê os cravos nas mãos,\nSeu corpo a sofrer\nNaqueles momentos de dor\nVê o Mestre a chorar \nE foi por você\nQue Ele mostrou tanto amor\n\nOs soldados cuspiam no seu rosto nu\nPosso ouvir o clamor da multidão\nE Jesus a olhar aquele céu azul\nPede ao Pai que lhes dê o seu perdão\nEle tanto amou, \nTudo suportou,\nEle carregou a nossa cruz\n\nVê os cravos nas mãos, \nSeu corpo a sofrer\nNaqueles momentos de dor\n\nVê o Mêstre a Chorar\nE foi por você\nQue Ele mostrou\nTanto amor\n\nEle tanto, tanto me amou,\nEle tudo por mim suportou,\nCarregou minha cruz\n\nVê os cravos nas mãos,\nSeu corpo a sofrer\nNaqueles momentos de dor\n\nVê o Mestre a Chorar\nE foi por você\nQue Ele mostrou tanto amor\n\nSim na cruz, sim na cruz,\nSempre me glorio.\nAté que eu possa descansar\nSalvo além do rio",
+      "full_text_with_comment": null,
+      "paragraphs": [
+        {
+          "number": 1,
+          "description": "",
+          "text": "No Getsêmani foi que meu Jesus orou\nSe entregando ao Pai \nMais uma vez",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 2,
+          "description": "",
+          "text": "Logo vieram pessoas para o levar\nPara a maior das provações",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 3,
+          "description": "",
+          "text": "Ele tanto amou,\nTudo suportou,\nEle carregou a nossa cruz",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 4,
+          "description": "",
+          "text": "Vê os cravos nas mãos,\nSeu corpo a sofrer\nNaqueles momentos de dor\nVê o Mestre a chorar \nE foi por você\nQue Ele mostrou tanto amor",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 5,
+          "description": "",
+          "text": "Os soldados cuspiam no seu rosto nu\nPosso ouvir o clamor da multidão\nE Jesus a olhar aquele céu azul\nPede ao Pai que lhes dê o seu perdão\nEle tanto amou, \nTudo suportou,\nEle carregou a nossa cruz",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 6,
+          "description": "",
+          "text": "Vê os cravos nas mãos, \nSeu corpo a sofrer\nNaqueles momentos de dor",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 7,
+          "description": "",
+          "text": "Vê o Mêstre a Chorar\nE foi por você\nQue Ele mostrou\nTanto amor",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 8,
+          "description": "",
+          "text": "Ele tanto, tanto me amou,\nEle tudo por mim suportou,\nCarregou minha cruz",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 9,
+          "description": "",
+          "text": "Vê os cravos nas mãos,\nSeu corpo a sofrer\nNaqueles momentos de dor",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 10,
+          "description": "",
+          "text": "Vê o Mestre a Chorar\nE foi por você\nQue Ele mostrou tanto amor",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 11,
+          "description": "",
+          "text": "Sim na cruz, sim na cruz,\nSempre me glorio.\nAté que eu possa descansar\nSalvo além do rio",
+          "text_with_comment": null,
+          "translations": null
+        }
+      ]
+    },
+    "streaming": {
+      "audio": {
+        "spotify": "",
+        "youtube": "",
+        "deezer": ""
+      },
+      "backing_track": {
+        "spotify": "",
+        "youtube": "",
+        "deezer": ""
+      }
+    },
+    "extras": {
+      "extra": ""
+    }
+  },
+  {
+    "id": 1770693004000,
+    "title": "Isaías 53",
+    "artist": "Musical de Páscoa 2026",
+    "author": "",
+    "note": "",
+    "copyright": "",
+    "language": "",
+    "key": "",
+    "bpm": 0.0,
+    "time_sig": "",
+    "midi": null,
+    "order": "",
+    "arrangements": [],
+    "lyrics": {
+      "full_text": "Ele não tinha qualquer beleza\nOu majestade pra nos atrair\nNada havia em sua aparência\nPara o desejarmos\n\nMais rejeitado dentre os homens\nAinda assim carregou nossas dores\nO seu castigo nos traz paz\nE a esperança não se esvai\n\nA oferta pela culpa Ele ofereceu\nPra satisfazer o Criador, Ele morreu\nPra que a sua luz em nós pudesse brilhar\nO Filho do Amor se entregou em nosso lugar\n\nMais rejeitado dentre os homens\nAinda assim carregou nossas dores\nO seu castigo nos traz paz\nE a esperança não se esvai\n\nA oferta pela culpa Ele ofereceu\nPra satisfazer o Criador, Ele morreu\nPra que a sua luz em nós pudesse brilhar\nO Filho do Amor se entregou em nosso lugar\n\nÉs o Cordeiro\nQue pelos nossos pecados\nFoi esmagado sem dizer\nUma só palavra\nSe entregou aos cravos\n\nDerramou sua vida até a morte\nProvando a ira amarga\nPra nos dar sua doce graça\nE nos fazer viver",
+      "full_text_with_comment": null,
+      "paragraphs": [
+        {
+          "number": 1,
+          "description": "",
+          "text": "Ele não tinha qualquer beleza\nOu majestade pra nos atrair\nNada havia em sua aparência\nPara o desejarmos",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 2,
+          "description": "",
+          "text": "Mais rejeitado dentre os homens\nAinda assim carregou nossas dores\nO seu castigo nos traz paz\nE a esperança não se esvai",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 3,
+          "description": "",
+          "text": "A oferta pela culpa Ele ofereceu\nPra satisfazer o Criador, Ele morreu\nPra que a sua luz em nós pudesse brilhar\nO Filho do Amor se entregou em nosso lugar",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 4,
+          "description": "",
+          "text": "Mais rejeitado dentre os homens\nAinda assim carregou nossas dores\nO seu castigo nos traz paz\nE a esperança não se esvai",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 5,
+          "description": "",
+          "text": "A oferta pela culpa Ele ofereceu\nPra satisfazer o Criador, Ele morreu\nPra que a sua luz em nós pudesse brilhar\nO Filho do Amor se entregou em nosso lugar",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 6,
+          "description": "",
+          "text": "És o Cordeiro\nQue pelos nossos pecados\nFoi esmagado sem dizer\nUma só palavra\nSe entregou aos cravos",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 7,
+          "description": "",
+          "text": "Derramou sua vida até a morte\nProvando a ira amarga\nPra nos dar sua doce graça\nE nos fazer viver",
+          "text_with_comment": null,
+          "translations": null
+        }
+      ]
+    },
+    "streaming": {
+      "audio": {
+        "spotify": "",
+        "youtube": "",
+        "deezer": ""
+      },
+      "backing_track": {
+        "spotify": "",
+        "youtube": "",
+        "deezer": ""
+      }
+    },
+    "extras": {
+      "extra": ""
+    }
+  },
+  {
+    "id": 1770693005000,
+    "title": "Jesus, o Plano Perfeito",
+    "artist": "Musical de Páscoa 2026",
+    "author": "",
+    "note": "",
+    "copyright": "",
+    "language": "",
+    "key": "",
+    "bpm": 0.0,
+    "time_sig": "",
+    "midi": null,
+    "order": "",
+    "arrangements": [],
+    "lyrics": {
+      "full_text": "Um plano pra salvar, \nUm pacto pra selar\nSilêncio no céu\n\nResgate e salvação, \nEncheu Seu coração\nEle nem hesitou\n\nNo palco do amor, o autor anunciou\nA vida e salvação\nTudo que Ele fez foi obedecer\nO plano que Deus escreveu\n\nE quando a minha história \nParecia ter chegado ao fim\nA Sua graça me alcançou\n\nE quando tudo parecia estar \nPerdido naquela cruz\nO Seu sangue me libertou\n\nJesus o plano perfeito\nMistério da graça que me transformou\nO Seu nome é Jesus, Nome sobre todos\nVeio pra salvar, Ele me salvou\n\nUm plano pra salvar, \nUm pacto pra selar\nSilêncio no céu\n\nResgate e salvação, \nEncheu Seu coração\nEle nem hesitou\n\nNo palco do amor, o autor anunciou\nA vida e salvação\nTudo que Ele fez foi obedecer\nO plano que Deus escreveu\n\nE quando a minha história \nParecia ter chegado ao fim\nA Sua graça me alcançou\n\nE quando tudo parecia estar \nPerdido naquela cruz\nO Seu sangue me libertou\nMe libertou\n\nJesus o plano perfeito\nMistério da graça que me transformou\nO Seu nome é Jesus, Nome sobre todos\nVeio pra salvar, Ele me salvou\n\nEle pagou o preço da minha salvação\nEle pagou o preço da minha salvação\n\nEle pagou o preço da minha salvação\nEle pagou o preço da minha salvação\nSalvação\n\nJesus o plano perfeito\nMistério da graça que me transformou\nO Seu nome é Jesus, Nome sobre todos\nVeio pra salvar, Ele me salvou\n\nJesus o plano perfeito\nMistério da graça que me transformou\nO Seu nome é Jesus, Nome sobre todos\nVeio pra salvar, Ele me salvou",
+      "full_text_with_comment": null,
+      "paragraphs": [
+        {
+          "number": 1,
+          "description": "",
+          "text": "Um plano pra salvar, \nUm pacto pra selar\nSilêncio no céu",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 2,
+          "description": "",
+          "text": "Resgate e salvação, \nEncheu Seu coração\nEle nem hesitou",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 3,
+          "description": "",
+          "text": "No palco do amor, o autor anunciou\nA vida e salvação\nTudo que Ele fez foi obedecer\nO plano que Deus escreveu",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 4,
+          "description": "",
+          "text": "E quando a minha história \nParecia ter chegado ao fim\nA Sua graça me alcançou",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 5,
+          "description": "",
+          "text": "E quando tudo parecia estar \nPerdido naquela cruz\nO Seu sangue me libertou",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 6,
+          "description": "",
+          "text": "Jesus o plano perfeito\nMistério da graça que me transformou\nO Seu nome é Jesus, Nome sobre todos\nVeio pra salvar, Ele me salvou",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 7,
+          "description": "",
+          "text": "Um plano pra salvar, \nUm pacto pra selar\nSilêncio no céu",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 8,
+          "description": "",
+          "text": "Resgate e salvação, \nEncheu Seu coração\nEle nem hesitou",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 9,
+          "description": "",
+          "text": "No palco do amor, o autor anunciou\nA vida e salvação\nTudo que Ele fez foi obedecer\nO plano que Deus escreveu",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 10,
+          "description": "",
+          "text": "E quando a minha história \nParecia ter chegado ao fim\nA Sua graça me alcançou",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 11,
+          "description": "",
+          "text": "E quando tudo parecia estar \nPerdido naquela cruz\nO Seu sangue me libertou\nMe libertou",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 12,
+          "description": "",
+          "text": "Jesus o plano perfeito\nMistério da graça que me transformou\nO Seu nome é Jesus, Nome sobre todos\nVeio pra salvar, Ele me salvou",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 13,
+          "description": "",
+          "text": "Ele pagou o preço da minha salvação\nEle pagou o preço da minha salvação",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 14,
+          "description": "",
+          "text": "Ele pagou o preço da minha salvação\nEle pagou o preço da minha salvação\nSalvação",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 15,
+          "description": "",
+          "text": "Jesus o plano perfeito\nMistério da graça que me transformou\nO Seu nome é Jesus, Nome sobre todos\nVeio pra salvar, Ele me salvou",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 16,
+          "description": "",
+          "text": "Jesus o plano perfeito\nMistério da graça que me transformou\nO Seu nome é Jesus, Nome sobre todos\nVeio pra salvar, Ele me salvou",
+          "text_with_comment": null,
+          "translations": null
+        }
+      ]
+    },
+    "streaming": {
+      "audio": {
+        "spotify": "",
+        "youtube": "",
+        "deezer": ""
+      },
+      "backing_track": {
+        "spotify": "",
+        "youtube": "",
+        "deezer": ""
+      }
+    },
+    "extras": {
+      "extra": ""
+    }
+  },
+  {
+    "id": 1770693006000,
+    "title": "Pra Sempre",
+    "artist": "Musical de Páscoa 2026",
+    "author": "",
+    "note": "",
+    "copyright": "",
+    "language": "",
+    "key": "",
+    "bpm": 0.0,
+    "time_sig": "",
+    "midi": null,
+    "order": "",
+    "arrangements": [],
+    "lyrics": {
+      "full_text": "O universo chora o sol se apagou\nAli estava morto o salvador\nSeu corpo lá na cruz seu sangue derramou\nO peso do pecado ele levou\n\nIntro\n\nDeus pai o abandonou\nCessou seu respirar\nEm trevas se encontrou o filho\n\nA guerra começou\nA morte enfrentou\nTodo o poder das trevas vencido foi\n\nA terra estremeceu\nO sepulcro se abriu\nE nada vencerá seu grande amor\n\nÓ morte onde estás\nO rei ressuscitou\nEle venceu pra sempre\n\nPra sempre exaltado é\nPra sempre adorado é\nPra sempre ele vive\nressuscitou, ressuscitou\n\nA terra estremeceu\nO sepulcro se abriu\nE nada vencerá seu grande amor\n\nÓ morte onde estás\nO rei ressuscitou\nEle venceu pra sempre\n\nPra sempre exaltado é\nPra sempre adorado é\nPra sempre ele vive\nressuscitou, ressuscitou\n\nCantamos aleluia\nCantamos aleluia\nCantamos aleluia\nO cordeiro venceu\n\nCantamos aleluia\nCantamos aleluia\nCantamos aleluia\nO cordeiro venceu\n\nCantamos aleluia\nCantamos aleluia\nCantamos aleluia\nO cordeiro venceu\n\nCantamos aleluia\nCantamos aleluia\nCantamos aleluia\nO cordeiro venceu\n\nCantamos aleluia\nCantamos aleluia\nCantamos aleluia\nO cordeiro venceu\n\nCantamos aleluia\nCantamos aleluia\nCantamos aleluia\nO cordeiro venceu\n\nPra sempre exaltado é\nPra sempre adorado é\nPra sempre ele vive\nressuscitou, ressuscitou\n\nPra sempre exaltado é\nPra sempre adorado é\nPra sempre ele vive\nressuscitou, ressuscitou",
+      "full_text_with_comment": null,
+      "paragraphs": [
+        {
+          "number": 1,
+          "description": "",
+          "text": "O universo chora o sol se apagou\nAli estava morto o salvador\nSeu corpo lá na cruz seu sangue derramou\nO peso do pecado ele levou",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 2,
+          "description": "",
+          "text": "Intro",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 3,
+          "description": "",
+          "text": "Deus pai o abandonou\nCessou seu respirar\nEm trevas se encontrou o filho",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 4,
+          "description": "",
+          "text": "A guerra começou\nA morte enfrentou\nTodo o poder das trevas vencido foi",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 5,
+          "description": "",
+          "text": "A terra estremeceu\nO sepulcro se abriu\nE nada vencerá seu grande amor",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 6,
+          "description": "",
+          "text": "Ó morte onde estás\nO rei ressuscitou\nEle venceu pra sempre",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 7,
+          "description": "",
+          "text": "Pra sempre exaltado é\nPra sempre adorado é\nPra sempre ele vive\nressuscitou, ressuscitou",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 8,
+          "description": "",
+          "text": "A terra estremeceu\nO sepulcro se abriu\nE nada vencerá seu grande amor",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 9,
+          "description": "",
+          "text": "Ó morte onde estás\nO rei ressuscitou\nEle venceu pra sempre",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 10,
+          "description": "",
+          "text": "Pra sempre exaltado é\nPra sempre adorado é\nPra sempre ele vive\nressuscitou, ressuscitou",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 11,
+          "description": "",
+          "text": "Cantamos aleluia\nCantamos aleluia\nCantamos aleluia\nO cordeiro venceu",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 12,
+          "description": "",
+          "text": "Cantamos aleluia\nCantamos aleluia\nCantamos aleluia\nO cordeiro venceu",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 13,
+          "description": "",
+          "text": "Cantamos aleluia\nCantamos aleluia\nCantamos aleluia\nO cordeiro venceu",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 14,
+          "description": "",
+          "text": "Cantamos aleluia\nCantamos aleluia\nCantamos aleluia\nO cordeiro venceu",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 15,
+          "description": "",
+          "text": "Cantamos aleluia\nCantamos aleluia\nCantamos aleluia\nO cordeiro venceu",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 16,
+          "description": "",
+          "text": "Cantamos aleluia\nCantamos aleluia\nCantamos aleluia\nO cordeiro venceu",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 17,
+          "description": "",
+          "text": "Pra sempre exaltado é\nPra sempre adorado é\nPra sempre ele vive\nressuscitou, ressuscitou",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 18,
+          "description": "",
+          "text": "Pra sempre exaltado é\nPra sempre adorado é\nPra sempre ele vive\nressuscitou, ressuscitou",
+          "text_with_comment": null,
+          "translations": null
+        }
+      ]
+    },
+    "streaming": {
+      "audio": {
+        "spotify": "",
+        "youtube": "",
+        "deezer": ""
+      },
+      "backing_track": {
+        "spotify": "",
+        "youtube": "",
+        "deezer": ""
+      }
+    },
+    "extras": {
+      "extra": ""
+    }
+  },
+  {
+    "id": 1770693007000,
+    "title": "Vinho E Pão",
+    "artist": "Musical de Páscoa 2026",
+    "author": "",
+    "note": "",
+    "copyright": "",
+    "language": "",
+    "key": "",
+    "bpm": 0.0,
+    "time_sig": "",
+    "midi": null,
+    "order": "",
+    "arrangements": [],
+    "lyrics": {
+      "full_text": "Na mesa o pão, o vinho também\nNo peito uma dor com aquilo que vem\nDe um lado um sorriso, do outro traição\nEle abençoa e parte o pão\n\nE lava os pés daqueles fiéis\nE mesmo o traidor recebe assim\nDo vinho e o pão ao invés de rancor\nLavou nosso pés e enxugou com a dor\n\nNaquele partir estava todo meu ser\nPartido por mim e pelo meu viver\nNo vinho o amor, no sangue o perdão\nEm seu meigo olhar a minha salvação\n\nNaquele partir estava todo meu ser\nPartido por mim e pelo meu viver\nNo vinho o amor, no sangue o perdão\nEm seu meigo olhar a minha salvação\n\nUm hino cantou depois de cear\nE era o louvor que vinha preparar\nA maior canção, cantada na cruz\nEscrita na ceia pelo meu Jesus\n\nNaquele partir estava todo meu ser\nPartido por mim e pelo meu viver\nNo vinho o amor, no sangue o perdão\nEm seu meigo olhar a minha salvação\n\nNaquele partir estava todo meu ser\nPartido por mim e pelo meu viver\nNo vinho o amor, no sangue o perdão\nEm seu meigo olhar a minha salvação\n\nEle veio a mim\nO meu Jesus pensava em mim",
+      "full_text_with_comment": null,
+      "paragraphs": [
+        {
+          "number": 1,
+          "description": "",
+          "text": "Na mesa o pão, o vinho também\nNo peito uma dor com aquilo que vem\nDe um lado um sorriso, do outro traição\nEle abençoa e parte o pão",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 2,
+          "description": "",
+          "text": "E lava os pés daqueles fiéis\nE mesmo o traidor recebe assim\nDo vinho e o pão ao invés de rancor\nLavou nosso pés e enxugou com a dor",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 3,
+          "description": "",
+          "text": "Naquele partir estava todo meu ser\nPartido por mim e pelo meu viver\nNo vinho o amor, no sangue o perdão\nEm seu meigo olhar a minha salvação",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 4,
+          "description": "",
+          "text": "Naquele partir estava todo meu ser\nPartido por mim e pelo meu viver\nNo vinho o amor, no sangue o perdão\nEm seu meigo olhar a minha salvação",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 5,
+          "description": "",
+          "text": "Um hino cantou depois de cear\nE era o louvor que vinha preparar\nA maior canção, cantada na cruz\nEscrita na ceia pelo meu Jesus",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 6,
+          "description": "",
+          "text": "Naquele partir estava todo meu ser\nPartido por mim e pelo meu viver\nNo vinho o amor, no sangue o perdão\nEm seu meigo olhar a minha salvação",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 7,
+          "description": "",
+          "text": "Naquele partir estava todo meu ser\nPartido por mim e pelo meu viver\nNo vinho o amor, no sangue o perdão\nEm seu meigo olhar a minha salvação",
+          "text_with_comment": null,
+          "translations": null
+        },
+        {
+          "number": 8,
+          "description": "",
+          "text": "Ele veio a mim\nO meu Jesus pensava em mim",
+          "text_with_comment": null,
+          "translations": null
+        }
+      ]
+    },
+    "streaming": {
+      "audio": {
+        "spotify": "",
+        "youtube": "",
+        "deezer": ""
+      },
+      "backing_track": {
+        "spotify": "",
+        "youtube": "",
+        "deezer": ""
+      }
+    },
+    "extras": {
+      "extra": ""
+    }
+  }
+]
