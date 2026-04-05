@@ -166,17 +166,18 @@ a.next-song-btn:hover {
 
 .page-end-anchor {
     position: relative;
-    padding-bottom: 40px;
+    padding-bottom: 68px;
 }
 
 .fala-reminder-beacon {
     position: absolute;
+    bottom: 0;
     right: 16px;
-    width: 28px;
-    height: 28px;
+    width: 56px;
+    height: 56px;
     margin: 0;
     border-radius: 50%;
-    border: 7px solid #c00;
+    border: 10px solid #c00;
     background: transparent;
     box-sizing: border-box;
     pointer-events: none;
