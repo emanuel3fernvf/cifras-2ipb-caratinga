@@ -107,14 +107,15 @@
 
     var html = strophes.map(function (stropheLines) {
       var inner = stropheLines.map(function (line) {
-        var chordOnly = isChordLine(line);
-        var workingLine = line;
+            var chordOnly = isChordLine(line);
+            var workingLine = line;
 
-        if (semitones !== 0 && chordOnly) {
-          workingLine = line.replace(CHORD_REGEX, function (ch) {
-            return transposeChordSymbol(ch, semitones);
-          });
-        }
+            // Sempre transpor quaisquer símbolos de acorde encontrados na linha
+            if (semitones !== 0) {
+              workingLine = line.replace(CHORD_REGEX, function (ch) {
+                return transposeChordSymbol(ch, semitones);
+              });
+            }
 
         var escaped = escapeHtml(workingLine);
         var spanClass = chordOnly ? ' line-chord' : '';
@@ -254,11 +255,30 @@
     transposeDisplayEl.textContent = formatTranspose(currentTranspose);
     transposeLabel.appendChild(transposeDisplayEl);
 
+    // Botões para ajustar o tom (transpose) diretamente no painel
+    var btnTransposeMinus = document.createElement('button');
+    btnTransposeMinus.textContent = 'Tr−';
+    btnTransposeMinus.type = 'button';
+    btnTransposeMinus.title = 'Diminuir tom';
+    btnTransposeMinus.addEventListener('click', function () {
+      applyTranspose(currentTranspose - 1);
+    });
+
+    var btnTransposePlus = document.createElement('button');
+    btnTransposePlus.textContent = 'Tr+';
+    btnTransposePlus.type = 'button';
+    btnTransposePlus.title = 'Aumentar tom';
+    btnTransposePlus.addEventListener('click', function () {
+      applyTranspose(currentTranspose + 1);
+    });
+
     panel.appendChild(btnPlay);
     panel.appendChild(btnPause);
     panel.appendChild(btnSlower);
     panel.appendChild(btnFaster);
     panel.appendChild(speedDisplay);
+    panel.appendChild(btnTransposeMinus);
+    panel.appendChild(btnTransposePlus);
     panel.appendChild(transposeLabel);
 
     document.body.appendChild(panel);
