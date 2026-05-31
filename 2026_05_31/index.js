@@ -204,10 +204,15 @@
     for (var i = 0; i < pres.length; i++) {
       processPre(pres[i], currentTranspose);
     }
-    if (transposeDisplayEl) {
-      transposeDisplayEl.textContent = formatTranspose(currentTranspose);
-    }
+    updateTransposeDisplay();
     setTransposeInUrl(currentTranspose);
+  }
+
+  function updateTransposeDisplay() {
+    var els = document.querySelectorAll('.transpose-display');
+    els.forEach(function (el) {
+      el.textContent = formatTranspose(currentTranspose);
+    });
   }
 
   function updateSpeedDisplay(span) {
@@ -297,8 +302,8 @@
 
     var toneValue = document.createElement('span');
     toneValue.style.marginRight = '8px';
-    transposeDisplayEl = toneValue;
-    transposeDisplayEl.textContent = formatTranspose(currentTranspose);
+    toneValue.className = 'transpose-display';
+    toneValue.textContent = formatTranspose(currentTranspose);
 
     var btnToneDown = document.createElement('button');
     btnToneDown.type = 'button';
@@ -369,6 +374,64 @@
 
     // Garante que o display de tom e a URL estejam sincronizados
     applyTransposeToAllPres();
+  }
+
+  // Cria controles de tom no topo quando não houver iframe (ou sempre exibe controles no topo)
+  function createTopToneControls() {
+    // não duplicar
+    if (document.querySelector('.top-tone-controls')) return;
+
+    var container = document.createElement('div');
+    container.className = 'top-tone-controls';
+    container.style.position = 'fixed';
+    container.style.left = '10px';
+    container.style.top = '10px';
+    container.style.zIndex = '250';
+    container.style.display = 'flex';
+    container.style.alignItems = 'center';
+    container.style.gap = '6px';
+
+    var toneLabel = document.createElement('span');
+    toneLabel.textContent = 'Tom:';
+
+    var toneValue = document.createElement('span');
+    toneValue.className = 'transpose-display';
+    toneValue.textContent = formatTranspose(currentTranspose);
+
+    var btnToneDown = document.createElement('button');
+    btnToneDown.type = 'button';
+    btnToneDown.textContent = '−';
+    btnToneDown.className = 'video-sticky-toggle';
+    btnToneDown.addEventListener('click', function () {
+      currentTranspose -= 1;
+      applyTransposeToAllPres();
+    });
+
+    var btnToneUp = document.createElement('button');
+    btnToneUp.type = 'button';
+    btnToneUp.textContent = '+';
+    btnToneUp.className = 'video-sticky-toggle';
+    btnToneUp.addEventListener('click', function () {
+      currentTranspose += 1;
+      applyTransposeToAllPres();
+    });
+
+    var btnToneReset = document.createElement('button');
+    btnToneReset.type = 'button';
+    btnToneReset.textContent = 'Reset';
+    btnToneReset.className = 'video-sticky-toggle';
+    btnToneReset.addEventListener('click', function () {
+      currentTranspose = 0;
+      applyTransposeToAllPres();
+    });
+
+    container.appendChild(toneLabel);
+    container.appendChild(toneValue);
+    container.appendChild(btnToneDown);
+    container.appendChild(btnToneUp);
+    container.appendChild(btnToneReset);
+
+    document.body.insertBefore(container, document.body.firstChild);
   }
 
   if (document.readyState === 'loading') {
