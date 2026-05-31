@@ -2,11 +2,11 @@
  * Destaca linhas que contêm apenas cifras (acordes) com fundo laranja.
  * Roda ao carregar a página em todas as páginas que tenham <pre> com cifra.
  */
-(function () {
+ (function () {
   'use strict';
 
   // Acorde: nota (A-G, opcional #/b) + qualidade (m, maj, dim, etc.) + número (+ opcional M, ex: G7M) + opcional /baixo
-  var CHORD_REGEX = /[A-G][#b]?(?:m|min|maj|dim|aug|sus|add)?[0-9]*(?:M)?(?:\/[A-G][#b]?)?/g;
+  var CHORD_REGEX = /[A-G][#b]?(?:m|min|maj|dim|aug|sus|add)?[0-9]*(?:M)?(?:\/([A-G][#b]?))?/g;
 
   // Notas cromáticas em sustenidos (usadas para transposição)
   var NOTES_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -98,6 +98,7 @@
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i];
       if (line.trim() === '') {
+        // Linha vazia: apenas separa estrofes, não entra em nenhuma
         flushStrophe();
       } else {
         current.push(line);
@@ -107,15 +108,14 @@
 
     var html = strophes.map(function (stropheLines) {
       var inner = stropheLines.map(function (line) {
-            var chordOnly = isChordLine(line);
-            var workingLine = line;
+        var chordOnly = isChordLine(line);
+        var workingLine = line;
 
-            // Sempre transpor quaisquer símbolos de acorde encontrados na linha
-            if (semitones !== 0) {
-              workingLine = line.replace(CHORD_REGEX, function (ch) {
-                return transposeChordSymbol(ch, semitones);
-              });
-            }
+        if (semitones !== 0 && chordOnly) {
+          workingLine = line.replace(CHORD_REGEX, function (ch) {
+            return transposeChordSymbol(ch, semitones);
+          });
+        }
 
         var escaped = escapeHtml(workingLine);
         var spanClass = chordOnly ? ' line-chord' : '';
@@ -132,7 +132,7 @@
   var minSpeed = 5;
   var maxSpeed = 200;
   var lastTs = null;
-  var pendingScroll = 0;
+  var pendingScroll = 0; // acumula frações de pixel para velocidades baixas
 
   // --- Transposição de tom ---
   var currentTranspose = 0;
@@ -148,9 +148,10 @@
       lastTs = timestamp;
     }
 
-    var delta = (timestamp - lastTs) / 1000;
+    var delta = (timestamp - lastTs) / 1000; // segundos
     lastTs = timestamp;
 
+    // Acumula distância para evitar perder frações de pixel em velocidades baixas
     pendingScroll += speed * delta;
     var step = Math.floor(pendingScroll);
     if (step >= 1) {
@@ -158,6 +159,7 @@
       window.scrollBy(0, step);
     }
 
+    // Para se chegar no final da página
     if (window.innerHeight + window.scrollY >= document.body.scrollHeight) {
       isScrolling = false;
       lastTs = null;
@@ -167,6 +169,7 @@
     window.requestAnimationFrame(stepScroll);
   }
 
+  // --- Utilidades de transposição na URL ---
   function getTransposeFromUrl() {
     try {
       var params = new URLSearchParams(window.location.search);
@@ -196,104 +199,181 @@
     return (value > 0 ? '+' : '') + String(value);
   }
 
-  function updateTransposeDisplay() {
-    if (!transposeDisplayEl) return;
-    transposeDisplayEl.textContent = formatTranspose(currentTranspose);
+  function applyTransposeToAllPres() {
+    var pres = document.querySelectorAll('body > pre');
+    for (var i = 0; i < pres.length; i++) {
+      processPre(pres[i], currentTranspose);
+    }
+    if (transposeDisplayEl) {
+      transposeDisplayEl.textContent = formatTranspose(currentTranspose);
+    }
+    setTransposeInUrl(currentTranspose);
   }
 
-  function applyTranspose(semitones) {
-    currentTranspose = semitones;
-    setTransposeInUrl(semitones);
-    document.querySelectorAll('pre').forEach(function (pre) {
-      processPre(pre, semitones);
-    });
-    updateTransposeDisplay();
+  function updateSpeedDisplay(span) {
+    span.textContent = speed + ' px/s';
   }
 
-  function createControlPanel() {
+  function createAutoScrollPanel() {
+    if (document.querySelector('.auto-scroll-panel')) return;
+
     var panel = document.createElement('div');
     panel.className = 'auto-scroll-panel';
 
-    var btnPlay = document.createElement('button');
-    btnPlay.textContent = '▶';
-    btnPlay.type = 'button';
-    btnPlay.addEventListener('click', function () {
-      if (isScrolling) return;
-      isScrolling = true;
-      lastTs = null;
-      window.requestAnimationFrame(stepScroll);
-    });
+    var label = document.createElement('span');
+    label.textContent = 'Rolagem:';
 
-    var btnPause = document.createElement('button');
-    btnPause.textContent = '■';
-    btnPause.type = 'button';
-    btnPause.addEventListener('click', function () {
-      isScrolling = false;
-    });
-
-    var btnFaster = document.createElement('button');
-    btnFaster.textContent = '+';
-    btnFaster.type = 'button';
-    btnFaster.addEventListener('click', function () {
-      speed = Math.min(maxSpeed, speed + 5);
-    });
+    var btnToggle = document.createElement('button');
+    btnToggle.type = 'button';
+    btnToggle.textContent = 'Iniciar';
 
     var btnSlower = document.createElement('button');
-    btnSlower.textContent = '-';
     btnSlower.type = 'button';
+    btnSlower.textContent = '-';
+
+    var speedSpan = document.createElement('span');
+    speedSpan.className = 'auto-scroll-speed';
+
+    var btnFaster = document.createElement('button');
+    btnFaster.type = 'button';
+    btnFaster.textContent = '+';
+
+    updateSpeedDisplay(speedSpan);
+
+    btnToggle.addEventListener('click', function () {
+      if (!isScrolling) {
+        isScrolling = true;
+        lastTs = null;
+        btnToggle.textContent = 'Parar';
+        window.requestAnimationFrame(stepScroll);
+      } else {
+        isScrolling = false;
+        lastTs = null;
+        btnToggle.textContent = 'Iniciar';
+      }
+    });
+
     btnSlower.addEventListener('click', function () {
       speed = Math.max(minSpeed, speed - 5);
+      updateSpeedDisplay(speedSpan);
     });
 
-    var speedDisplay = document.createElement('span');
-    speedDisplay.className = 'auto-scroll-speed';
-    speedDisplay.textContent = speed;
-
-    var transposeLabel = document.createElement('label');
-    transposeLabel.textContent = 'Tr: ';
-    transposeDisplayEl = document.createElement('span');
-    transposeDisplayEl.textContent = formatTranspose(currentTranspose);
-    transposeLabel.appendChild(transposeDisplayEl);
-
-    // Botões para ajustar o tom (transpose) diretamente no painel
-    var btnTransposeMinus = document.createElement('button');
-    btnTransposeMinus.textContent = 'Tr−';
-    btnTransposeMinus.type = 'button';
-    btnTransposeMinus.title = 'Diminuir tom';
-    btnTransposeMinus.addEventListener('click', function () {
-      applyTranspose(currentTranspose - 1);
+    btnFaster.addEventListener('click', function () {
+      speed = Math.min(maxSpeed, speed + 5);
+      updateSpeedDisplay(speedSpan);
     });
 
-    var btnTransposePlus = document.createElement('button');
-    btnTransposePlus.textContent = 'Tr+';
-    btnTransposePlus.type = 'button';
-    btnTransposePlus.title = 'Aumentar tom';
-    btnTransposePlus.addEventListener('click', function () {
-      applyTranspose(currentTranspose + 1);
-    });
-
-    panel.appendChild(btnPlay);
-    panel.appendChild(btnPause);
+    panel.appendChild(label);
+    panel.appendChild(btnToggle);
     panel.appendChild(btnSlower);
+    panel.appendChild(speedSpan);
     panel.appendChild(btnFaster);
-    panel.appendChild(speedDisplay);
-    panel.appendChild(btnTransposeMinus);
-    panel.appendChild(btnTransposePlus);
-    panel.appendChild(transposeLabel);
 
     document.body.appendChild(panel);
-
-    setInterval(function () {
-      speedDisplay.textContent = speed;
-    }, 200);
   }
 
-  document.addEventListener('DOMContentLoaded', function () {
-    applyTranspose(getTransposeFromUrl());
-    createControlPanel();
+  function createVideoStickyToggle() {
+    if (document.querySelector('.video-sticky-toggle')) return;
 
-    document.querySelectorAll('pre').forEach(function (pre) {
-      processPre(pre, currentTranspose);
+    var iframe = document.querySelector('iframe.sticky-top');
+    if (!iframe) return;
+
+    // Garante que começa não fixo
+    iframe.classList.remove('sticky-fixed');
+
+    var container = document.createElement('div');
+    container.style.textAlign = 'left';
+    container.style.margin = '4px 0 8px 0';
+
+    var btnSticky = document.createElement('button');
+    btnSticky.type = 'button';
+    btnSticky.className = 'video-sticky-toggle';
+    btnSticky.textContent = 'Fixar vídeo';
+
+    var toneLabel = document.createElement('span');
+    toneLabel.style.marginLeft = '0';
+    toneLabel.style.marginRight = '4px';
+    toneLabel.textContent = 'Tom: ';
+
+    var toneValue = document.createElement('span');
+    toneValue.style.marginRight = '8px';
+    transposeDisplayEl = toneValue;
+    transposeDisplayEl.textContent = formatTranspose(currentTranspose);
+
+    var btnToneDown = document.createElement('button');
+    btnToneDown.type = 'button';
+    btnToneDown.className = 'video-sticky-toggle';
+    btnToneDown.textContent = '−';
+
+    var btnToneUp = document.createElement('button');
+    btnToneUp.type = 'button';
+    btnToneUp.className = 'video-sticky-toggle';
+    btnToneUp.textContent = '+';
+
+    var btnToneReset = document.createElement('button');
+    btnToneReset.type = 'button';
+    btnToneReset.className = 'video-sticky-toggle';
+    btnToneReset.textContent = 'Reset';
+
+    var fixed = false;
+    btnSticky.addEventListener('click', function () {
+      fixed = !fixed;
+      if (fixed) {
+        iframe.classList.add('sticky-fixed');
+        btnSticky.textContent = 'Soltar vídeo';
+      } else {
+        iframe.classList.remove('sticky-fixed');
+        btnSticky.textContent = 'Fixar vídeo';
+      }
     });
-  });
+
+    btnToneDown.addEventListener('click', function () {
+      currentTranspose -= 1;
+      applyTransposeToAllPres();
+    });
+
+    btnToneUp.addEventListener('click', function () {
+      currentTranspose += 1;
+      applyTransposeToAllPres();
+    });
+
+    container.appendChild(toneLabel);
+    container.appendChild(toneValue);
+    container.appendChild(btnToneDown);
+    container.appendChild(btnToneUp);
+    btnToneReset.addEventListener('click', function () {
+      currentTranspose = 0;
+      applyTransposeToAllPres();
+    });
+    container.appendChild(btnToneReset);
+    container.appendChild(btnSticky);
+
+    // Insere logo após o iframe
+    if (iframe.parentNode) {
+      iframe.parentNode.insertBefore(container, iframe.nextSibling);
+    } else {
+      document.body.insertBefore(container, document.body.firstChild);
+    }
+  }
+
+  function init() {
+    // Carrega transposição inicial da URL (parâmetro ?tr=)
+    currentTranspose = getTransposeFromUrl();
+
+    var pres = document.querySelectorAll('body > pre');
+    for (var i = 0; i < pres.length; i++) {
+      processPre(pres[i], currentTranspose);
+    }
+    createAutoScrollPanel();
+    createVideoStickyToggle();
+
+    // Garante que o display de tom e a URL estejam sincronizados
+    applyTransposeToAllPres();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
