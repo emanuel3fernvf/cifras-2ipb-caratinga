@@ -2,7 +2,7 @@
  * Destaca linhas que contêm apenas cifras (acordes) com fundo laranja.
  * Roda ao carregar a página em todas as páginas que tenham <pre> com cifra.
  */
- (function () {
+(function () {
   'use strict';
 
   // Acorde: nota (A-G, opcional #/b) + qualidade (m, maj, dim, etc.) + número (+ opcional M, ex: G7M) + opcional /baixo
