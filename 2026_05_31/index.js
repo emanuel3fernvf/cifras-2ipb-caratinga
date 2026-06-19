@@ -370,7 +370,11 @@
       processPre(pres[i], currentTranspose);
     }
     createAutoScrollPanel();
-    createVideoStickyToggle();
+    if (document.querySelector('iframe.sticky-top')) {
+      createVideoStickyToggle();
+    } else {
+      createTopToneControls();
+    }
 
     // Garante que o display de tom e a URL estejam sincronizados
     applyTransposeToAllPres();
@@ -383,13 +387,19 @@
 
     var container = document.createElement('div');
     container.className = 'top-tone-controls';
-    container.style.position = 'fixed';
-    container.style.left = '10px';
-    container.style.top = '10px';
+    container.style.position = 'sticky';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.right = '0';
     container.style.zIndex = '250';
     container.style.display = 'flex';
+    container.style.flexWrap = 'wrap';
     container.style.alignItems = 'center';
     container.style.gap = '6px';
+    container.style.padding = '8px 10px';
+    container.style.marginBottom = '8px';
+    container.style.background = '#fff';
+    container.style.borderBottom = '1px solid #ddd';
 
     var toneLabel = document.createElement('span');
     toneLabel.textContent = 'Tom:';
