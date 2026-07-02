@@ -378,6 +378,258 @@
 
     // Garante que o display de tom e a URL estejam sincronizados
     applyTransposeToAllPres();
+    createWarmPadPlayer();
+  }
+
+  // --- Warm Pad Player ---
+  var PAD_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  var MAJOR_SCALE_INTERVALS = [0, 2, 4, 5, 7, 9, 11];
+  var PAD_BASE_PATH = '../Warm Pads/';
+  var padAudio = null;
+  var padPlayingNote = null;
+  var padScale = 'C';
+  var padCustomNotes = [];
+  var padPanelEl = null;
+  var padGridEl = null;
+  var padCustomEl = null;
+  var padScaleSelectEl = null;
+
+  function getMajorScale(root) {
+    var idx = PAD_NOTES.indexOf(root);
+    if (idx === -1) return PAD_NOTES.slice();
+    return MAJOR_SCALE_INTERVALS.map(function (i) {
+      return PAD_NOTES[(idx + i) % 12];
+    });
+  }
+
+  function getPadFilePath(note) {
+    var num = PAD_NOTES.indexOf(note) + 1;
+    var padded = num < 10 ? '0' + num : String(num);
+    // "#" vira fragmento na URL — precisa ser %23 (ex.: C%23.mp3)
+    var filename = padded + ' - WARM PAD - ' + note.replace(/#/g, '%23') + '.mp3';
+    var relativePath = PAD_BASE_PATH + filename;
+    try {
+      return new URL(relativePath, window.location.href).href;
+    } catch (e) {
+      return encodeURI(relativePath);
+    }
+  }
+
+  function getVisiblePadNotes() {
+    if (padScale === 'custom') {
+      return padCustomNotes.slice();
+    }
+    return getMajorScale(padScale);
+  }
+
+  function stopPadAudio() {
+    if (padAudio) {
+      padAudio.pause();
+      padAudio.currentTime = 0;
+      padAudio = null;
+    }
+    padPlayingNote = null;
+    if (padGridEl) {
+      var active = padGridEl.querySelectorAll('.warm-pad-btn.active');
+      for (var i = 0; i < active.length; i++) {
+        active[i].classList.remove('active');
+      }
+    }
+  }
+
+  function playPadNote(note) {
+    if (padPlayingNote === note) {
+      stopPadAudio();
+      return;
+    }
+    stopPadAudio();
+    padAudio = new Audio(getPadFilePath(note));
+    padAudio.loop = true;
+    padPlayingNote = note;
+    padAudio.play().catch(function (err) {
+      console.error('Warm Pad:', note, getPadFilePath(note), err);
+    });
+    if (padGridEl) {
+      var btn = padGridEl.querySelector('[data-note="' + note + '"]');
+      if (btn) btn.classList.add('active');
+    }
+  }
+
+  function getScaleFromUrl() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var escala = params.get('escala');
+      if (!escala) return { scale: 'C', customNotes: [] };
+      if (escala === 'custom' || escala === 'personalizado') {
+        var notas = params.get('notas') || '';
+        var notes = notas.split(',').map(function (n) { return n.trim(); }).filter(function (n) {
+          return PAD_NOTES.indexOf(n) !== -1;
+        });
+        return { scale: 'custom', customNotes: notes };
+      }
+      if (PAD_NOTES.indexOf(escala) !== -1) {
+        return { scale: escala, customNotes: [] };
+      }
+      return { scale: 'C', customNotes: [] };
+    } catch (e) {
+      return { scale: 'C', customNotes: [] };
+    }
+  }
+
+  function setScaleInUrl(scale, customNotes) {
+    try {
+      var url = new URL(window.location.href);
+      if (scale === 'custom') {
+        url.searchParams.set('escala', 'custom');
+        if (customNotes.length) {
+          url.searchParams.set('notas', customNotes.join(','));
+        } else {
+          url.searchParams.delete('notas');
+        }
+      } else if (scale === 'C') {
+        url.searchParams.delete('escala');
+        url.searchParams.delete('notas');
+      } else {
+        url.searchParams.set('escala', scale);
+        url.searchParams.delete('notas');
+      }
+      window.history.replaceState(null, '', url.toString());
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function renderPadGrid() {
+    if (!padGridEl) return;
+    padGridEl.innerHTML = '';
+    var notes = getVisiblePadNotes();
+    notes.forEach(function (note) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'warm-pad-btn';
+      btn.setAttribute('data-note', note);
+      if (note === padPlayingNote) btn.classList.add('active');
+
+      var label = document.createElement('span');
+      label.className = 'pad-label';
+      label.textContent = note;
+      btn.appendChild(label);
+
+      btn.addEventListener('click', function () {
+        playPadNote(note);
+      });
+
+      padGridEl.appendChild(btn);
+    });
+  }
+
+  function renderCustomCheckboxes() {
+    if (!padCustomEl) return;
+    padCustomEl.innerHTML = '';
+    PAD_NOTES.forEach(function (note) {
+      var lbl = document.createElement('label');
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = note;
+      cb.checked = padCustomNotes.indexOf(note) !== -1;
+      cb.addEventListener('change', function () {
+        if (cb.checked) {
+          if (padCustomNotes.indexOf(note) === -1) padCustomNotes.push(note);
+        } else {
+          padCustomNotes = padCustomNotes.filter(function (n) { return n !== note; });
+        }
+        padCustomNotes.sort(function (a, b) {
+          return PAD_NOTES.indexOf(a) - PAD_NOTES.indexOf(b);
+        });
+        setScaleInUrl('custom', padCustomNotes);
+        renderPadGrid();
+      });
+      lbl.appendChild(cb);
+      lbl.appendChild(document.createTextNode(note));
+      padCustomEl.appendChild(lbl);
+    });
+  }
+
+  function updatePadScaleUI() {
+    if (padScaleSelectEl) padScaleSelectEl.value = padScale;
+    if (padCustomEl) {
+      padCustomEl.classList.toggle('visible', padScale === 'custom');
+    }
+    var visible = getVisiblePadNotes();
+    if (padPlayingNote && visible.indexOf(padPlayingNote) === -1) {
+      stopPadAudio();
+    }
+    renderPadGrid();
+  }
+
+  function createWarmPadPlayer() {
+    if (document.querySelector('.warm-pad-toggle')) return;
+
+    var urlScale = getScaleFromUrl();
+    padScale = urlScale.scale;
+    padCustomNotes = urlScale.customNotes;
+
+    var toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.className = 'warm-pad-toggle';
+    toggleBtn.textContent = 'Mostrar Pad';
+
+    padPanelEl = document.createElement('div');
+    padPanelEl.className = 'warm-pad-panel';
+
+    var controls = document.createElement('div');
+    controls.className = 'warm-pad-controls';
+
+    var scaleLabel = document.createElement('label');
+    scaleLabel.textContent = 'Escala:';
+    scaleLabel.setAttribute('for', 'warm-pad-scale');
+
+    padScaleSelectEl = document.createElement('select');
+    padScaleSelectEl.id = 'warm-pad-scale';
+    PAD_NOTES.forEach(function (note) {
+      var opt = document.createElement('option');
+      opt.value = note;
+      opt.textContent = note + ' maior';
+      padScaleSelectEl.appendChild(opt);
+    });
+    var customOpt = document.createElement('option');
+    customOpt.value = 'custom';
+    customOpt.textContent = 'Personalizado';
+    padScaleSelectEl.appendChild(customOpt);
+    padScaleSelectEl.value = padScale;
+
+    padScaleSelectEl.addEventListener('change', function () {
+      padScale = padScaleSelectEl.value;
+      if (padScale !== 'custom') {
+        padCustomNotes = [];
+      }
+      setScaleInUrl(padScale, padCustomNotes);
+      updatePadScaleUI();
+    });
+
+    controls.appendChild(scaleLabel);
+    controls.appendChild(padScaleSelectEl);
+
+    padCustomEl = document.createElement('div');
+    padCustomEl.className = 'warm-pad-custom';
+
+    padGridEl = document.createElement('div');
+    padGridEl.className = 'warm-pad-grid';
+
+    padPanelEl.appendChild(controls);
+    padPanelEl.appendChild(padCustomEl);
+    padPanelEl.appendChild(padGridEl);
+
+    toggleBtn.addEventListener('click', function () {
+      var visible = padPanelEl.classList.toggle('visible');
+      toggleBtn.textContent = visible ? 'Ocultar Pad' : 'Mostrar Pad';
+    });
+
+    renderCustomCheckboxes();
+    updatePadScaleUI();
+
+    document.body.appendChild(toggleBtn);
+    document.body.appendChild(padPanelEl);
   }
 
   // Cria controles de tom no topo quando não houver iframe (ou sempre exibe controles no topo)
