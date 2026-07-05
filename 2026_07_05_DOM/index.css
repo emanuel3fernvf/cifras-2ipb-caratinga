@@ -66,9 +66,85 @@
     background: #e56600;
 }
 
+.video-sticky-toggle.is-active {
+    background: #cc5500;
+}
+
+.video-sticky-toggle.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 10px;
+    min-width: 32px;
+}
+
+.tone-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.tone-toolbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.toolbar-extra-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.copy-dropdown {
+    position: relative;
+}
+
+.copy-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 300;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    overflow: hidden;
+}
+
+.copy-dropdown-menu[hidden] {
+    display: none;
+}
+
+.copy-dropdown-option {
+    display: block;
+    width: 100%;
+    border: none;
+    background: #fff;
+    color: #222;
+    padding: 10px 14px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.copy-dropdown-option:hover {
+    background: #fff3e8;
+}
+
+body.chords-hidden .line-chord {
+    display: none;
+}
+
 .strophe {
     margin: 0;
     padding: 0;
+}
+
+.strophe .line {
+    display: block;
 }
 
 .pre-intro-fala,

@@ -120,7 +120,7 @@
         var escaped = escapeHtml(workingLine);
         var spanClass = chordOnly ? ' line-chord' : '';
         return '<span class="line' + spanClass + '">' + escaped + '</span>';
-      }).join('\n');
+      }).join('');
       return '<div class="strophe">' + inner + '</div>';
     }).join('\n');
     pre.innerHTML = html;
@@ -137,6 +137,10 @@
   // --- Transposição de tom ---
   var currentTranspose = 0;
   var transposeDisplayEl = null;
+
+  // --- Ocultar cifra ---
+  var chordsHidden = false;
+  var hideChordsBtnEl = null;
 
   function stepScroll(timestamp) {
     if (!isScrolling) {
@@ -215,6 +219,171 @@
     });
   }
 
+  // --- Utilidades de ocultar cifra na URL ---
+  function getHideChordsFromUrl() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      return params.get('oc') === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function setHideChordsInUrl(hidden) {
+    try {
+      var url = new URL(window.location.href);
+      if (hidden) {
+        url.searchParams.set('oc', '1');
+      } else {
+        url.searchParams.delete('oc');
+      }
+      window.history.replaceState(null, '', url.toString());
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function applyHideChords(hidden) {
+    chordsHidden = hidden;
+    document.body.classList.toggle('chords-hidden', hidden);
+    setHideChordsInUrl(hidden);
+    if (hideChordsBtnEl) {
+      hideChordsBtnEl.classList.toggle('is-active', hidden);
+      hideChordsBtnEl.title = hidden ? 'Mostrar cifra' : 'Ocultar cifra';
+    }
+  }
+
+  function getLyricsText(lyricsOnly) {
+    var pres = document.querySelectorAll('body > pre');
+    var parts = [];
+
+    for (var p = 0; p < pres.length; p++) {
+      var strophes = pres[p].querySelectorAll('.strophe');
+      var stropheTexts = [];
+
+      for (var s = 0; s < strophes.length; s++) {
+        var lines = strophes[s].querySelectorAll('.line');
+        var lineTexts = [];
+
+        for (var l = 0; l < lines.length; l++) {
+          var lineEl = lines[l];
+          if (lyricsOnly && lineEl.classList.contains('line-chord')) continue;
+          lineTexts.push(lineEl.textContent);
+        }
+
+        if (lineTexts.length) {
+          stropheTexts.push(lineTexts.join('\n'));
+        }
+      }
+
+      if (stropheTexts.length) {
+        parts.push(stropheTexts.join('\n\n'));
+      }
+    }
+
+    return parts.join('\n\n');
+  }
+
+  function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy') ? resolve() : reject();
+      } catch (e) {
+        reject(e);
+      }
+      document.body.removeChild(ta);
+    });
+  }
+
+  function createSvgIcon(pathD) {
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    svg.setAttribute('width', '16');
+    svg.setAttribute('height', '16');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'currentColor');
+    svg.setAttribute('aria-hidden', 'true');
+    var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', pathD);
+    svg.appendChild(path);
+    return svg;
+  }
+
+  var ICON_COPY = 'M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z';
+  var ICON_VISIBILITY_OFF = 'M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75l-1.73-1.73c-.55.95-1.26 1.78-2.09 2.44L12 7zm-4.27 3.77L3.41 6.41 2 7.82l3.53 3.53C5.21 12.47 5 13.69 5 15c0 2.76 2.24 5 5 5 .88 0 1.71-.23 2.43-.63l-2.07-2.07c-.54.17-1.11.27-1.7.27-2.21 0-4-1.79-4-4 0-.59.1-1.16.27-1.7zM12 4.5c3.73 0 6.83 2.36 8.01 5.66l1.73-1.73C20.55 4.84 16.48 2 12 2 10.47 2 9.03 2.38 7.79 3.03L9.4 4.64C10.15 4.22 11.04 4 12 4.5zM2 4.27l2.75 2.75C3.08 8.26 2 10.9 2 13.5c0 5.52 4.48 10 10 10 2.45 0 4.69-.88 6.43-2.34l2.28 2.28 1.41-1.41L3.41 2.86 2 4.27z';
+
+  function createToolbarExtraRow(parent) {
+    if (!document.querySelector('body > pre')) return;
+    if (parent.querySelector('.toolbar-extra-row')) return;
+
+    var row = document.createElement('div');
+    row.className = 'toolbar-extra-row';
+
+    var dropdown = document.createElement('div');
+    dropdown.className = 'copy-dropdown';
+
+    var btnCopy = document.createElement('button');
+    btnCopy.type = 'button';
+    btnCopy.className = 'video-sticky-toggle icon-btn';
+    btnCopy.title = 'copiar';
+    btnCopy.appendChild(createSvgIcon(ICON_COPY));
+
+    var menu = document.createElement('div');
+    menu.className = 'copy-dropdown-menu';
+    menu.hidden = true;
+
+    function addMenuOption(label, lyricsOnly) {
+      var opt = document.createElement('button');
+      opt.type = 'button';
+      opt.className = 'copy-dropdown-option';
+      opt.textContent = label;
+      opt.addEventListener('click', function () {
+        menu.hidden = true;
+        copyToClipboard(getLyricsText(lyricsOnly)).catch(function () {});
+      });
+      menu.appendChild(opt);
+    }
+
+    addMenuOption('Copiar tudo', false);
+    addMenuOption('Copiar somente letra', true);
+
+    btnCopy.addEventListener('click', function (e) {
+      e.stopPropagation();
+      menu.hidden = !menu.hidden;
+    });
+
+    document.addEventListener('click', function () {
+      menu.hidden = true;
+    });
+
+    dropdown.appendChild(btnCopy);
+    dropdown.appendChild(menu);
+
+    hideChordsBtnEl = document.createElement('button');
+    hideChordsBtnEl.type = 'button';
+    hideChordsBtnEl.className = 'video-sticky-toggle icon-btn';
+    hideChordsBtnEl.title = chordsHidden ? 'Mostrar cifra' : 'Ocultar cifra';
+    hideChordsBtnEl.appendChild(createSvgIcon(ICON_VISIBILITY_OFF));
+    if (chordsHidden) hideChordsBtnEl.classList.add('is-active');
+
+    hideChordsBtnEl.addEventListener('click', function () {
+      applyHideChords(!chordsHidden);
+    });
+
+    row.appendChild(dropdown);
+    row.appendChild(hideChordsBtnEl);
+    parent.appendChild(row);
+  }
+
   function updateSpeedDisplay(span) {
     span.textContent = speed + ' px/s';
   }
@@ -278,7 +447,7 @@
   }
 
   function createVideoStickyToggle() {
-    if (document.querySelector('.video-sticky-toggle')) return;
+    if (document.querySelector('.tone-toolbar')) return;
 
     var iframe = document.querySelector('iframe.sticky-top');
     if (!iframe) return;
@@ -286,9 +455,13 @@
     // Garante que começa não fixo
     iframe.classList.remove('sticky-fixed');
 
-    var container = document.createElement('div');
-    container.style.textAlign = 'left';
-    container.style.margin = '4px 0 8px 0';
+    var toolbar = document.createElement('div');
+    toolbar.className = 'tone-toolbar';
+    toolbar.style.textAlign = 'left';
+    toolbar.style.margin = '4px 0 8px 0';
+
+    var row1 = document.createElement('div');
+    row1.className = 'tone-toolbar-row';
 
     var btnSticky = document.createElement('button');
     btnSticky.type = 'button';
@@ -342,28 +515,36 @@
       applyTransposeToAllPres();
     });
 
-    container.appendChild(toneLabel);
-    container.appendChild(toneValue);
-    container.appendChild(btnToneDown);
-    container.appendChild(btnToneUp);
     btnToneReset.addEventListener('click', function () {
       currentTranspose = 0;
       applyTransposeToAllPres();
     });
-    container.appendChild(btnToneReset);
-    container.appendChild(btnSticky);
+
+    row1.appendChild(toneLabel);
+    row1.appendChild(toneValue);
+    row1.appendChild(btnToneDown);
+    row1.appendChild(btnToneUp);
+    row1.appendChild(btnToneReset);
+    row1.appendChild(btnSticky);
+
+    toolbar.appendChild(row1);
+    createToolbarExtraRow(toolbar);
 
     // Insere logo após o iframe
     if (iframe.parentNode) {
-      iframe.parentNode.insertBefore(container, iframe.nextSibling);
+      iframe.parentNode.insertBefore(toolbar, iframe.nextSibling);
     } else {
-      document.body.insertBefore(container, document.body.firstChild);
+      document.body.insertBefore(toolbar, document.body.firstChild);
     }
   }
 
   function init() {
-    // Carrega transposição inicial da URL (parâmetro ?tr=)
+    // Carrega transposição e ocultar cifra da URL
     currentTranspose = getTransposeFromUrl();
+    chordsHidden = getHideChordsFromUrl();
+    if (chordsHidden) {
+      document.body.classList.add('chords-hidden');
+    }
 
     var pres = document.querySelectorAll('body > pre');
     for (var i = 0; i < pres.length; i++) {
@@ -638,20 +819,19 @@
     if (document.querySelector('.top-tone-controls')) return;
 
     var container = document.createElement('div');
-    container.className = 'top-tone-controls';
+    container.className = 'top-tone-controls tone-toolbar';
     container.style.position = 'sticky';
     container.style.top = '0';
     container.style.left = '0';
     container.style.right = '0';
     container.style.zIndex = '250';
-    container.style.display = 'flex';
-    container.style.flexWrap = 'wrap';
-    container.style.alignItems = 'center';
-    container.style.gap = '6px';
     container.style.padding = '8px 10px';
     container.style.marginBottom = '8px';
     container.style.background = '#fff';
     container.style.borderBottom = '1px solid #ddd';
+
+    var row1 = document.createElement('div');
+    row1.className = 'tone-toolbar-row';
 
     var toneLabel = document.createElement('span');
     toneLabel.textContent = 'Tom:';
@@ -687,11 +867,14 @@
       applyTransposeToAllPres();
     });
 
-    container.appendChild(toneLabel);
-    container.appendChild(toneValue);
-    container.appendChild(btnToneDown);
-    container.appendChild(btnToneUp);
-    container.appendChild(btnToneReset);
+    row1.appendChild(toneLabel);
+    row1.appendChild(toneValue);
+    row1.appendChild(btnToneDown);
+    row1.appendChild(btnToneUp);
+    row1.appendChild(btnToneReset);
+
+    container.appendChild(row1);
+    createToolbarExtraRow(container);
 
     document.body.insertBefore(container, document.body.firstChild);
   }
