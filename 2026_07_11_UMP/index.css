@@ -1,14 +1,32 @@
+/* Reserva espaço no topo para o botão "Mostrar Pad" (fixed) */
+:root {
+    --video-top-offset: 52px;
+    --video-max-width: 720px;
+}
+
 .sticky-top {
     display: block;
-    width: 200px;
-    height: 150px;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--video-max-width);
+    height: auto;
+    aspect-ratio: 16 / 9;
+    margin: var(--video-top-offset) auto 0;
+    border: none;
 }
 
 .sticky-top.sticky-fixed {
     position: sticky;
-    top: 0;
+    top: var(--video-top-offset);
     z-index: 100;
     background: white;
+}
+
+@media (max-width: 639px) {
+    .sticky-top {
+        max-width: none;
+        width: 100%;
+    }
 }
 
 .line-chord {
