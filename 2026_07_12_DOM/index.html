@@ -75,6 +75,28 @@
         #content a:hover {
             background-color: #0052c9;
         }
+
+        .song-link-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .song-link-row a {
+            margin-bottom: 0;
+            flex: 1;
+        }
+
+        .song-link-row a.capo-btn {
+            flex: 0 0 auto;
+            background-color: #ff7700;
+            padding: 10px 14px;
+            white-space: nowrap;
+        }
+
+        .song-link-row a.capo-btn:hover {
+            background-color: #e56600;
+        }
     </style>
 </head>
 
@@ -95,7 +117,10 @@
             <a href="Amigo%20de%20Deus%20-%20Adhemar%20de%20Campos.html">Amigo de Deus — Adhemar de Campos</a>
 
             <p class="section-title">Pós-mensagem</p>
-            <a href="Tu%20%C3%89s%20%2B%20%C3%89%20Ele%20-%20Emi%20Sousa.html">Tu És + É Ele — Emi Sousa</a>
+            <div class="song-link-row">
+                <a href="Tu%20%C3%89s%20%2B%20%C3%89%20Ele%20-%20Emi%20Sousa.html">Tu És + É Ele — Emi Sousa</a>
+                <a class="capo-btn" href="Tu%20%C3%89s%20%2B%20%C3%89%20Ele%20-%20Emi%20Sousa.html?tr=-2">Capo na 2ª</a>
+            </div>
         </div>
     </div>
 </body>
