@@ -538,7 +538,258 @@
     }
   }
 
+  // --- Exportar para Holyrics (índice) ---
+
+  /**
+   * HOLYRICS_HYPHEN_WORDS — allowlist de hífens ortográficos (export Holyrics).
+   *
+   * IA / agentes: ao criar ou editar cifras nesta pasta (HTMLs com <pre>),
+   * varrer as letras por palavras com hífen único (-) que sejam gramaticalmente
+   * corretas em português (clíticos, compostos, etc.) e ADICIONAR aqui em
+   * minúsculas se ainda não estiverem. Não incluir melismas (Rei--no, tu----a).
+   * Não remover entradas sem motivo.
+   */
+  var HOLYRICS_HYPHEN_WORDS = {
+    'dá-me': true,
+    'todo-poderoso': true
+  };
+
+  function cleanLyricHyphensForHolyrics(line) {
+    // 1) Melisma claro: 2+ hífens consecutivos
+    var cleaned = String(line || '').replace(/-{2,}/g, '');
+
+    // 2) Tokens com hífen único: preserva só se estiver no dicionário
+    cleaned = cleaned.replace(/\S+/g, function (token) {
+      if (token.indexOf('-') === -1) return token;
+      // Se ainda houver 2+ hífens (não deveria), remove
+      if (/-{2,}/.test(token)) {
+        token = token.replace(/-{2,}/g, '');
+      }
+      if (token.indexOf('-') === -1) return token;
+
+      // Compara sem pontuação ao redor (mantém pontuação no resultado)
+      var match = token.match(/^([^a-zA-Zà-úÀ-Ú]*)([a-zA-Zà-úÀ-Ú]+(?:-[a-zA-Zà-úÀ-Ú]+)+)([^a-zA-Zà-úÀ-Ú]*)$/);
+      if (!match) {
+        // Hífen residual atípico: remove hífens
+        return token.replace(/-/g, '');
+      }
+      var prefix = match[1];
+      var core = match[2];
+      var suffix = match[3];
+      var key = core.toLowerCase();
+      if (HOLYRICS_HYPHEN_WORDS[key]) {
+        return prefix + core + suffix;
+      }
+      return prefix + core.replace(/-/g, '') + suffix;
+    });
+
+    // 3) Espaços múltiplos
+    cleaned = cleaned.replace(/ {2,}/g, ' ');
+    return cleaned;
+  }
+
+  function getSongLinksFromIndex() {
+    var content = document.getElementById('content');
+    if (!content) return [];
+    var anchors = content.querySelectorAll('a[href]');
+    var seen = {};
+    var urls = [];
+    for (var i = 0; i < anchors.length; i++) {
+      var href = anchors[i].getAttribute('href') || '';
+      if (!/\.html/i.test(href)) continue;
+      var path = href.split('?')[0];
+      if (seen[path]) continue;
+      seen[path] = true;
+      urls.push(path);
+    }
+    return urls;
+  }
+
+  function processPreTextForHolyrics(rawText, withChords) {
+    var lines = (rawText || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+    var start = -1;
+    for (var i = 0; i < lines.length; i++) {
+      if (isChordLine(lines[i])) {
+        start = i;
+        break;
+      }
+    }
+    if (start === -1) return '';
+
+    var out = [];
+    for (var j = start; j < lines.length; j++) {
+      var line = lines[j];
+      if (/[\[\]]/.test(line)) continue;
+      if (isChordLine(line)) {
+        if (withChords) {
+          out.push('// ' + line.trimEnd());
+        }
+        continue;
+      }
+      out.push(cleanLyricHyphensForHolyrics(line));
+    }
+
+    // Compacta linhas vazias no início/fim e grupos de vazias em uma só
+    while (out.length && out[0].trim() === '') out.shift();
+    while (out.length && out[out.length - 1].trim() === '') out.pop();
+
+    var compacted = [];
+    var prevEmpty = false;
+    for (var k = 0; k < out.length; k++) {
+      var empty = out[k].trim() === '';
+      if (empty) {
+        if (!prevEmpty) compacted.push('');
+        prevEmpty = true;
+      } else {
+        compacted.push(out[k]);
+        prevEmpty = false;
+      }
+    }
+    return compacted.join('\n');
+  }
+
+  function textToParagraphs(fullText) {
+    if (!fullText) return [];
+    return fullText.split(/\n\s*\n/).map(function (p) {
+      return p.replace(/^\n+|\n+$/g, '').trimEnd();
+    }).filter(function (p) {
+      return p.trim() !== '';
+    });
+  }
+
+  function buildHolyricsSong(id, title, artist, fullText) {
+    var paragraphs = textToParagraphs(fullText);
+    return {
+      id: id,
+      title: title,
+      artist: artist,
+      author: '',
+      note: '',
+      copyright: '',
+      language: '',
+      key: '',
+      bpm: 0.0,
+      time_sig: '',
+      midi: null,
+      order: '',
+      arrangements: [],
+      lyrics: {
+        full_text: paragraphs.join('\n\n'),
+        full_text_with_comment: null,
+        paragraphs: paragraphs.map(function (p, idx) {
+          return {
+            number: idx + 1,
+            description: '',
+            text: p,
+            text_with_comment: null,
+            translations: null
+          };
+        })
+      },
+      streaming: {
+        audio: { spotify: '', youtube: '', deezer: '' },
+        backing_track: { spotify: '', youtube: '', deezer: '' }
+      },
+      extras: { extra: '' }
+    };
+  }
+
+  function downloadJson(filename, data) {
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function parseSongHtml(html) {
+    var doc = new DOMParser().parseFromString(html, 'text/html');
+    var titleEl = doc.querySelector('.holyrics-title');
+    var artistEl = doc.querySelector('.holyrics-artist');
+    var pre = doc.querySelector('body > pre');
+    return {
+      title: titleEl ? (titleEl.textContent || '').trim() : '',
+      artist: artistEl ? (artistEl.textContent || '').trim() : '',
+      preText: pre ? (pre.textContent || '') : ''
+    };
+  }
+
+  function exportHolyrics(mode) {
+    var withChords = mode === 'cifra';
+    var urls = getSongLinksFromIndex();
+    if (!urls.length) {
+      window.alert('Nenhuma cifra encontrada no índice.');
+      return Promise.resolve();
+    }
+
+    if (window.location.protocol === 'file:') {
+      window.alert('Abra o índice via servidor HTTP local (ex.: python -m http.server) para exportar.');
+      return Promise.resolve();
+    }
+
+    var baseId = Date.now();
+    return Promise.all(urls.map(function (url) {
+      return fetch(url).then(function (res) {
+        if (!res.ok) throw new Error('Falha ao carregar ' + url);
+        return res.text();
+      });
+    })).then(function (htmls) {
+      var songs = htmls.map(function (html, idx) {
+        var parsed = parseSongHtml(html);
+        var fullText = processPreTextForHolyrics(parsed.preText, withChords);
+        return buildHolyricsSong(
+          baseId + idx,
+          parsed.title || ('Música ' + (idx + 1)),
+          parsed.artist || '',
+          fullText
+        );
+      });
+      var suffix = withChords ? 'cifra' : 'letra';
+      downloadJson('2026-07-12_holyrics-' + suffix + '.json', songs);
+    }).catch(function (err) {
+      console.error(err);
+      window.alert('Erro ao exportar: ' + (err && err.message ? err.message : String(err)));
+    });
+  }
+
+  function initHolyricsExport() {
+    var btn = document.getElementById('holyrics-export-btn');
+    var menu = document.getElementById('holyrics-export-menu');
+    if (!btn || !menu) return;
+
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      menu.hidden = !menu.hidden;
+    });
+
+    menu.addEventListener('click', function (e) {
+      e.stopPropagation();
+    });
+
+    var options = menu.querySelectorAll('.holyrics-export-option');
+    for (var i = 0; i < options.length; i++) {
+      options[i].addEventListener('click', function () {
+        var mode = this.getAttribute('data-mode') || 'letra';
+        menu.hidden = true;
+        exportHolyrics(mode);
+      });
+    }
+
+    document.addEventListener('click', function () {
+      menu.hidden = true;
+    });
+  }
+
   function init() {
+    if (document.getElementById('holyrics-export')) {
+      initHolyricsExport();
+      return;
+    }
+
     // Carrega transposição e ocultar cifra da URL
     currentTranspose = getTransposeFromUrl();
     chordsHidden = getHideChordsFromUrl();
