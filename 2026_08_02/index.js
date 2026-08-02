@@ -6,7 +6,7 @@
   'use strict';
 
   // Acorde: nota (A-G, opcional #/b) + qualidade (m, maj, dim, etc.) + número (+ opcional M, ex: G7M) + opcional /baixo
-  var CHORD_REGEX = /[A-G][#b]?(?:m|min|maj|dim|aug|sus|add)?[0-9]*(?:M)?(?:\/([A-G][#b]?))?/g;
+  var CHORD_REGEX = /[A-G][#b]?(?:m|min|maj|dim|aug|sus|add|°)?[0-9]*(?:M)?(?:\/([A-G][#b]?))?/g;
 
   // Notas cromáticas em sustenidos (usadas para transposição)
   var NOTES_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -57,6 +57,46 @@
     return div.innerHTML;
   }
 
+  function getChordMatches(line) {
+    var chordRegex = new RegExp(CHORD_REGEX.source, CHORD_REGEX.flags);
+    var matches = [];
+    var match;
+
+    while ((match = chordRegex.exec(line)) !== null) {
+      matches.push({
+        text: match[0],
+        start: match.index,
+        end: match.index + match[0].length
+      });
+    }
+
+    return matches;
+  }
+
+  function renderChordLineContents(line) {
+    if (!localEditor || !localEditor.enabled) return escapeHtml(line);
+
+    var matches = getChordMatches(line);
+    var pieces = [];
+    var cursor = 0;
+
+    for (var i = 0; i < matches.length; i++) {
+      var chord = matches[i];
+      pieces.push(escapeHtml(line.slice(cursor, chord.start)));
+      pieces.push(
+        '<span class="editable-chord" tabindex="0" role="button" aria-selected="false"' +
+        ' aria-label="Acorde" data-chord-start="' + chord.start +
+        '" data-chord-end="' + chord.end + '" draggable="' +
+        (currentTranspose === 0 && !localEditor.busy ? 'true' : 'false') + '">' +
+        escapeHtml(chord.text) + '</span>'
+      );
+      cursor = chord.end;
+    }
+
+    pieces.push(escapeHtml(line.slice(cursor)));
+    return pieces.join('');
+  }
+
   /**
    * Verifica se a linha contém apenas cifras (acordes) e espaços.
    * Linhas com letra ou marcadores de seção ([Intro], [Verso 1] etc.) retornam false.
@@ -101,13 +141,14 @@
         // Linha vazia: apenas separa estrofes, não entra em nenhuma
         flushStrophe();
       } else {
-        current.push(line);
+        current.push({ text: line, index: i });
       }
     }
     flushStrophe();
 
     var html = strophes.map(function (stropheLines) {
-      var inner = stropheLines.map(function (line) {
+      var inner = stropheLines.map(function (lineData) {
+        var line = lineData.text;
         var chordOnly = isChordLine(line);
         var workingLine = line;
 
@@ -117,12 +158,17 @@
           });
         }
 
-        var escaped = escapeHtml(workingLine);
+        var escaped = chordOnly ? renderChordLineContents(workingLine) : escapeHtml(workingLine);
         var spanClass = chordOnly ? ' line-chord' : '';
-        return '<span class="line' + spanClass + '">' + escaped + '</span>';
+        return '<span class="line' + spanClass + '" data-line-index="' +
+          lineData.index + '">' + escaped + '</span>';
       }).join('');
       return '<div class="strophe">' + inner + '</div>';
     }).join('\n');
+    if (localEditor && localEditor.pre === pre) {
+      localEditor.selectedChord = null;
+      hideEditorContextMenu();
+    }
     pre.innerHTML = html;
   }
 
@@ -141,6 +187,26 @@
   // --- Ocultar cifra ---
   var chordsHidden = false;
   var hideChordsBtnEl = null;
+
+  // --- Editor local de cifras ---
+  var localEditor = {
+    enabled: false,
+    busy: false,
+    pre: null,
+    preText: '',
+    revision: null,
+    path: '',
+    selectedChord: null,
+    editButton: null,
+    rewriteButton: null,
+    palette: null,
+    paletteGrid: null,
+    contextMenu: null,
+    modal: null,
+    drag: null,
+    suppressClick: false,
+    interactionsInitialized: false
+  };
 
   function stepScroll(timestamp) {
     if (!isScrolling) {
@@ -210,6 +276,7 @@
     }
     updateTransposeDisplay();
     setTransposeInUrl(currentTranspose);
+    refreshLocalEditorUi();
   }
 
   function updateTransposeDisplay() {
@@ -320,6 +387,40 @@
 
   var ICON_COPY = 'M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z';
   var ICON_VISIBILITY_OFF = 'M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75l-1.73-1.73c-.55.95-1.26 1.78-2.09 2.44L12 7zm-4.27 3.77L3.41 6.41 2 7.82l3.53 3.53C5.21 12.47 5 13.69 5 15c0 2.76 2.24 5 5 5 .88 0 1.71-.23 2.43-.63l-2.07-2.07c-.54.17-1.11.27-1.7.27-2.21 0-4-1.79-4-4 0-.59.1-1.16.27-1.7zM12 4.5c3.73 0 6.83 2.36 8.01 5.66l1.73-1.73C20.55 4.84 16.48 2 12 2 10.47 2 9.03 2.38 7.79 3.03L9.4 4.64C10.15 4.22 11.04 4 12 4.5zM2 4.27l2.75 2.75C3.08 8.26 2 10.9 2 13.5c0 5.52 4.48 10 10 10 2.45 0 4.69-.88 6.43-2.34l2.28 2.28 1.41-1.41L3.41 2.86 2 4.27z';
+  var ICON_EDIT = 'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z';
+  var ICON_REWRITE = 'M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.09 0-7.19 3.72-6.39 7.69L3.55 9.63C3.2 14.67 7.19 19 12 19c3.38 0 6.31-1.87 7.84-4.63l-1.76-1.02C16.91 15.52 14.62 17 12 17c-3.72 0-6.66-3.45-5.86-7.1l2.58 2.58L10.14 11 5 5.86.86 10l1.42 1.42 2.03-2.04C3.45 14.48 7.34 19 12 19c4.42 0 8-3.58 8-8 0-2.21-.9-4.21-2.35-5.65z';
+
+  function createLocalEditorToolbarButtons(row) {
+    if (!localEditor.enabled || !row || localEditor.editButton) return;
+
+    var editButton = document.createElement('button');
+    editButton.type = 'button';
+    editButton.className = 'video-sticky-toggle icon-btn local-editor-toolbar-btn';
+    editButton.title = 'Editar';
+    editButton.setAttribute('aria-label', 'Editar cifra completa');
+    editButton.appendChild(createSvgIcon(ICON_EDIT));
+    editButton.addEventListener('click', function () {
+      if (currentTranspose !== 0 || localEditor.busy) return;
+      openFullEditorModal();
+    });
+
+    var rewriteButton = document.createElement('button');
+    rewriteButton.type = 'button';
+    rewriteButton.className = 'video-sticky-toggle icon-btn local-editor-toolbar-btn';
+    rewriteButton.title = 'Reescrever';
+    rewriteButton.setAttribute('aria-label', 'Reescrever cifra no tom exibido');
+    rewriteButton.appendChild(createSvgIcon(ICON_REWRITE));
+    rewriteButton.addEventListener('click', function () {
+      if (currentTranspose === 0 || localEditor.busy) return;
+      openRewriteModal();
+    });
+
+    localEditor.editButton = editButton;
+    localEditor.rewriteButton = rewriteButton;
+    row.appendChild(editButton);
+    row.appendChild(rewriteButton);
+    refreshLocalEditorUi();
+  }
 
   function createToolbarExtraRow(parent) {
     if (!document.querySelector('body > pre')) return;
@@ -381,6 +482,7 @@
 
     row.appendChild(dropdown);
     row.appendChild(hideChordsBtnEl);
+    createLocalEditorToolbarButtons(row);
     parent.appendChild(row);
   }
 
@@ -503,6 +605,7 @@
         iframe.classList.remove('sticky-fixed');
         btnSticky.textContent = 'Fixar vídeo';
       }
+      updatePalettePosition();
     });
 
     btnToneDown.addEventListener('click', function () {
@@ -536,6 +639,1066 @@
     } else {
       document.body.insertBefore(toolbar, document.body.firstChild);
     }
+  }
+
+  function getLocalDocumentPath() {
+    var path = window.location.pathname || '';
+    try {
+      path = decodeURIComponent(path);
+    } catch (e) {
+      // Mantém o pathname codificado se houver sequência inválida.
+    }
+    return path.replace(/^\/+/, '');
+  }
+
+  function fetchEditorJson(url, options) {
+    var requestOptions = options || {};
+    requestOptions.cache = 'no-store';
+    requestOptions.credentials = 'same-origin';
+
+    return fetch(url, requestOptions).then(function (response) {
+      return response.json().catch(function () {
+        return {};
+      }).then(function (payload) {
+        if (!response.ok) {
+          var serverError = payload.error;
+          var message = payload.message;
+          if (serverError && typeof serverError === 'object') {
+            message = serverError.message || message;
+          } else if (typeof serverError === 'string') {
+            message = serverError;
+          }
+          var error = new Error(message || ('Erro HTTP ' + response.status));
+          error.status = response.status;
+          error.payload = payload;
+          throw error;
+        }
+        return payload;
+      });
+    });
+  }
+
+  function showLocalEditorGuidance() {
+    if (document.querySelector('.local-editor-guidance')) return;
+    var guidance = document.createElement('div');
+    guidance.className = 'local-editor-guidance';
+    guidance.textContent = 'Para editar esta cifra, execute python3 local_editor_server.py e abra o endereço local informado.';
+    guidance.setAttribute('role', 'status');
+    var pre = document.querySelector('body > pre');
+    document.body.insertBefore(guidance, pre || document.body.firstChild);
+  }
+
+  function showLocalEditorNotification(message, type) {
+    var container = document.querySelector('.editor-notification-stack');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'editor-notification-stack';
+      container.setAttribute('aria-live', 'polite');
+      document.body.appendChild(container);
+    }
+
+    var notification = document.createElement('div');
+    notification.className = 'editor-notification' + (type ? ' is-' + type : '');
+    notification.textContent = message;
+    container.appendChild(notification);
+
+    window.setTimeout(function () {
+      if (notification.parentNode) notification.parentNode.removeChild(notification);
+      if (!container.childNodes.length && container.parentNode) {
+        container.parentNode.removeChild(container);
+      }
+    }, type === 'error' ? 7000 : 3500);
+  }
+
+  function setLocalEditorBusy(busy) {
+    localEditor.busy = !!busy;
+    document.body.classList.toggle('local-editor-busy', localEditor.busy);
+    refreshLocalEditorUi();
+  }
+
+  function getLocalEditorLines() {
+    return localEditor.preText.split('\n');
+  }
+
+  function buildPreTextWithLine(lineIndex, nextLine) {
+    var lines = getLocalEditorLines();
+    if (lineIndex < 0 || lineIndex >= lines.length) return null;
+    lines[lineIndex] = nextLine;
+    return lines.join('\n');
+  }
+
+  function commitSavedPreText(preText, revision, options) {
+    var saveOptions = options || {};
+    localEditor.preText = preText;
+    localEditor.revision = revision;
+    localEditor.pre.setAttribute('data-original-text', preText);
+
+    if (saveOptions.resetTranspose) currentTranspose = 0;
+
+    processPre(localEditor.pre, currentTranspose);
+    updateTransposeDisplay();
+    setTransposeInUrl(currentTranspose);
+    refreshLocalEditorUi();
+  }
+
+  function saveLocalPreText(nextText, options) {
+    var saveOptions = options || {};
+    if (!localEditor.enabled || localEditor.busy) {
+      return Promise.reject(new Error('O editor está ocupado.'));
+    }
+    if (nextText === localEditor.preText) return Promise.resolve(false);
+
+    var savingLine = saveOptions.lineElement || null;
+    if (savingLine) savingLine.classList.add('is-saving');
+    setLocalEditorBusy(true);
+
+    return fetchEditorJson('/__chord_editor__/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        path: localEditor.path,
+        preText: nextText,
+        expectedRevision: localEditor.revision
+      })
+    }).then(function (result) {
+      if (result.revision == null) throw new Error('O servidor não retornou a nova revisão.');
+      commitSavedPreText(nextText, result.revision, saveOptions);
+      setLocalEditorBusy(false);
+      if (saveOptions.successMessage) {
+        showLocalEditorNotification(saveOptions.successMessage, 'success');
+      }
+      return true;
+    }).catch(function (error) {
+      if (savingLine) savingLine.classList.remove('is-saving');
+      setLocalEditorBusy(false);
+      if (error.status === 409) {
+        showLocalEditorNotification(
+          'O arquivo foi alterado fora do editor. Recarregue a página antes de tentar novamente.',
+          'error'
+        );
+      } else {
+        showLocalEditorNotification(error.message || 'Não foi possível salvar a cifra.', 'error');
+      }
+      throw error;
+    });
+  }
+
+  function createEditorModal(title, primaryLabel) {
+    if (localEditor.modal) localEditor.modal.close(true);
+
+    var overlay = document.createElement('div');
+    overlay.className = 'editor-modal-backdrop';
+
+    var modal = document.createElement('div');
+    modal.className = 'editor-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+
+    var heading = document.createElement('h2');
+    heading.className = 'editor-modal-title';
+    heading.textContent = title;
+
+    var header = document.createElement('div');
+    header.className = 'editor-modal-header';
+    header.appendChild(heading);
+
+    var body = document.createElement('div');
+    body.className = 'editor-modal-body';
+
+    var actions = document.createElement('div');
+    actions.className = 'editor-modal-actions';
+
+    var cancelButton = document.createElement('button');
+    cancelButton.type = 'button';
+    cancelButton.className = 'editor-modal-button';
+    cancelButton.textContent = 'Cancelar';
+
+    var primaryButton = document.createElement('button');
+    primaryButton.type = 'button';
+    primaryButton.className = 'editor-modal-button is-primary';
+    primaryButton.textContent = primaryLabel;
+
+    actions.appendChild(cancelButton);
+    actions.appendChild(primaryButton);
+    modal.appendChild(header);
+    modal.appendChild(body);
+    modal.appendChild(actions);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    var api = {
+      overlay: overlay,
+      body: body,
+      primaryButton: primaryButton,
+      cancelButton: cancelButton,
+      pending: false,
+      close: function (force) {
+        if (api.pending && !force) return;
+        document.removeEventListener('keydown', onModalKeyDown, true);
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        if (localEditor.modal === api) localEditor.modal = null;
+      },
+      setPending: function (pending) {
+        api.pending = !!pending;
+        primaryButton.disabled = api.pending;
+        cancelButton.disabled = api.pending;
+        var fields = modal.querySelectorAll('input, textarea, select');
+        for (var i = 0; i < fields.length; i++) {
+          fields[i].disabled = api.pending;
+        }
+        modal.classList.toggle('is-pending', api.pending);
+      }
+    };
+
+    function onModalKeyDown(event) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        api.close(false);
+        return;
+      }
+
+      if (event.key === 'Tab') {
+        var focusable = Array.prototype.filter.call(
+          modal.querySelectorAll(
+            'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), ' +
+            'select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          ),
+          function (element) {
+            return !element.hidden && element.getAttribute('aria-hidden') !== 'true';
+          }
+        );
+        if (!focusable.length) {
+          event.preventDefault();
+          return;
+        }
+
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        var active = document.activeElement;
+        if (!modal.contains(active)) {
+          event.preventDefault();
+          event.stopPropagation();
+          first.focus();
+        } else if (event.shiftKey && active === first) {
+          event.preventDefault();
+          event.stopPropagation();
+          last.focus();
+        } else if (!event.shiftKey && active === last) {
+          event.preventDefault();
+          event.stopPropagation();
+          first.focus();
+        }
+      }
+    }
+
+    cancelButton.addEventListener('click', function () {
+      api.close(false);
+    });
+    overlay.addEventListener('mousedown', function (event) {
+      if (event.target === overlay) api.close(false);
+    });
+    document.addEventListener('keydown', onModalKeyDown, true);
+    localEditor.modal = api;
+    return api;
+  }
+
+  function openFullEditorModal() {
+    if (!localEditor.enabled || localEditor.busy || currentTranspose !== 0) return;
+
+    var editor = createEditorModal('Editar cifra completa', 'Salvar');
+    editor.overlay.classList.add('editor-modal-full');
+
+    var textarea = document.createElement('textarea');
+    textarea.className = 'editor-modal-input editor-modal-textarea';
+    textarea.value = localEditor.preText;
+    textarea.spellcheck = false;
+    textarea.setAttribute('aria-label', 'Conteúdo completo da cifra');
+    editor.body.appendChild(textarea);
+
+    editor.primaryButton.addEventListener('click', function () {
+      if (editor.pending) return;
+      if (currentTranspose !== 0) {
+        showLocalEditorNotification(
+          'A edição completa está bloqueada enquanto o tom estiver transposto.',
+          'error'
+        );
+        return;
+      }
+      if (textarea.value === localEditor.preText) {
+        editor.close(true);
+        return;
+      }
+      editor.setPending(true);
+      saveLocalPreText(textarea.value, { successMessage: 'Cifra completa salva.' }).then(function () {
+        editor.close(true);
+      }).catch(function () {
+        editor.setPending(false);
+      });
+    });
+
+    window.setTimeout(function () {
+      textarea.focus();
+    }, 0);
+  }
+
+  function getTransposedPreText() {
+    return getLocalEditorLines().map(function (line) {
+      if (!isChordLine(line)) return line;
+      return line.replace(CHORD_REGEX, function (chord) {
+        return transposeChordSymbol(chord, currentTranspose);
+      });
+    }).join('\n');
+  }
+
+  function openRewriteModal() {
+    if (!localEditor.enabled || localEditor.busy || currentTranspose === 0) return;
+
+    var transposeAtOpen = currentTranspose;
+    var editor = createEditorModal('Reescrever cifra', 'Reescrever');
+    var message = document.createElement('p');
+    message.textContent = 'Salvar no arquivo o tom exibido (' +
+      formatTranspose(transposeAtOpen) + ') como o novo tom original?';
+    editor.body.appendChild(message);
+
+    editor.primaryButton.addEventListener('click', function () {
+      if (editor.pending || currentTranspose !== transposeAtOpen) return;
+      editor.setPending(true);
+      saveLocalPreText(getTransposedPreText(), {
+        resetTranspose: true,
+        successMessage: 'Tom exibido salvo como novo original.'
+      }).then(function () {
+        editor.close(true);
+      }).catch(function () {
+        editor.setPending(false);
+      });
+    });
+  }
+
+  function replaceSelectedChord(replacement, targetOverride) {
+    var selected = targetOverride || localEditor.selectedChord;
+    if (!selected || localEditor.busy || currentTranspose !== 0) return Promise.resolve(false);
+
+    var lines = getLocalEditorLines();
+    var line = lines[selected.lineIndex];
+    if (typeof line !== 'string') return Promise.resolve(false);
+    if (line.slice(selected.start, selected.end) !== selected.text) {
+      showLocalEditorNotification('A posição do acorde mudou. Selecione-o novamente.', 'error');
+      return Promise.resolve(false);
+    }
+
+    var nextLine = line.slice(0, selected.start) + replacement + line.slice(selected.end);
+    var nextText = buildPreTextWithLine(selected.lineIndex, nextLine);
+    return saveLocalPreText(nextText, { lineElement: selected.lineElement });
+  }
+
+  function removeSelectedChord() {
+    var selected = localEditor.selectedChord;
+    if (!selected) return Promise.resolve(false);
+    return replaceSelectedChord(new Array(selected.end - selected.start + 1).join(' '));
+  }
+
+  function openChordReplacementModal(initialValue, useCurrentValue) {
+    var selected = localEditor.selectedChord;
+    if (!selected || localEditor.busy || currentTranspose !== 0) return;
+    var target = {
+      element: selected.element,
+      lineElement: selected.lineElement,
+      lineIndex: selected.lineIndex,
+      start: selected.start,
+      end: selected.end,
+      text: selected.text
+    };
+
+    var editor = createEditorModal('Substituir acorde', 'Substituir');
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'editor-modal-input';
+    input.value = useCurrentValue ? target.text : (initialValue || '');
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+    input.setAttribute('aria-label', 'Novo acorde');
+    editor.body.appendChild(input);
+
+    function submitReplacement() {
+      if (editor.pending) return;
+      if (currentTranspose !== 0) {
+        showLocalEditorNotification(
+          'A substituição está bloqueada enquanto o tom estiver transposto.',
+          'error'
+        );
+        return;
+      }
+      var value = input.value;
+      if (!value.trim()) {
+        showLocalEditorNotification('Digite um acorde.', 'error');
+        input.focus();
+        input.select();
+        return;
+      }
+
+      editor.setPending(true);
+      replaceSelectedChord(value, target).then(function () {
+        editor.close(true);
+      }).catch(function () {
+        editor.setPending(false);
+      });
+    }
+
+    editor.primaryButton.addEventListener('click', submitReplacement);
+    input.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        submitReplacement();
+      }
+    });
+
+    window.setTimeout(function () {
+      input.focus();
+      if (useCurrentValue) input.select();
+      else input.setSelectionRange(input.value.length, input.value.length);
+    }, 0);
+  }
+
+  function clearSelectedChord() {
+    var selected = localEditor.selectedChord;
+    if (selected && selected.element) {
+      selected.element.classList.remove('is-selected');
+      selected.element.setAttribute('aria-selected', 'false');
+    }
+    localEditor.selectedChord = null;
+  }
+
+  function selectEditableChord(chordElement) {
+    if (!chordElement || localEditor.modal || currentTranspose !== 0 || localEditor.busy) return false;
+    var lineElement = chordElement.closest('.line-chord');
+    if (!lineElement) return false;
+
+    var lineIndex = parseInt(lineElement.getAttribute('data-line-index'), 10);
+    var start = parseInt(chordElement.getAttribute('data-chord-start'), 10);
+    var end = parseInt(chordElement.getAttribute('data-chord-end'), 10);
+    if (isNaN(lineIndex) || isNaN(start) || isNaN(end)) return false;
+
+    clearSelectedChord();
+    chordElement.classList.add('is-selected');
+    chordElement.setAttribute('aria-selected', 'true');
+    localEditor.selectedChord = {
+      element: chordElement,
+      lineElement: lineElement,
+      lineIndex: lineIndex,
+      start: start,
+      end: end,
+      text: chordElement.textContent || ''
+    };
+    return true;
+  }
+
+  function hideEditorContextMenu() {
+    if (localEditor && localEditor.contextMenu) localEditor.contextMenu.hidden = true;
+  }
+
+  function createEditorContextMenu() {
+    if (localEditor.contextMenu) return;
+
+    var menu = document.createElement('div');
+    menu.className = 'chord-context-menu';
+    menu.hidden = true;
+    menu.setAttribute('role', 'menu');
+
+    var editOption = document.createElement('button');
+    editOption.type = 'button';
+    editOption.className = 'chord-context-menu-item';
+    editOption.textContent = 'Editar';
+    editOption.setAttribute('role', 'menuitem');
+    editOption.addEventListener('click', function (event) {
+      event.stopPropagation();
+      hideEditorContextMenu();
+      openChordReplacementModal('', true);
+    });
+
+    var removeOption = document.createElement('button');
+    removeOption.type = 'button';
+    removeOption.className = 'chord-context-menu-item is-danger';
+    removeOption.textContent = 'Remover';
+    removeOption.setAttribute('role', 'menuitem');
+    removeOption.addEventListener('click', function (event) {
+      event.stopPropagation();
+      hideEditorContextMenu();
+      removeSelectedChord().catch(function () {});
+    });
+
+    menu.appendChild(editOption);
+    menu.appendChild(removeOption);
+    document.body.appendChild(menu);
+    localEditor.contextMenu = menu;
+  }
+
+  function showEditorContextMenu(x, y) {
+    createEditorContextMenu();
+    var menu = localEditor.contextMenu;
+    menu.hidden = false;
+    menu.style.left = Math.max(8, x) + 'px';
+    menu.style.top = Math.max(8, y) + 'px';
+
+    var rect = menu.getBoundingClientRect();
+    if (rect.right > window.innerWidth - 8) {
+      menu.style.left = Math.max(8, window.innerWidth - rect.width - 8) + 'px';
+    }
+    if (rect.bottom > window.innerHeight - 8) {
+      menu.style.top = Math.max(8, window.innerHeight - rect.height - 8) + 'px';
+    }
+  }
+
+  function isEditorInputTarget(target) {
+    if (!target || !target.tagName) return false;
+    var tag = target.tagName.toLowerCase();
+    return tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable;
+  }
+
+  function handleLocalEditorKeyDown(event) {
+    if (!localEditor.enabled || localEditor.modal || localEditor.busy || currentTranspose !== 0) return;
+    if (isEditorInputTarget(event.target)) return;
+
+    if (event.key === 'Escape') {
+      hideEditorContextMenu();
+      clearSelectedChord();
+      return;
+    }
+
+    var selected = localEditor.selectedChord;
+    if (!selected || !selected.element || !selected.element.isConnected) return;
+
+    if (event.key === 'Delete') {
+      event.preventDefault();
+      hideEditorContextMenu();
+      removeSelectedChord().catch(function () {});
+      return;
+    }
+
+    if (event.key && event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      event.preventDefault();
+      hideEditorContextMenu();
+      openChordReplacementModal(event.key, false);
+    }
+  }
+
+  function getLineColumnFromPointer(lineElement, clientX) {
+    var measure = document.createElement('span');
+    var computed = window.getComputedStyle(lineElement);
+    measure.textContent = 'MMMMMMMMMM';
+    measure.style.position = 'fixed';
+    measure.style.visibility = 'hidden';
+    measure.style.whiteSpace = 'pre';
+    measure.style.font = computed.font;
+    measure.style.letterSpacing = computed.letterSpacing;
+    document.body.appendChild(measure);
+    var characterWidth = measure.getBoundingClientRect().width / 10;
+    document.body.removeChild(measure);
+    if (!characterWidth || !isFinite(characterWidth)) characterWidth = 8;
+
+    var lineRect = lineElement.getBoundingClientRect();
+    return Math.round((clientX - lineRect.left) / characterWidth);
+  }
+
+  function composeChordLayout(line, placements) {
+    var originalChords = getChordMatches(line);
+    var characters = line.split('');
+    var i;
+    var j;
+
+    for (i = 0; i < originalChords.length; i++) {
+      for (j = originalChords[i].start; j < originalChords[i].end; j++) {
+        characters[j] = ' ';
+      }
+    }
+
+    placements.sort(function (a, b) { return a.start - b.start; });
+    for (i = 0; i < placements.length; i++) {
+      var placement = placements[i];
+      if (placement.start < 0) return null;
+      while (characters.length < placement.start + placement.text.length) characters.push(' ');
+      for (j = 0; j < placement.text.length; j++) {
+        var existing = characters[placement.start + j];
+        if (existing && !/\s/.test(existing)) return null;
+      }
+      for (j = 0; j < placement.text.length; j++) {
+        characters[placement.start + j] = placement.text.charAt(j);
+      }
+    }
+
+    return characters.join('');
+  }
+
+  function placeChordWithPush(line, chordText, targetStart, direction, sourceStart, sourceEnd) {
+    var matches = getChordMatches(line);
+    var otherChords = [];
+    var sourceFound = sourceStart == null;
+
+    for (var i = 0; i < matches.length; i++) {
+      var chord = matches[i];
+      if (!sourceFound && chord.start === sourceStart && chord.end === sourceEnd) {
+        sourceFound = true;
+        continue;
+      }
+      otherChords.push({ text: chord.text, start: chord.start, end: chord.end });
+    }
+    if (!sourceFound) return null;
+
+    if (targetStart < 0) return null;
+    var moving = {
+      text: chordText,
+      start: targetStart,
+      end: targetStart + chordText.length
+    };
+    var placements = [moving];
+
+    otherChords.sort(function (a, b) { return a.start - b.start; });
+    if (direction >= 0) {
+      var cursorEnd = moving.end;
+      for (i = 0; i < otherChords.length; i++) {
+        var rightChord = otherChords[i];
+        if (rightChord.end <= moving.start - 1) {
+          placements.push(rightChord);
+          continue;
+        }
+        var rightStart = Math.max(rightChord.start, cursorEnd + 1);
+        placements.push({
+          text: rightChord.text,
+          start: rightStart,
+          end: rightStart + rightChord.text.length
+        });
+        cursorEnd = rightStart + rightChord.text.length;
+      }
+    } else {
+      var before = [];
+      var after = [];
+      for (i = 0; i < otherChords.length; i++) {
+        if (otherChords[i].start >= moving.end + 1) after.push(otherChords[i]);
+        else before.push(otherChords[i]);
+      }
+
+      var cursorStart = moving.start;
+      for (i = before.length - 1; i >= 0; i--) {
+        var leftChord = before[i];
+        var leftStart = Math.min(leftChord.start, cursorStart - leftChord.text.length - 1);
+        if (leftStart < 0) return null;
+        placements.push({
+          text: leftChord.text,
+          start: leftStart,
+          end: leftStart + leftChord.text.length
+        });
+        cursorStart = leftStart;
+      }
+      placements = placements.concat(after);
+    }
+
+    return composeChordLayout(line, placements);
+  }
+
+  function clearEditorDropTargets() {
+    if (!localEditor.pre) return;
+    var targets = localEditor.pre.querySelectorAll('.line-chord.is-drop-target');
+    for (var i = 0; i < targets.length; i++) targets[i].classList.remove('is-drop-target');
+  }
+
+  function clearEditorDragState() {
+    clearEditorDropTargets();
+    if (localEditor.drag && localEditor.drag.element) {
+      localEditor.drag.element.classList.remove('is-dragging');
+    }
+    localEditor.drag = null;
+  }
+
+  function canDropEditorDragOnLine(lineElement) {
+    if (!localEditor.drag || localEditor.busy || currentTranspose !== 0 || !lineElement) return false;
+    if (localEditor.drag.type === 'line') {
+      return localEditor.drag.lineIndex === parseInt(lineElement.getAttribute('data-line-index'), 10);
+    }
+    return localEditor.drag.type === 'palette';
+  }
+
+  function handleEditorDragStart(event) {
+    if (localEditor.busy || currentTranspose !== 0) return;
+    var chordElement = event.target.closest && event.target.closest('.editable-chord');
+    if (!chordElement || !selectEditableChord(chordElement)) return;
+    var selected = localEditor.selectedChord;
+    var pointerColumn = getLineColumnFromPointer(selected.lineElement, event.clientX);
+    var grabOffset = Math.max(0, Math.min(
+      selected.text.length - 1,
+      pointerColumn - selected.start
+    ));
+    chordElement.classList.add('is-dragging');
+    localEditor.drag = {
+      type: 'line',
+      text: selected.text,
+      element: chordElement,
+      lineIndex: selected.lineIndex,
+      start: selected.start,
+      end: selected.end,
+      grabOffset: grabOffset
+    };
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', selected.text);
+    }
+  }
+
+  function handleEditorDragOver(event) {
+    var lineElement = event.target.closest && event.target.closest('.line-chord');
+    if (!canDropEditorDragOnLine(lineElement)) return;
+    event.preventDefault();
+    clearEditorDropTargets();
+    lineElement.classList.add('is-drop-target');
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = localEditor.drag.type === 'palette' ? 'copy' : 'move';
+    }
+  }
+
+  function handleEditorDragLeave(event) {
+    var lineElement = event.target.closest && event.target.closest('.line-chord');
+    if (!lineElement) return;
+    var nextTarget = event.relatedTarget;
+    if (!nextTarget || !lineElement.contains(nextTarget)) lineElement.classList.remove('is-drop-target');
+  }
+
+  function handleEditorDrop(event) {
+    var lineElement = event.target.closest && event.target.closest('.line-chord');
+    if (!canDropEditorDragOnLine(lineElement)) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    var drag = localEditor.drag;
+    var lineIndex = parseInt(lineElement.getAttribute('data-line-index'), 10);
+    var line = getLocalEditorLines()[lineIndex];
+    var pointerColumn = getLineColumnFromPointer(lineElement, event.clientX);
+    var targetColumn = drag.type === 'palette' ?
+      Math.max(0, pointerColumn) : pointerColumn - drag.grabOffset;
+    var direction = drag.type === 'palette' ? 1 : (targetColumn < drag.start ? -1 : 1);
+    var nextLine = placeChordWithPush(
+      line,
+      drag.text,
+      targetColumn,
+      direction,
+      drag.type === 'line' ? drag.start : null,
+      drag.type === 'line' ? drag.end : null
+    );
+
+    if (nextLine == null) {
+      showLocalEditorNotification(
+        direction < 0 ? 'Não há espaço à esquerda para mover esse acorde.' : 'Não foi possível inserir nesse ponto.',
+        'error'
+      );
+      clearEditorDragState();
+      return;
+    }
+
+    var nextText = buildPreTextWithLine(lineIndex, nextLine);
+    localEditor.suppressClick = drag.type === 'line';
+    clearEditorDragState();
+    if (nextText !== localEditor.preText) {
+      saveLocalPreText(nextText, { lineElement: lineElement }).catch(function () {});
+    }
+    window.setTimeout(function () { localEditor.suppressClick = false; }, 300);
+  }
+
+  function handleEditorDragEnd() {
+    clearEditorDragState();
+  }
+
+  function getPaletteChordSymbols() {
+    if (!localEditor.pre) return [];
+    var lineElements = localEditor.pre.querySelectorAll('.line-chord');
+    var seen = Object.create(null);
+    var chords = [];
+
+    for (var i = 0; i < lineElements.length; i++) {
+      var matches = getChordMatches(lineElements[i].textContent || '');
+      for (var j = 0; j < matches.length; j++) {
+        var chord = matches[j].text;
+        if (!seen[chord]) {
+          seen[chord] = true;
+          chords.push(chord);
+        }
+      }
+    }
+
+    chords.sort(function (a, b) {
+      var rootA = a.match(/^([A-G][#b]?)/);
+      var rootB = b.match(/^([A-G][#b]?)/);
+      var indexA = rootA ? NOTES_SHARP.indexOf(normalizeNote(rootA[1])) : 99;
+      var indexB = rootB ? NOTES_SHARP.indexOf(normalizeNote(rootB[1])) : 99;
+      if (indexA !== indexB) return indexA - indexB;
+      return a.localeCompare(b, 'pt-BR');
+    });
+    return chords;
+  }
+
+  function startPaletteChordDrag(event, item, chord) {
+    if (localEditor.busy || currentTranspose !== 0) {
+      event.preventDefault();
+      return;
+    }
+    item.classList.add('is-dragging');
+    localEditor.drag = {
+      type: 'palette',
+      text: chord,
+      element: item
+    };
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'copy';
+      event.dataTransfer.setData('text/plain', chord);
+    }
+  }
+
+  function renderChordPalette() {
+    if (!localEditor.paletteGrid) return;
+    var chords = getPaletteChordSymbols();
+    var locked = currentTranspose !== 0 || localEditor.busy;
+    localEditor.paletteGrid.innerHTML = '';
+
+    chords.forEach(function (chord) {
+      var item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'chord-palette-item';
+      item.textContent = chord;
+      item.draggable = !locked;
+      item.disabled = locked;
+      item.setAttribute('data-chord', chord);
+      item.setAttribute('aria-label', locked ?
+        'Acorde ' + chord + ' (edição bloqueada durante transposição)' :
+        'Arrastar acorde ' + chord);
+      item.addEventListener('dragstart', function (event) {
+        startPaletteChordDrag(event, item, chord);
+      });
+      item.addEventListener('dragend', handleEditorDragEnd);
+      localEditor.paletteGrid.appendChild(item);
+    });
+
+    localEditor.palette.classList.toggle('is-empty', chords.length === 0);
+  }
+
+  function createChordPalette() {
+    if (!localEditor.enabled || localEditor.palette) return;
+
+    var palette = document.createElement('aside');
+    palette.className = 'chord-palette';
+    palette.setAttribute('aria-label', 'Acordes usados na cifra');
+
+    var title = document.createElement('h2');
+    title.className = 'chord-palette-title';
+    title.textContent = 'Acordes';
+
+    var grid = document.createElement('div');
+    grid.className = 'chord-palette-grid';
+
+    palette.appendChild(title);
+    palette.appendChild(grid);
+    document.body.appendChild(palette);
+    localEditor.palette = palette;
+    localEditor.paletteGrid = grid;
+    renderChordPalette();
+    updatePalettePosition();
+  }
+
+  function measureEditorCharacterWidth(element) {
+    var measure = document.createElement('span');
+    var computed = window.getComputedStyle(element);
+    measure.textContent = 'MMMMMMMMMM';
+    measure.style.position = 'fixed';
+    measure.style.visibility = 'hidden';
+    measure.style.whiteSpace = 'pre';
+    measure.style.font = computed.font;
+    measure.style.letterSpacing = computed.letterSpacing;
+    document.body.appendChild(measure);
+    var width = measure.getBoundingClientRect().width / 10;
+    document.body.removeChild(measure);
+    return width && isFinite(width) ? width : 8;
+  }
+
+  function updatePalettePosition() {
+    var palette = localEditor.palette;
+    var pre = localEditor.pre;
+    if (!palette || !pre) return;
+
+    var warmPad = document.querySelector('.warm-pad-panel.visible');
+    if (warmPad || !localEditor.paletteGrid || !localEditor.paletteGrid.children.length) {
+      palette.classList.remove('is-positioned');
+      palette.setAttribute('aria-hidden', 'true');
+      return;
+    }
+
+    var preRect = pre.getBoundingClientRect();
+    var preStyle = window.getComputedStyle(pre);
+    var contentLeft = preRect.left + (parseFloat(preStyle.paddingLeft) || 0);
+    var lineElements = pre.querySelectorAll('.line');
+    var maximumColumns = 0;
+    for (var i = 0; i < lineElements.length; i++) {
+      maximumColumns = Math.max(maximumColumns, (lineElements[i].textContent || '').length);
+    }
+    var contentRight = contentLeft + maximumColumns * measureEditorCharacterWidth(pre);
+    var referenceRight = contentRight;
+    var iframe = document.querySelector('iframe.sticky-top');
+    if (iframe) {
+      var iframeRect = iframe.getBoundingClientRect();
+      if (iframeRect.width && iframeRect.height) referenceRight = Math.max(referenceRight, iframeRect.right);
+    }
+
+    var horizontalGap = 36;
+    var viewportGap = 20;
+    var desiredLeft = referenceRight + horizontalGap;
+    palette.style.left = '0px';
+    palette.style.visibility = 'hidden';
+    palette.classList.add('is-positioned');
+    var paletteWidth = palette.getBoundingClientRect().width || 300;
+
+    if (desiredLeft + paletteWidth <= window.innerWidth - viewportGap) {
+      palette.style.left = Math.round(desiredLeft) + 'px';
+      palette.style.visibility = '';
+      palette.setAttribute('aria-hidden', 'false');
+    } else {
+      palette.classList.remove('is-positioned');
+      palette.style.left = '';
+      palette.style.visibility = '';
+      palette.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  function initLocalEditorInteractions() {
+    if (localEditor.interactionsInitialized || !localEditor.pre) return;
+    localEditor.interactionsInitialized = true;
+    createEditorContextMenu();
+
+    localEditor.pre.addEventListener('click', function (event) {
+      var chordElement = event.target.closest && event.target.closest('.editable-chord');
+      if (!chordElement) return;
+      if (localEditor.suppressClick) {
+        localEditor.suppressClick = false;
+        event.preventDefault();
+        return;
+      }
+      if (selectEditableChord(chordElement)) {
+        event.stopPropagation();
+        try {
+          chordElement.focus({ preventScroll: true });
+        } catch (e) {
+          chordElement.focus();
+        }
+      }
+    });
+
+    localEditor.pre.addEventListener('focusin', function (event) {
+      var chordElement = event.target.closest && event.target.closest('.editable-chord');
+      if (chordElement) selectEditableChord(chordElement);
+    });
+
+    localEditor.pre.addEventListener('contextmenu', function (event) {
+      var chordElement = event.target.closest && event.target.closest('.editable-chord');
+      if (!chordElement || currentTranspose !== 0 || localEditor.busy) return;
+      event.preventDefault();
+      if (selectEditableChord(chordElement)) showEditorContextMenu(event.clientX, event.clientY);
+    });
+    localEditor.pre.addEventListener('dragstart', handleEditorDragStart);
+    localEditor.pre.addEventListener('dragover', handleEditorDragOver);
+    localEditor.pre.addEventListener('dragleave', handleEditorDragLeave);
+    localEditor.pre.addEventListener('drop', handleEditorDrop);
+    localEditor.pre.addEventListener('dragend', handleEditorDragEnd);
+
+    document.addEventListener('keydown', handleLocalEditorKeyDown);
+    document.addEventListener('click', function (event) {
+      if (event.target.closest && (
+        event.target.closest('.editable-chord') ||
+        event.target.closest('.chord-context-menu') ||
+        event.target.closest('.editor-modal')
+      )) return;
+      hideEditorContextMenu();
+      clearSelectedChord();
+    });
+
+    window.addEventListener('resize', updatePalettePosition);
+  }
+
+  function refreshLocalEditorUi() {
+    if (!localEditor.enabled) return;
+
+    var editingLocked = currentTranspose !== 0 || localEditor.busy;
+    if (editingLocked) {
+      hideEditorContextMenu();
+      clearSelectedChord();
+    }
+    if (localEditor.editButton) {
+      localEditor.editButton.disabled = editingLocked;
+      localEditor.editButton.title = currentTranspose !== 0 ?
+        'Volte o tom para 0 ou use Reescrever' : 'Editar';
+    }
+    if (localEditor.rewriteButton) {
+      localEditor.rewriteButton.hidden = currentTranspose === 0;
+      localEditor.rewriteButton.style.display = currentTranspose === 0 ? 'none' : '';
+      localEditor.rewriteButton.disabled = localEditor.busy;
+    }
+
+    if (localEditor.pre) {
+      var chordEls = localEditor.pre.querySelectorAll('.editable-chord');
+      for (var i = 0; i < chordEls.length; i++) {
+        chordEls[i].draggable = !editingLocked;
+        chordEls[i].tabIndex = editingLocked ? -1 : 0;
+        chordEls[i].setAttribute('aria-disabled', editingLocked ? 'true' : 'false');
+      }
+    }
+
+    renderChordPalette();
+    updatePalettePosition();
+  }
+
+  function initLocalEditor() {
+    var protocol = window.location.protocol;
+    if (protocol === 'https:') return;
+    if (protocol === 'file:') {
+      showLocalEditorGuidance();
+      return;
+    }
+    if (protocol !== 'http:') return;
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') return;
+
+    var pre = document.querySelector('body > pre');
+    if (!pre) return;
+    var serverConfirmed = false;
+
+    fetch('/__chord_editor__/health', {
+      cache: 'no-store',
+      credentials: 'same-origin'
+    }).then(function (response) {
+      if (!response.ok) throw new Error('Servidor local do editor indisponível');
+      serverConfirmed = true;
+
+      localEditor.path = getLocalDocumentPath();
+      var query = new URLSearchParams({ path: localEditor.path });
+      return fetchEditorJson('/__chord_editor__/document?' + query.toString());
+    }).then(function (documentData) {
+      if (typeof documentData.preText !== 'string' || documentData.revision == null) {
+        throw new Error('Resposta inválida do servidor local');
+      }
+
+      localEditor.enabled = true;
+      localEditor.pre = pre;
+      localEditor.preText = documentData.preText;
+      localEditor.revision = documentData.revision;
+      pre.setAttribute('data-original-text', localEditor.preText);
+      document.body.classList.add('local-editor-enabled');
+
+      processPre(pre, currentTranspose);
+      createLocalEditorToolbarButtons(document.querySelector('.toolbar-extra-row'));
+      initLocalEditorInteractions();
+      createChordPalette();
+      refreshLocalEditorUi();
+    }).catch(function (error) {
+      // Um HTTP comum não possui os endpoints do editor; nesse caso a página
+      // segue funcionando normalmente, sem controles ou listeners de edição.
+      if (localEditor.enabled || serverConfirmed) {
+        showLocalEditorNotification(error.message || 'Não foi possível iniciar o editor local.', 'error');
+      } else {
+        console.info('Editor local não ativado:', error.message || error);
+      }
+    });
   }
 
   // --- Exportar para Holyrics (índice) ---
@@ -815,6 +1978,7 @@
     // Garante que o display de tom e a URL estejam sincronizados
     applyTransposeToAllPres();
     createWarmPadPlayer();
+    initLocalEditor();
   }
 
   // --- Warm Pad Player ---
@@ -1059,6 +2223,7 @@
     toggleBtn.addEventListener('click', function () {
       var visible = padPanelEl.classList.toggle('visible');
       toggleBtn.textContent = visible ? 'Ocultar Pad' : 'Mostrar Pad';
+      updatePalettePosition();
     });
 
     renderCustomCheckboxes();
