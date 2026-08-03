@@ -428,6 +428,50 @@ body.local-editor-busy .local-editor-toolbar-btn {
     cursor: not-allowed;
 }
 
+.line-edit-button {
+    display: inline-flex;
+    width: 20px;
+    height: 20px;
+    margin-left: 7px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 4px;
+    padding: 2px;
+    background: transparent;
+    color: #777;
+    vertical-align: middle;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease, color 0.12s ease, background-color 0.12s ease;
+}
+
+.line-edit-button svg {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
+}
+
+.line:hover .line-edit-button,
+.line:focus-within .line-edit-button,
+.line-edit-button:focus-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.line-edit-button:hover,
+.line-edit-button:focus-visible {
+    background: #fff0df;
+    color: #d96300;
+    outline: 2px solid rgba(255, 119, 0, 0.3);
+}
+
+.line-edit-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+}
+
 .line-chord.is-drop-target {
     background: rgba(0, 104, 255, 0.12);
     box-shadow: inset 0 -2px 0 #0068ff;
@@ -454,14 +498,12 @@ body.local-editor-busy .chord-palette-item {
 }
 
 .chord-palette {
-    display: none;
+    display: flex;
     position: fixed;
-    top: 50%;
     z-index: 190;
     box-sizing: border-box;
     width: max-content;
     max-width: calc(100vw - 40px);
-    transform: translateY(-50%);
     flex-direction: column;
     gap: 10px;
     padding: 14px;
@@ -476,7 +518,7 @@ body.local-editor-busy .chord-palette-item {
 }
 
 .chord-palette.is-empty {
-    display: none;
+    min-width: 150px;
 }
 
 .chord-palette-title {
@@ -485,6 +527,13 @@ body.local-editor-busy .chord-palette-item {
     font-size: 14px;
     line-height: 1.2;
     text-align: center;
+    cursor: move;
+    touch-action: none;
+    user-select: none;
+}
+
+.chord-palette.is-moving .chord-palette-title {
+    cursor: grabbing;
 }
 
 .chord-palette-grid {
@@ -494,25 +543,24 @@ body.local-editor-busy .chord-palette-item {
 }
 
 .chord-palette-item {
-    min-width: 58px;
-    border: 1px solid #ffc184;
-    border-radius: 7px;
-    background: #fff4e8;
-    color: #9a4300;
-    padding: 8px 7px;
+    min-width: 0;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: #ff7700;
+    padding: 2px 4px;
     font-family: inherit;
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1.1;
+    font-size: inherit;
+    font-weight: bold;
+    line-height: inherit;
     white-space: nowrap;
     cursor: grab;
 }
 
 .chord-palette-item:hover:not(:disabled),
 .chord-palette-item:focus-visible {
-    border-color: #ff7700;
-    background: #ffe4ca;
-    outline: none;
+    background: #fff0df;
+    outline: 2px solid #ff9b3d;
 }
 
 .chord-palette-item.is-dragging {
@@ -523,6 +571,22 @@ body.local-editor-busy .chord-palette-item {
 .chord-palette-item:disabled {
     cursor: not-allowed;
     opacity: 0.58;
+}
+
+.chord-palette-empty {
+    margin: 0;
+    color: #777;
+    font-size: 12px;
+    text-align: center;
+}
+
+.chord-palette-empty[hidden] {
+    display: none;
+}
+
+.editor-line-input {
+    font-family: "Courier New", Courier, monospace;
+    white-space: pre;
 }
 
 .editor-modal-backdrop {
@@ -733,10 +797,15 @@ body.local-editor-busy .chord-palette-item {
         break-inside: avoid;
     }
 
+    .line-edit-button {
+        display: none !important;
+    }
+
     .editable-chord,
     .editable-chord:hover,
     .editable-chord:focus-visible,
     .editable-chord.is-selected,
+    .line-edit-button,
     .line-chord.is-drop-target,
     .line-chord.is-saving {
         background: transparent !important;

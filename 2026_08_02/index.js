@@ -97,6 +97,15 @@
     return pieces.join('');
   }
 
+  function renderLineEditButton() {
+    if (!localEditor || !localEditor.enabled) return '';
+    return '<button type="button" class="line-edit-button" aria-label="Editar linha"' +
+      ' title="Editar linha">' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '<path d="M4 17.25V20h2.75L17.81 8.94l-2.75-2.75L4 17.25zm15.71-10.42a1 1 0 0 0 0-1.42l-1.12-1.12a1 1 0 0 0-1.42 0l-.88.88 2.75 2.75.67-.67z"/>' +
+      '</svg></button>';
+  }
+
   /**
    * Verifica se a linha contém apenas cifras (acordes) e espaços.
    * Linhas com letra ou marcadores de seção ([Intro], [Verso 1] etc.) retornam false.
@@ -161,7 +170,7 @@
         var escaped = chordOnly ? renderChordLineContents(workingLine) : escapeHtml(workingLine);
         var spanClass = chordOnly ? ' line-chord' : '';
         return '<span class="line' + spanClass + '" data-line-index="' +
-          lineData.index + '">' + escaped + '</span>';
+          lineData.index + '">' + escaped + renderLineEditButton() + '</span>';
       }).join('');
       return '<div class="strophe">' + inner + '</div>';
     }).join('\n');
@@ -204,6 +213,8 @@
     contextMenu: null,
     modal: null,
     drag: null,
+    paletteDrag: null,
+    paletteEmpty: null,
     suppressClick: false,
     interactionsInitialized: false
   };
@@ -741,6 +752,26 @@
     refreshLocalEditorUi();
   }
 
+  function restoreChordSelection(selection) {
+    if (!selection || !localEditor.pre) return;
+    var lineElement = localEditor.pre.querySelector(
+      '.line-chord[data-line-index="' + selection.lineIndex + '"]'
+    );
+    if (!lineElement) return;
+    var chordElements = lineElement.querySelectorAll('.editable-chord');
+    for (var i = 0; i < chordElements.length; i++) {
+      if (parseInt(chordElements[i].getAttribute('data-chord-start'), 10) !== selection.start) continue;
+      if ((chordElements[i].textContent || '') !== selection.text) continue;
+      if (!selectEditableChord(chordElements[i])) return;
+      try {
+        chordElements[i].focus({ preventScroll: true });
+      } catch (error) {
+        chordElements[i].focus();
+      }
+      return;
+    }
+  }
+
   function saveLocalPreText(nextText, options) {
     var saveOptions = options || {};
     if (!localEditor.enabled || localEditor.busy) {
@@ -764,6 +795,7 @@
       if (result.revision == null) throw new Error('O servidor não retornou a nova revisão.');
       commitSavedPreText(nextText, result.revision, saveOptions);
       setLocalEditorBusy(false);
+      restoreChordSelection(saveOptions.restoreSelection);
       if (saveOptions.successMessage) {
         showLocalEditorNotification(saveOptions.successMessage, 'success');
       }
@@ -1060,6 +1092,54 @@
     }, 0);
   }
 
+  function openLineEditorModal(lineElement) {
+    if (!lineElement || !localEditor.enabled || localEditor.busy || currentTranspose !== 0) return;
+    var lineIndex = parseInt(lineElement.getAttribute('data-line-index'), 10);
+    var lines = getLocalEditorLines();
+    if (isNaN(lineIndex) || typeof lines[lineIndex] !== 'string') return;
+    var originalLine = lines[lineIndex];
+    var editor = createEditorModal('Editar linha completa', 'Salvar');
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'editor-modal-input editor-line-input';
+    input.value = originalLine;
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+    input.setAttribute('aria-label', 'Conteúdo completo da linha');
+    editor.body.appendChild(input);
+
+    function submitLine() {
+      if (editor.pending) return;
+      if (input.value === originalLine) {
+        editor.close(true);
+        return;
+      }
+      var nextText = buildPreTextWithLine(lineIndex, input.value);
+      if (nextText == null) return;
+      editor.setPending(true);
+      saveLocalPreText(nextText, {
+        lineElement: lineElement,
+        successMessage: 'Linha salva.'
+      }).then(function () {
+        editor.close(true);
+      }).catch(function () {
+        editor.setPending(false);
+      });
+    }
+
+    editor.primaryButton.addEventListener('click', submitLine);
+    input.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        submitLine();
+      }
+    });
+    window.setTimeout(function () {
+      input.focus();
+      input.select();
+    }, 0);
+  }
+
   function clearSelectedChord() {
     var selected = localEditor.selectedChord;
     if (selected && selected.element) {
@@ -1172,6 +1252,38 @@
       event.preventDefault();
       hideEditorContextMenu();
       removeSelectedChord().catch(function () {});
+      return;
+    }
+
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault();
+      hideEditorContextMenu();
+      var direction = event.key === 'ArrowLeft' ? -1 : 1;
+      var line = getLocalEditorLines()[selected.lineIndex];
+      var targetStart = selected.start + direction;
+      var nextLine = placeChordWithPush(
+        line,
+        selected.text,
+        targetStart,
+        direction,
+        selected.start,
+        selected.end
+      );
+      if (nextLine == null) {
+        showLocalEditorNotification('Não há espaço para mover esse acorde.', 'error');
+        return;
+      }
+      var nextText = buildPreTextWithLine(selected.lineIndex, nextLine);
+      if (nextText !== localEditor.preText) {
+        saveLocalPreText(nextText, {
+          lineElement: selected.lineElement,
+          restoreSelection: {
+            lineIndex: selected.lineIndex,
+            start: targetStart,
+            text: selected.text
+          }
+        }).catch(function () {});
+      }
       return;
     }
 
@@ -1454,6 +1566,12 @@
     if (!localEditor.paletteGrid) return;
     var chords = getPaletteChordSymbols();
     var locked = currentTranspose !== 0 || localEditor.busy;
+    if (localEditor.pre) {
+      var preStyle = window.getComputedStyle(localEditor.pre);
+      localEditor.paletteGrid.style.fontFamily = preStyle.fontFamily;
+      localEditor.paletteGrid.style.fontSize = preStyle.fontSize;
+      localEditor.paletteGrid.style.lineHeight = preStyle.lineHeight;
+    }
     localEditor.paletteGrid.innerHTML = '';
 
     chords.forEach(function (chord) {
@@ -1475,6 +1593,27 @@
     });
 
     localEditor.palette.classList.toggle('is-empty', chords.length === 0);
+    if (localEditor.paletteEmpty) localEditor.paletteEmpty.hidden = chords.length !== 0;
+  }
+
+  function getPaletteStorageKey() {
+    var slash = localEditor.path.lastIndexOf('/');
+    var folder = slash === -1 ? '' : localEditor.path.slice(0, slash);
+    return 'chord-editor-palette-position:' + folder;
+  }
+
+  function readPalettePosition() {
+    try {
+      var value = JSON.parse(window.localStorage.getItem(getPaletteStorageKey()));
+      if (value && isFinite(value.left) && isFinite(value.top)) return value;
+    } catch (error) {}
+    return null;
+  }
+
+  function savePalettePosition(left, top) {
+    try {
+      window.localStorage.setItem(getPaletteStorageKey(), JSON.stringify({ left: left, top: top }));
+    } catch (error) {}
   }
 
   function createChordPalette() {
@@ -1491,11 +1630,18 @@
     var grid = document.createElement('div');
     grid.className = 'chord-palette-grid';
 
+    var empty = document.createElement('p');
+    empty.className = 'chord-palette-empty';
+    empty.textContent = 'Nenhum acorde';
+
     palette.appendChild(title);
     palette.appendChild(grid);
+    palette.appendChild(empty);
     document.body.appendChild(palette);
     localEditor.palette = palette;
     localEditor.paletteGrid = grid;
+    localEditor.paletteEmpty = empty;
+    title.addEventListener('pointerdown', startPaletteMove);
     renderChordPalette();
     updatePalettePosition();
   }
@@ -1520,13 +1666,6 @@
     var pre = localEditor.pre;
     if (!palette || !pre) return;
 
-    var warmPad = document.querySelector('.warm-pad-panel.visible');
-    if (warmPad || !localEditor.paletteGrid || !localEditor.paletteGrid.children.length) {
-      palette.classList.remove('is-positioned');
-      palette.setAttribute('aria-hidden', 'true');
-      return;
-    }
-
     var preRect = pre.getBoundingClientRect();
     var preStyle = window.getComputedStyle(pre);
     var contentLeft = preRect.left + (parseFloat(preStyle.paddingLeft) || 0);
@@ -1547,20 +1686,56 @@
     var viewportGap = 20;
     var desiredLeft = referenceRight + horizontalGap;
     palette.style.left = '0px';
+    palette.style.top = '0px';
     palette.style.visibility = 'hidden';
     palette.classList.add('is-positioned');
-    var paletteWidth = palette.getBoundingClientRect().width || 300;
-
-    if (desiredLeft + paletteWidth <= window.innerWidth - viewportGap) {
-      palette.style.left = Math.round(desiredLeft) + 'px';
-      palette.style.visibility = '';
-      palette.setAttribute('aria-hidden', 'false');
-    } else {
-      palette.classList.remove('is-positioned');
-      palette.style.left = '';
-      palette.style.visibility = '';
-      palette.setAttribute('aria-hidden', 'true');
+    var rect = palette.getBoundingClientRect();
+    var stored = readPalettePosition();
+    var desiredTop = stored ? stored.top : Math.max(viewportGap, (window.innerHeight - rect.height) / 2);
+    if (!stored && desiredLeft + rect.width > window.innerWidth - viewportGap) {
+      desiredLeft = window.innerWidth - rect.width - viewportGap;
+    } else if (stored) {
+      desiredLeft = stored.left;
     }
+    var maximumLeft = Math.max(viewportGap, window.innerWidth - rect.width - viewportGap);
+    var maximumTop = Math.max(viewportGap, window.innerHeight - rect.height - viewportGap);
+    palette.style.left = Math.round(Math.max(viewportGap, Math.min(desiredLeft, maximumLeft))) + 'px';
+    palette.style.top = Math.round(Math.max(viewportGap, Math.min(desiredTop, maximumTop))) + 'px';
+    palette.style.visibility = '';
+    palette.setAttribute('aria-hidden', 'false');
+  }
+
+  function startPaletteMove(event) {
+    if (!localEditor.palette || event.button > 0) return;
+    event.preventDefault();
+    var rect = localEditor.palette.getBoundingClientRect();
+    localEditor.paletteDrag = {
+      pointerId: event.pointerId,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top
+    };
+    localEditor.palette.classList.add('is-moving');
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function movePalette(event) {
+    var drag = localEditor.paletteDrag;
+    var palette = localEditor.palette;
+    if (!drag || !palette || event.pointerId !== drag.pointerId) return;
+    var rect = palette.getBoundingClientRect();
+    var gap = 8;
+    var left = Math.max(gap, Math.min(event.clientX - drag.offsetX, window.innerWidth - rect.width - gap));
+    var top = Math.max(gap, Math.min(event.clientY - drag.offsetY, window.innerHeight - rect.height - gap));
+    palette.style.left = Math.round(left) + 'px';
+    palette.style.top = Math.round(top) + 'px';
+  }
+
+  function stopPaletteMove(event) {
+    var drag = localEditor.paletteDrag;
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    localEditor.paletteDrag = null;
+    localEditor.palette.classList.remove('is-moving');
+    savePalettePosition(parseFloat(localEditor.palette.style.left), parseFloat(localEditor.palette.style.top));
   }
 
   function initLocalEditorInteractions() {
@@ -1569,6 +1744,13 @@
     createEditorContextMenu();
 
     localEditor.pre.addEventListener('click', function (event) {
+      var editButton = event.target.closest && event.target.closest('.line-edit-button');
+      if (editButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        openLineEditorModal(editButton.closest('.line'));
+        return;
+      }
       var chordElement = event.target.closest && event.target.closest('.editable-chord');
       if (!chordElement) return;
       if (localEditor.suppressClick) {
@@ -1615,6 +1797,9 @@
     });
 
     window.addEventListener('resize', updatePalettePosition);
+    document.addEventListener('pointermove', movePalette);
+    document.addEventListener('pointerup', stopPaletteMove);
+    document.addEventListener('pointercancel', stopPaletteMove);
   }
 
   function refreshLocalEditorUi() {
@@ -1643,6 +1828,8 @@
         chordEls[i].tabIndex = editingLocked ? -1 : 0;
         chordEls[i].setAttribute('aria-disabled', editingLocked ? 'true' : 'false');
       }
+      var lineButtons = localEditor.pre.querySelectorAll('.line-edit-button');
+      for (var j = 0; j < lineButtons.length; j++) lineButtons[j].disabled = editingLocked;
     }
 
     renderChordPalette();
