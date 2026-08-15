@@ -118,8 +118,9 @@
     var withoutSpaces = withoutChords.replace(/\s/g, '');
     if (!withoutSpaces) return true;
 
-    // Se sobrou algo com 2+ letras seguidas, é letra (não é linha só de cifra)
-    if (/[a-zA-Zà-úÀ-Ú]{2,}/.test(withoutSpaces)) return false;
+    // Qualquer letra restante indica letra cantada, inclusive vocalizações
+    // curtas e separadas por pontuação, como "Ô, ô, ô, ô".
+    if (/[A-Za-zÀ-ÖØ-öø-ÿ]/.test(withoutSpaces)) return false;
 
     return true;
   }

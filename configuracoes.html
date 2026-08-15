@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Configurações — Cifras 2IPB</title>
+  <link rel="stylesheet" href="configuracoes.css">
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div class="brand" aria-hidden="true">♫</div>
+      <div><p class="eyebrow">CIFRAS 2IPB CARATINGA</p><h1>Configurações</h1><p class="intro">Acesse seus repertórios e gerencie o servidor local.</p></div>
+    </header>
+
+    <section class="card server-card" aria-labelledby="server-title">
+      <div class="card-heading">
+        <div><p class="eyebrow">APLICATIVO LOCAL</p><h2 id="server-title">Servidor</h2></div>
+        <div class="status" id="server-status" role="status"><span class="status-dot"></span><span id="server-label">Verificando…</span></div>
+      </div>
+      <p class="detail" id="server-detail">Conferindo a conexão com o servidor.</p>
+      <div class="actions">
+        <button class="button button-secondary" id="check-server" type="button">Verificar status</button>
+        <button class="button button-danger" id="stop-server" type="button">Desligar o servidor e fechar</button>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="shortcut-title">
+      <div class="card-heading">
+        <div><p class="eyebrow">ACESSO RÁPIDO</p><h2 id="shortcut-title">Atalho</h2></div>
+      </div>
+      <p class="detail">Crie um ícone na área de trabalho. Ele inicia o servidor quando necessário e abre esta página no navegador.</p>
+      <button class="button button-primary" id="add-shortcut" type="button">＋ Adicionar um atalho na área de trabalho</button>
+      <p class="feedback" id="shortcut-feedback" role="status"></p>
+    </section>
+
+    <section class="card" aria-labelledby="indexes-title">
+      <div class="card-heading indexes-heading">
+        <div><p class="eyebrow">REPERTÓRIOS</p><h2 id="indexes-title">Pastas</h2></div>
+        <span class="count" id="index-count">…</span>
+      </div>
+      <div class="index-list" id="index-list"><p class="empty">Carregando pastas…</p></div>
+    </section>
+  </main>
+  <dialog id="shutdown-dialog">
+    <form method="dialog">
+      <h2>Desligar o servidor?</h2>
+      <p>As páginas deixarão de funcionar até você abrir o atalho novamente.</p>
+      <div class="actions dialog-actions"><button class="button button-secondary" value="cancel">Cancelar</button><button class="button button-danger" id="confirm-shutdown" value="confirm">Desligar</button></div>
+    </form>
+  </dialog>
+  <script src="configuracoes.js"></script>
+</body>
+</html>

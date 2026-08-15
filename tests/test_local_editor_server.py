@@ -48,6 +48,32 @@ class EditorServiceTests(unittest.TestCase):
             hashlib.sha256(self.original_source.encode("utf-8")).hexdigest(),
         )
 
+    def test_lists_only_valid_index_pages(self) -> None:
+        (self.root / "culto" / "index.html").write_text("índice", encoding="utf-8")
+        (self.root / "outra").mkdir()
+        (self.root / "outra" / "index.html").write_text("índice", encoding="utf-8")
+
+        self.assertEqual(
+            self.service.list_indexes(),
+            [
+                {"name": "outra", "path": "outra/index.html"},
+                {"name": "culto", "path": "culto/index.html"},
+            ],
+        )
+
+    def test_creates_executable_desktop_shortcut_for_current_port(self) -> None:
+        launcher = self.root / "local_app_launcher.py"
+        launcher.write_text("# launcher", encoding="utf-8")
+        desktop = self.root / "Desktop"
+
+        with mock.patch("local_editor_server._desktop_directory", return_value=desktop):
+            shortcut = self.service.create_desktop_shortcut(8765)
+
+        source = shortcut.read_text(encoding="utf-8")
+        self.assertIn("Name=Cifras 2IPB Caratinga", source)
+        self.assertIn("--port 8765", source)
+        self.assertTrue(stat.S_IMODE(shortcut.stat().st_mode) & stat.S_IXUSR)
+
     def test_save_escapes_text_and_preserves_everything_outside_pre(self) -> None:
         os.chmod(self.page_path, 0o640)
         document = self.service.load_document(self.relative_path)
@@ -323,6 +349,17 @@ class EditorApiTests(unittest.TestCase):
                 assert response is not None
                 self.assertEqual(response.status, 400)
                 self.assertEqual(response.body["error"]["code"], "invalid_request")
+
+    def test_indexes_and_shutdown_endpoints(self) -> None:
+        (self.root / "pasta" / "index.html").write_text("índice", encoding="utf-8")
+
+        indexes = self.api.get(server.INDEXES_ENDPOINT)
+        shutdown = self.api.post(server.SHUTDOWN_ENDPOINT, {})
+
+        assert indexes is not None
+        self.assertEqual(indexes.status, 200)
+        self.assertEqual(indexes.body["indexes"], [{"name": "pasta", "path": "pasta/index.html"}])
+        self.assertEqual(shutdown, server.ApiResponse(200, {"ok": True, "message": "Servidor encerrado."}))
 
 
 class HttpAdapterTests(unittest.TestCase):

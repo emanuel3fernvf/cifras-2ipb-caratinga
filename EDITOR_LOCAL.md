@@ -11,7 +11,11 @@ Na raiz do repositório:
 python3 local_editor_server.py
 ```
 
-Depois, abra <http://127.0.0.1:8000/2026_08_02/>. Para usar outra porta ou
+Depois, abra <http://127.0.0.1:8000/configuracoes.html>. Nessa página é
+possível abrir qualquer pasta que contenha `index.html`, criar o atalho na
+área de trabalho, verificar o status e desligar o servidor com segurança.
+
+Para usar outra porta ou
 servir uma cópia isolada em testes:
 
 ```bash
@@ -37,6 +41,18 @@ Resposta `200`:
 ```json
 {"ok":true}
 ```
+
+### Listar pastas com índice
+
+```http
+GET /__chord_editor__/indexes
+```
+
+### Criar atalho e desligar
+
+Os controles da página usam `POST /__chord_editor__/shortcut` para criar um
+arquivo `.desktop` e `POST /__chord_editor__/shutdown` para encerrar o processo.
+O atalho inicia o servidor quando necessário e abre as configurações.
 
 ### Ler texto e revisão atuais
 

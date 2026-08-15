@@ -13,9 +13,15 @@
     .top { margin-top: 20px; text-align: center; }
     .top h2 { font-size: 32px; color: #ff7700; }
     .section-title { margin: 24px 0 8px; font-size: 18px; color: #666; text-align: center; }
-    #content { margin-top: 12px; }
+    .service-item { margin-bottom: 10px; line-height: 1.45; }
+    .hymn-item { margin-bottom: 10px; padding: 10px 20px; color: #fff; background: #7b3fb2; border-radius: 10px; font-weight: bold; text-align: center; }
+    #content { margin-top: 12px; width: 100%; }
     #content a { text-decoration: none; background: #0068ff; padding: 10px 20px; display: flex; font-weight: bold; color: #fff; border-radius: 10px; margin-bottom: 10px; align-items: baseline; justify-content: center; text-align: center; }
     #content a:hover { background: #0052c9; }
+    .song-link-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .song-link-row a { flex: 1; margin-bottom: 0; }
+    .song-link-row a.capo-btn { flex: 0 0 auto; background: #ff7700; padding: 10px 14px; white-space: nowrap; }
+    .song-link-row a.capo-btn:hover { background: #e56600; }
     .holyrics-export { position: absolute; top: 10px; right: 10px; z-index: 300; }
     .holyrics-export-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 0; background: #ff7700; color: #fff; border-radius: 8px; cursor: pointer; padding: 0; }
     .holyrics-export-menu { position: absolute; top: calc(100% + 4px); right: 0; min-width: 240px; z-index: 301; background: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,.15); overflow: hidden; }
@@ -26,7 +32,7 @@
 </head>
 <body>
   <div class="box-center">
-    <div class="top"><h1>Culto DOM</h1><p>16/08/2026</p><h2>Cifras</h2></div>
+    <div class="top"><h1>Culto DOM</h1><p>16/08/2026</p><h2>Cifras</h2><p>🦶 em pé · 🪑 sentado</p></div>
     <div class="holyrics-export" id="holyrics-export">
       <button type="button" class="holyrics-export-btn" id="holyrics-export-btn" title="Exportar para o Holyrics" aria-label="Exportar para o Holyrics"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button>
       <div class="holyrics-export-menu" id="holyrics-export-menu" hidden>
@@ -35,14 +41,39 @@
       </div>
     </div>
     <div id="content">
-      <h3 class="section-title">PRÉ-LÚDIO</h3>
+      <p class="service-item">🪑 <strong>PRELÚDIO:</strong> cântico até às 19h</p>
       <a href="Alegria%20%2B%20Sou%20Feliz%20-%20Rachel%20Novaes.html">Alegria / Sou Feliz — Rachel Novaes</a>
-      <h3 class="section-title">CULTO</h3>
+      <p class="service-item">🪑 Palavra de acolhimento e liturgia: presb. Flávio</p>
+
+      <h3 class="section-title">I – CONFESSAMOS NOSSOS PECADOS AO SENHOR</h3>
+      <p class="service-item">🪑 Leitura Bíblica: Romanos 11.29-32 (dirigente)</p>
+      <p class="service-item">🪑 Oração silenciosa (enquanto o instrumental toca)</p>
+      <p class="service-item">🪑 Oração de gratidão pelo perdão</p>
+
+      <h3 class="section-title">II – REUNIMO-NOS PARA ADORAR E NOS CONSAGRAR AO SENHOR</h3>
+      <p class="service-item">🪑 Momento Palavra em Silêncio: Salmo 69.16</p>
+      <p class="service-item">🦶 Leitura: Salmo 69.1-18 (alternada)</p>
+      <p class="service-item">🦶 <strong>2 cânticos:</strong></p>
       <a href="O%20Le%C3%A3o%20da%20Tribo%20de%20Jud%C3%A1%20%2B%20Nosso%20Comandante%20-%20Adhemar%20de%20Campos.html">O Leão da Tribo de Judá / Nosso Comandante — Adhemar de Campos</a>
       <a href="Digno%20%C3%A9%20o%20Senhor%20-%20Aline%20Barros.html">Digno é o Senhor — Aline Barros</a>
-      <h3 class="section-title">PÓS-MENSAGEM</h3>
-      <a href="Tua%20Gra%C3%A7a%20Me%20Basta%20-%20Davi%20Sacer.html">Tua Graça Me Basta — Davi Sacer</a>
-      <h3 class="section-title">PÓS-LÚDIO</h3>
+      <p class="service-item">🦶 Leitura Bíblica (dízimos): Isaías 6.8 (oníssono)</p>
+      <div class="hymn-item">🦶 Hino 315 — Serviço do Crente</div>
+      <p class="service-item">🦶 Oração de adoração e ação de graças (dízimos e algum motivo especial de gratidão)</p>
+      <p class="service-item">🪑 Participação das crianças (se tiver)</p>
+
+      <h3 class="section-title">III – O SENHOR NOS EDIFICA</h3>
+      <p class="service-item">🪑 Oração por iluminação (pelas crianças e pelos adultos)</p>
+      <p class="service-item">🪑 Proclamação da Palavra: Pr. Wanderson</p>
+
+      <h3 class="section-title">IV – O SENHOR CAMINHA CONOSCO</h3>
+      <p class="service-item">🪑 <strong>Cântico:</strong></p>
+      <div class="song-link-row">
+        <a href="Tua%20Gra%C3%A7a%20Me%20Basta%20-%20Davi%20Sacer.html">Tua Graça Me Basta — Davi Sacer</a>
+        <a class="capo-btn" href="Tua%20Gra%C3%A7a%20Me%20Basta%20-%20Davi%20Sacer.html?tr=-4">Tom E · capo 4ª</a>
+      </div>
+      <p class="service-item">🦶 Oração final</p>
+      <p class="service-item">🦶 Bênção apostólica</p>
+      <p class="service-item"><strong>Cântico de confraternização:</strong> enquanto o povo se cumprimenta e sai</p>
       <a href="O%20Le%C3%A3o%20da%20Tribo%20de%20Jud%C3%A1%20%2B%20Nosso%20Comandante%20-%20Adhemar%20de%20Campos.html">Nosso Comandante — repetir parte do medley</a>
     </div>
   </div>

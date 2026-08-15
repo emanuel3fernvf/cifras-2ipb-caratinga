@@ -14,6 +14,7 @@ import html
 import json
 import os
 import re
+import shlex
 import stat
 import sys
 import tempfile
@@ -33,6 +34,9 @@ API_PREFIX = "/__chord_editor__/"
 HEALTH_ENDPOINT = f"{API_PREFIX}health"
 DOCUMENT_ENDPOINT = f"{API_PREFIX}document"
 SAVE_ENDPOINT = f"{API_PREFIX}save"
+INDEXES_ENDPOINT = f"{API_PREFIX}indexes"
+SHORTCUT_ENDPOINT = f"{API_PREFIX}shortcut"
+SHUTDOWN_ENDPOINT = f"{API_PREFIX}shutdown"
 REVISION_RE = re.compile(r"[0-9a-fA-F]{64}\Z")
 
 
@@ -249,6 +253,45 @@ class EditorService:
             revision=loaded.revision,
         )
 
+    def list_indexes(self) -> list[dict[str, str]]:
+        """Lista pastas que possuem index.html sem expor links externos."""
+        indexes: list[dict[str, str]] = []
+        for target in self.root.rglob("index.html"):
+            try:
+                resolved = target.resolve(strict=True)
+                relative = resolved.relative_to(self.root)
+            except (OSError, RuntimeError, ValueError):
+                continue
+            if resolved.is_file() and relative.name == "index.html":
+                folder = relative.parent.as_posix()
+                indexes.append({
+                    "name": "Início" if folder == "." else folder,
+                    "path": relative.as_posix(),
+                })
+        return sorted(indexes, key=lambda item: item["name"].casefold(), reverse=True)
+
+    def create_desktop_shortcut(self, port: int) -> Path:
+        desktop = _desktop_directory()
+        desktop.mkdir(parents=True, exist_ok=True)
+        shortcut = desktop / "Cifras 2IPB Caratinga.desktop"
+        launcher = self.root / "local_app_launcher.py"
+        if not launcher.is_file():
+            raise EditorError(500, "launcher_not_found", "O iniciador do aplicativo não foi encontrado.")
+        command = " ".join(shlex.quote(value) for value in (
+            sys.executable, str(launcher), "--root", str(self.root), "--port", str(port)
+        ))
+        content = (
+            "[Desktop Entry]\nType=Application\nVersion=1.0\n"
+            "Name=Cifras 2IPB Caratinga\n"
+            "Comment=Abrir o editor local de cifras\n"
+            f"Exec={command}\nTerminal=false\nCategories=Utility;Music;\n"
+        )
+        try:
+            shortcut.write_text(content, encoding="utf-8")
+            shortcut.chmod(0o755)
+        except OSError as exc:
+            raise EditorError(500, "shortcut_failed", "Não foi possível criar o atalho na área de trabalho.") from exc
+        return shortcut
     def _atomic_replace(
         self, target: Path, new_data: bytes, expected_revision: str
     ) -> None:
@@ -351,6 +394,25 @@ class EditorService:
             return SaveResult(revision=new_revision)
 
 
+def _desktop_directory() -> Path:
+    home = Path.home()
+    config = home / ".config" / "user-dirs.dirs"
+    try:
+        source = config.read_text(encoding="utf-8")
+        match = re.search(r'^XDG_DESKTOP_DIR="([^"]+)"', source, re.MULTILINE)
+        if match:
+            candidate = Path(match.group(1).replace("$HOME", str(home))).expanduser()
+            if candidate.is_absolute():
+                return candidate
+    except OSError:
+        pass
+    for name in ("Área de Trabalho", "Desktop"):
+        candidate = home / name
+        if candidate.is_dir():
+            return candidate
+    return home / "Desktop"
+
+
 def _error_response(error: EditorError) -> ApiResponse:
     return ApiResponse(
         error.status,
@@ -396,15 +458,32 @@ class EditorAPI:
                 },
             )
 
+        if parsed.path == INDEXES_ENDPOINT:
+            if parsed.query:
+                return _error_response(EditorError(400, "invalid_request", "O endpoint indexes não aceita parâmetros."))
+            return ApiResponse(200, {"ok": True, "indexes": self.service.list_indexes()})
+
         if parsed.path.startswith(API_PREFIX):
             return _error_response(
                 EditorError(404, "endpoint_not_found", "Endpoint da API não encontrado.")
             )
         return None
 
-    def post(self, request_target: str, payload: Any) -> ApiResponse:
+    def post(self, request_target: str, payload: Any, *, server_port: int = DEFAULT_PORT) -> ApiResponse:
         parsed = urlsplit(request_target)
-        if parsed.path != SAVE_ENDPOINT or parsed.query:
+        if parsed.query:
+            return _error_response(
+                EditorError(404, "endpoint_not_found", "Endpoint da API não encontrado.")
+            )
+        if parsed.path == SHORTCUT_ENDPOINT:
+            try:
+                shortcut = self.service.create_desktop_shortcut(server_port)
+            except EditorError as error:
+                return _error_response(error)
+            return ApiResponse(200, {"ok": True, "path": str(shortcut)})
+        if parsed.path == SHUTDOWN_ENDPOINT:
+            return ApiResponse(200, {"ok": True, "message": "Servidor encerrado."})
+        if parsed.path != SAVE_ENDPOINT:
             return _error_response(
                 EditorError(404, "endpoint_not_found", "Endpoint da API não encontrado.")
             )
@@ -544,7 +623,7 @@ def make_handler(
             if self._reject_nonlocal_host():
                 return
             parsed = urlsplit(self.path)
-            if parsed.path != SAVE_ENDPOINT or parsed.query:
+            if parsed.path not in {SAVE_ENDPOINT, SHORTCUT_ENDPOINT, SHUTDOWN_ENDPOINT} or parsed.query:
                 self._send_api(api.post(self.path, {}))
                 return
             try:
@@ -552,7 +631,10 @@ def make_handler(
             except EditorError as error:
                 self._send_api(_error_response(error))
                 return
-            self._send_api(api.post(self.path, payload))
+            response = api.post(self.path, payload, server_port=self.server.server_port)
+            self._send_api(response)
+            if parsed.path == SHUTDOWN_ENDPOINT and response.status == 200:
+                threading.Thread(target=self.server.shutdown, daemon=True).start()
 
         def do_OPTIONS(self) -> None:
             # Não habilitar CORS impede páginas de outras origens de gravarem
@@ -611,7 +693,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Não foi possível iniciar o servidor: {exc}", file=sys.stderr)
         return 1
 
-    print(f"Editor local disponível em http://{LOOPBACK_HOST}:{args.port}/2026_08_02/")
+    print(f"Editor local disponível em http://{LOOPBACK_HOST}:{args.port}/configuracoes.html")
+    print(f"Exemplo de repertório: http://{LOOPBACK_HOST}:{args.port}/2026_08_02/")
     print("Pressione Ctrl+C para encerrar.")
     try:
         server.serve_forever()
