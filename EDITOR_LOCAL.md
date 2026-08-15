@@ -141,3 +141,17 @@ Sem dependências externas e sem conexão de rede:
 ```bash
 python3 -m unittest discover -s tests -p 'test_local_editor_server.py' -v
 ```
+
+## Catálogo online
+
+O GitHub Pages usa `catalogo.html` e o manifesto estático `catalogo.json` para
+listar os índices e todas as músicas das pastas recentes. Depois de adicionar,
+remover ou renomear uma dessas páginas, atualize e confira o manifesto:
+
+```bash
+python3 gerar_catalogo.py
+python3 gerar_catalogo.py --check
+```
+
+O botão Home das páginas musicais abre as configurações no servidor local e o
+catálogo nos demais endereços.

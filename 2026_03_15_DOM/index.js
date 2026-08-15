@@ -357,7 +357,29 @@
     }
   }
 
+  function createHomeButton() {
+    if (document.querySelector('.project-home-button')) return;
+    var localHost = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
+    var link = document.createElement('a');
+    link.className = 'project-home-button';
+    link.href = localHost ? '../configuracoes.html' : '../catalogo.html';
+    link.title = localHost ? 'Abrir configurações' : 'Abrir catálogo';
+    link.setAttribute('aria-label', link.title);
+    link.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">' +
+      '<path fill="currentColor" d="M12 3 2 12h3v9h6v-6h2v6h6v-9h3L12 3z"/></svg>';
+    link.style.cssText = 'position:fixed;top:8px;left:8px;z-index:1100;display:flex;' +
+      'align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;' +
+      'background:#1769e0;color:#fff;text-decoration:none;box-shadow:0 3px 12px rgba(0,0,0,.24)';
+    var style = document.createElement('style');
+    style.textContent = '.top-tone-controls{padding-left:60px!important}' +
+      '.project-home-button:hover,.project-home-button:focus-visible{background:#1055ba;outline:2px solid #fff;outline-offset:2px}';
+    document.head.appendChild(style);
+    document.body.appendChild(link);
+  }
+
   function init() {
+    createHomeButton();
+    if (!document.querySelector('pre') && !document.getElementById('holyrics-export')) return;
     // Carrega transposição inicial da URL (parâmetro ?tr=)
     currentTranspose = getTransposeFromUrl();
 

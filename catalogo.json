@@ -1,0 +1,401 @@
+{
+  "folders": [
+    {
+      "name": "Musical Páscoa UMP 2026",
+      "directory": "musical_pascoa_UMP_2026",
+      "index": "musical_pascoa_UMP_2026/index.html",
+      "songs": [
+        {
+          "title": "Jesus, o Plano Perfeito - Renascer Praise - 140 BPM",
+          "path": "musical_pascoa_UMP_2026/Jesus, o Plano Perfeito - Renascer Praise.html"
+        },
+        {
+          "title": "Vinho E Pão - Fernanda Brum - 128 BPM",
+          "path": "musical_pascoa_UMP_2026/Vinho E Pão - Fernanda Brum.html"
+        },
+        {
+          "title": "Getsêmani - Leonardo Gonçalves - 130 BPM",
+          "path": "musical_pascoa_UMP_2026/Getsêmani - Leonardo Gonçalves.html"
+        },
+        {
+          "title": "Canção do Apocalipse - Diante do Trono - 123 BPM",
+          "path": "musical_pascoa_UMP_2026/Canção do Apocalipse - Diante do Trono.html"
+        },
+        {
+          "title": "Isaías 53 - Projeto Sola - 83 BPM",
+          "path": "musical_pascoa_UMP_2026/Isaías 53 - Projeto Sola.html"
+        },
+        {
+          "title": "Pra Sempre - Avivah - 140 BPM",
+          "path": "musical_pascoa_UMP_2026/Pra Sempre - Avivah.html"
+        },
+        {
+          "title": "Ele Vive - Leonardo Gonçalves - 75 BPM",
+          "path": "musical_pascoa_UMP_2026/Ele Vive - Leonardo Gonçalves.html"
+        },
+        {
+          "title": "Digno é o Senhor - Felipe Rodrigues - 137 BPM",
+          "path": "musical_pascoa_UMP_2026/Digno é o Senhor - Felipe Rodrigues.html"
+        },
+        {
+          "title": "Autor da Vida - Aline Barros",
+          "path": "musical_pascoa_UMP_2026/Autor da Vida - Aline Barros.html"
+        }
+      ]
+    },
+    {
+      "name": "Culto DOM",
+      "directory": "2026_08_16",
+      "index": "2026_08_16/index.html",
+      "songs": [
+        {
+          "title": "Alegria / Sou Feliz — Rachel Novaes",
+          "path": "2026_08_16/Alegria + Sou Feliz - Rachel Novaes.html"
+        },
+        {
+          "title": "O Leão da Tribo de Judá / Nosso Comandante — Adhemar de Campos",
+          "path": "2026_08_16/O Leão da Tribo de Judá + Nosso Comandante - Adhemar de Campos.html"
+        },
+        {
+          "title": "Digno é o Senhor — Aline Barros",
+          "path": "2026_08_16/Digno é o Senhor - Aline Barros.html"
+        },
+        {
+          "title": "Tua Graça Me Basta — Davi Sacer",
+          "path": "2026_08_16/Tua Graça Me Basta - Davi Sacer.html"
+        },
+        {
+          "title": "130 - Projeto Sola",
+          "path": "2026_08_16/130 - Projeto Sola.html"
+        },
+        {
+          "title": "Glória e Honra - Projeto Sola",
+          "path": "2026_08_16/Glória e Honra - Projeto Sola.html"
+        }
+      ]
+    },
+    {
+      "name": "Culto DOM",
+      "directory": "2026_08_02",
+      "index": "2026_08_02/index.html",
+      "songs": [
+        {
+          "title": "Um Novo Dia — Get Worship",
+          "path": "2026_08_02/Um Novo Dia - Get Worship.html"
+        },
+        {
+          "title": "Teu Amor Não Falha — Nívea Soares",
+          "path": "2026_08_02/Teu Amor Não Falha - Nívea Soares.html"
+        },
+        {
+          "title": "A Ele a Glória / Porque Ele Vive — Gabriela Rocha",
+          "path": "2026_08_02/A Ele a Glória + Porque Ele Vive - Gabriela Rocha.html"
+        },
+        {
+          "title": "Sobre as Águas — Davi Sacer",
+          "path": "2026_08_02/Sobre as Águas - Davi Sacer.html"
+        },
+        {
+          "title": "Filho do Deus Vivo — Nívea Soares",
+          "path": "2026_08_02/Filho do Deus Vivo - Nívea Soares.html"
+        }
+      ]
+    },
+    {
+      "name": "Culto DOM",
+      "directory": "2026_07_12_DOM",
+      "index": "2026_07_12_DOM/index.html",
+      "songs": [
+        {
+          "title": "Venha Sobre Nós — CantoVerbo",
+          "path": "2026_07_12_DOM/Venha Sobre Nós - CantoVerbo.html"
+        },
+        {
+          "title": "Tu és Santo — Ronaldo Bezerra",
+          "path": "2026_07_12_DOM/Tu és Santo - Ronaldo Bezerra.html"
+        },
+        {
+          "title": "Amigo de Deus — Adhemar de Campos",
+          "path": "2026_07_12_DOM/Amigo de Deus - Adhemar de Campos.html"
+        },
+        {
+          "title": "Tu És + É Ele — Emi Sousa",
+          "path": "2026_07_12_DOM/Tu És + É Ele - Emi Sousa.html"
+        }
+      ]
+    },
+    {
+      "name": "Culto do Amigo UMP",
+      "directory": "2026_07_11_UMP",
+      "index": "2026_07_11_UMP/index.html",
+      "songs": [
+        {
+          "title": "Venha Sobre Nós — CantoVerbo",
+          "path": "2026_07_11_UMP/Venha Sobre Nós - CantoVerbo.html"
+        },
+        {
+          "title": "Tu és Santo — Ronaldo Bezerra",
+          "path": "2026_07_11_UMP/Tu és Santo - Ronaldo Bezerra.html"
+        },
+        {
+          "title": "Amigo de Deus — Adhemar de Campos",
+          "path": "2026_07_11_UMP/Amigo de Deus - Adhemar de Campos.html"
+        },
+        {
+          "title": "Tributo a Iehovah — Paulo César Baruk",
+          "path": "2026_07_11_UMP/Tributo a Iehovah - Paulo Cesar Baruk.html"
+        }
+      ]
+    },
+    {
+      "name": "Culto DOM",
+      "directory": "2026_07_05_DOM",
+      "index": "2026_07_05_DOM/index.html",
+      "songs": [
+        {
+          "title": "Das Trevas a Luz — Projeto Sola",
+          "path": "2026_07_05_DOM/Das Trevas a Luz - Projeto Sola.html"
+        },
+        {
+          "title": "Venha Sobre Nós — CantoVerbo",
+          "path": "2026_07_05_DOM/Venha Sobre Nós - CantoVerbo.html"
+        },
+        {
+          "title": "Me Rendo A Ti — Hillsong em Português",
+          "path": "2026_07_05_DOM/Me Rendo A Ti - Hillsong em Português.html"
+        },
+        {
+          "title": "A Maior Honra — Juliany",
+          "path": "2026_07_05_DOM/A Maior Honra - Juliany.html"
+        },
+        {
+          "title": "Até Outra Vez — Projeto Sola",
+          "path": "2026_07_05_DOM/Até Outra Vez - Projeto Sola.html"
+        }
+      ]
+    },
+    {
+      "name": "Encontro de Casais — Caputira",
+      "directory": "2026_06_27",
+      "index": "2026_06_27/index.html",
+      "songs": [
+        {
+          "title": "Take My Hand",
+          "path": "2026_06_27/Take My Hand.html"
+        },
+        {
+          "title": "Only Hope — Switchfoot",
+          "path": "2026_06_27/Only Hope - Switchfoot.html"
+        },
+        {
+          "title": "You Are For Me — Kari Jobe",
+          "path": "2026_06_27/You Are For Me - Kari Jobe.html"
+        },
+        {
+          "title": "Se For Com Você — Estevão Queiroga",
+          "path": "2026_06_27/Se For Com Você - Estevão Queiroga.html"
+        },
+        {
+          "title": "Amor Que Eu Quero — Lorena Chaves",
+          "path": "2026_06_27/Amor Que Eu Quero - Lorena Chaves.html"
+        },
+        {
+          "title": "Quando Deus Criou Você",
+          "path": "2026_06_27/Quando Deus Criou Você.html"
+        },
+        {
+          "title": "Só Você — Anderson Freire",
+          "path": "2026_06_27/Só Você.html"
+        },
+        {
+          "title": "Escolhi Te Esperar — Marcela Taís",
+          "path": "2026_06_27/Escolhi Te Esperar - Marcela Tais.html"
+        },
+        {
+          "title": "Eles Se Amam",
+          "path": "2026_06_27/Eles Se Amam.html"
+        },
+        {
+          "title": "Seremos Um",
+          "path": "2026_06_27/Seremos Um.html"
+        },
+        {
+          "title": "Com Você Não Há Limites",
+          "path": "2026_06_27/Com Você Não Há Limites.html"
+        },
+        {
+          "title": "Diferente dos Anjos — Rose Nascimento",
+          "path": "2026_06_27/Diferente dos Anjos - Rose Nascimento.html"
+        },
+        {
+          "title": "Você Me Conquistou",
+          "path": "2026_06_27/Você Me Conquistou.html"
+        },
+        {
+          "title": "Meu Eterno Namorado",
+          "path": "2026_06_27/Meu Eterno Namorado.html"
+        },
+        {
+          "title": "Que Bom Que Você Chegou — Bruna Karla",
+          "path": "2026_06_27/Que Bom Que Você Chegou - Bruna Karla.html"
+        },
+        {
+          "title": "Apaixonado Coração",
+          "path": "2026_06_27/Apaixonado Coração.html"
+        },
+        {
+          "title": "Te Amo",
+          "path": "2026_06_27/Te Amo.html"
+        },
+        {
+          "title": "Nosso Amor",
+          "path": "2026_06_27/Nosso Amor.html"
+        },
+        {
+          "title": "Os Anjos Te Louvam — Eli Soares",
+          "path": "2026_06_27/Os Anjos Te Louvam - Eli Soares.html"
+        },
+        {
+          "title": "Senhor Formoso És — Ele É Exaltado",
+          "path": "2026_06_27/Senhor Formoso És - Ele É Exaltado.html"
+        },
+        {
+          "title": "Rompendo em Fé",
+          "path": "2026_06_27/Rompendo em Fé.html"
+        },
+        {
+          "title": "Ao Único",
+          "path": "2026_06_27/Ao Único.html"
+        },
+        {
+          "title": "Grande é o Senhor — ADHEMAR DE CAMPOS",
+          "path": "2026_06_27/Grande é o Senhor - ADHEMAR DE CAMPOS.html"
+        },
+        {
+          "title": "Ninguém Explica Deus — Preto no Branco",
+          "path": "2026_06_27/Ninguém Explica Deus - Preto no Branco.html"
+        },
+        {
+          "title": "Oceanos — Hillsong",
+          "path": "2026_06_27/Oceanos - Hillsong.html"
+        },
+        {
+          "title": "Aleluia — Jotta A",
+          "path": "2026_06_27/Aleluia.html"
+        },
+        {
+          "title": "Agnus Dei",
+          "path": "2026_06_27/Agnus Dei.html"
+        },
+        {
+          "title": "Santo Espírito",
+          "path": "2026_06_27/Santo Espírito.html"
+        },
+        {
+          "title": "Hosana — Hillsong em Português",
+          "path": "2026_06_27/Hosana - Hillsong.html"
+        },
+        {
+          "title": "Quero Conhecer Jesus — Gabriel Guedes",
+          "path": "2026_06_27/Quero Conhecer Jesus - Gabriel Guedes.html"
+        },
+        {
+          "title": "A Bênção — Gabriel Guedes",
+          "path": "2026_06_27/A Bênção - Gabriel Guedes.html"
+        },
+        {
+          "title": "Hosana - folha",
+          "path": "2026_06_27/Hosana - folha.html"
+        }
+      ]
+    },
+    {
+      "name": "Domingo à noite — 21/06/2026",
+      "directory": "2026_06_21",
+      "index": "2026_06_21/index.html",
+      "songs": [
+        {
+          "title": "Eu Te Agradeço — Preto no Branco",
+          "path": "2026_06_21/Eu Te Agradeço - Preto no Branco.html"
+        },
+        {
+          "title": "CRISTO VENCEU — IPALPHA",
+          "path": "2026_06_21/CRISTO VENCEU - IPALPHA.html"
+        },
+        {
+          "title": "Eterno Deus — Vineyard",
+          "path": "2026_06_21/Eterno Deus - Vineyard.html"
+        },
+        {
+          "title": "Grande é o Senhor — ADHEMAR DE CAMPOS",
+          "path": "2026_06_21/Grande é o Senhor - ADHEMAR DE CAMPOS.html"
+        },
+        {
+          "title": "Salmo 139 — João Manô",
+          "path": "2026_06_21/Salmo 139 - João Manô.html"
+        }
+      ]
+    },
+    {
+      "name": "Domingo à noite — 31/05/2026",
+      "directory": "2026_05_31",
+      "index": "2026_05_31/index.html",
+      "songs": [
+        {
+          "title": "Senhor e Rei — Trazendo a Arca",
+          "path": "2026_05_31/Senhor e Rei - Trazendo a Arca.html"
+        },
+        {
+          "title": "Meia Noite — FHOP",
+          "path": "2026_05_31/Meia Noite - FHOP.html"
+        }
+      ]
+    },
+    {
+      "name": "Domingo à noite — 19/04/2026",
+      "directory": "2026_04_19",
+      "index": "2026_04_19/index.html",
+      "songs": [
+        {
+          "title": "Mil Motivos — Rachel Novaes",
+          "path": "2026_04_19/Mil Motivos - Rachel Novaes.html"
+        },
+        {
+          "title": "Minh'alma Engrandece ao Senhor / Adorado — Rachel Novaes",
+          "path": "2026_04_19/Minh'alma Engrandece ao Senhor - Adorado - Rachel Novaes.html"
+        },
+        {
+          "title": "Eterno Deus — Vineyard",
+          "path": "2026_04_19/Eterno Deus - Vineyard.html"
+        },
+        {
+          "title": "Salmos 139 — João Manô",
+          "path": "2026_04_19/Salmos 139 - João Manô.html"
+        }
+      ]
+    },
+    {
+      "name": "15/03/2026",
+      "directory": "2026_03_15_DOM",
+      "index": "2026_03_15_DOM/index.html",
+      "songs": [
+        {
+          "title": "Êxodo - Projeto Sola",
+          "path": "2026_03_15_DOM/Êxodo - Projeto Sola.html"
+        },
+        {
+          "title": "Santo Pra Sempre - Fernandinho",
+          "path": "2026_03_15_DOM/Santo pra sempre - Fernandinho.html"
+        },
+        {
+          "title": "Ao Primeiro Amor - Fernandinho",
+          "path": "2026_03_15_DOM/Ao Primeiro Amor - Fernandinho.html"
+        },
+        {
+          "title": "Tão Profundo - Vineyard",
+          "path": "2026_03_15_DOM/Tão Profundo - Vineyard.html"
+        }
+      ]
+    }
+  ]
+}

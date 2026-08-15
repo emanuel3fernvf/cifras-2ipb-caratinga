@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Catálogo — Cifras 2IPB</title>
+  <link rel="stylesheet" href="catalogo.css">
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div class="brand" aria-hidden="true">♫</div>
+      <div><p class="eyebrow">CIFRAS 2IPB CARATINGA</p><h1>Catálogo</h1><p>Encontre um culto ou uma música publicada.</p></div>
+    </header>
+    <nav class="tabs" aria-label="Seções do catálogo">
+      <a href="#pastas">Dias e pastas</a><a href="#musicas">Todas as músicas</a>
+    </nav>
+    <section class="card" id="pastas" aria-labelledby="pastas-title">
+      <div class="heading"><div><p class="eyebrow">REPERTÓRIOS</p><h2 id="pastas-title">Dias e pastas</h2></div><span class="count" id="folder-count">…</span></div>
+      <div class="folder-list" id="folder-list"><p class="empty">Carregando pastas…</p></div>
+    </section>
+    <section class="card" id="musicas" aria-labelledby="musicas-title">
+      <div class="heading"><div><p class="eyebrow">CIFRAS</p><h2 id="musicas-title">Todas as músicas</h2></div><span class="count" id="song-count">…</span></div>
+      <div id="song-groups"><p class="empty">Carregando músicas…</p></div>
+    </section>
+  </main>
+  <script src="catalogo.js"></script>
+</body>
+</html>
