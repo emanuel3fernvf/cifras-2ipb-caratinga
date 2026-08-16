@@ -48,6 +48,7 @@ class CatalogTests(unittest.TestCase):
         scoped_pages = [
             page
             for index in ROOT.glob("*/index.html")
+            if index.parent.name not in gerar_catalogo.IGNORED_DIRECTORIES
             for page in index.parent.glob("*.html")
         ]
         self.assertEqual(len(scoped_pages), 91)
@@ -56,7 +57,7 @@ class CatalogTests(unittest.TestCase):
                 source = page.read_text(encoding="utf-8")
                 self.assertIn('src="index.js', source)
 
-        scripts = [index.parent / "index.js" for index in ROOT.glob("*/index.html")]
+        scripts = [index.parent / "index.js" for index in ROOT.glob("*/index.html") if index.parent.name not in gerar_catalogo.IGNORED_DIRECTORIES]
         self.assertEqual(len(scripts), 11)
         for script in scripts:
             with self.subTest(script=script.relative_to(ROOT)):

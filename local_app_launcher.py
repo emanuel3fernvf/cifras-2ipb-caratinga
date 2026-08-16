@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -21,21 +22,37 @@ def is_running(url: str) -> bool:
         return False
 
 
-def main() -> int:
+def background_process_options() -> dict[str, object]:
+    """Opções para manter o servidor vivo sem uma janela de console."""
+    if sys.platform == "win32":
+        creation_flags = (
+            getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200)
+            | getattr(subprocess, "DETACHED_PROCESS", 0x00000008)
+            | getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+        )
+        return {"creationflags": creation_flags, "close_fds": True}
+    return {"start_new_session": True}
+
+
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--port", required=True, type=int)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     root = args.root.resolve()
     url = f"http://127.0.0.1:{args.port}"
 
     if not is_running(url):
-        log = Path("/tmp/cifras-2ipb-servidor.log").open("ab")
-        subprocess.Popen(
-            [sys.executable, str(root / "local_editor_server.py"), "--root", str(root), "--port", str(args.port)],
-            cwd=root, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
-            start_new_session=True,
-        )
+        log_path = Path(tempfile.gettempdir()) / "cifras-2ipb-servidor.log"
+        with log_path.open("ab") as log:
+            subprocess.Popen(
+                [sys.executable, str(root / "local_editor_server.py"), "--root", str(root), "--port", str(args.port)],
+                cwd=root,
+                stdin=subprocess.DEVNULL,
+                stdout=log,
+                stderr=subprocess.STDOUT,
+                **background_process_options(),
+            )
         for _ in range(30):
             if is_running(url):
                 break

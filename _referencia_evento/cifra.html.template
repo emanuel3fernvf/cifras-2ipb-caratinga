@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{SONG_TITLE}} — {{SONG_ARTIST}}</title>
+  <link rel="stylesheet" href="index.css?v=1">
+</head>
+<body>
+<span class="holyrics-title" hidden>{{SONG_TITLE}}</span>
+<span class="holyrics-artist" hidden>{{SONG_ARTIST}}</span>
+<pre>{{SONG_TITLE}} — {{SONG_ARTIST}}
+
+</pre>
+<p class="next-song-wrap"><a class="back-to-index-btn" href="index.html" aria-label="Voltar ao índice">← Índice</a></p>
+<script src="index.js?v=1"></script>
+</body>
+</html>

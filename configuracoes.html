@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Configurações — Cifras 2IPB</title>
-  <link rel="stylesheet" href="configuracoes.css">
+  <link rel="stylesheet" href="configuracoes.css?v=2">
 </head>
 <body>
   <main class="page">
@@ -29,7 +29,7 @@
       <div class="card-heading">
         <div><p class="eyebrow">ACESSO RÁPIDO</p><h2 id="shortcut-title">Atalho</h2></div>
       </div>
-      <p class="detail">Crie um ícone na área de trabalho. Ele inicia o servidor quando necessário e abre esta página no navegador.</p>
+      <p class="detail">Crie um ícone na área de trabalho. No Windows será um atalho .lnk; no Linux, um arquivo .desktop. Ele inicia o servidor quando necessário e abre esta página no navegador.</p>
       <button class="button button-primary" id="add-shortcut" type="button">＋ Adicionar um atalho na área de trabalho</button>
       <p class="feedback" id="shortcut-feedback" role="status"></p>
     </section>
@@ -37,7 +37,13 @@
     <section class="card" aria-labelledby="indexes-title">
       <div class="card-heading indexes-heading">
         <div><p class="eyebrow">REPERTÓRIOS</p><h2 id="indexes-title">Pastas</h2></div>
-        <span class="count" id="index-count">…</span>
+        <div class="indexes-tools">
+          <div class="dropdown management-only" hidden>
+            <button class="button button-primary compact" id="create-event-menu" type="button" aria-haspopup="menu" aria-expanded="false">Criar novo evento ▾</button>
+            <div class="dropdown-menu" id="event-menu" role="menu" hidden><button type="button" data-event-mode="name">Por nome</button><button type="button" data-event-mode="date">Por data</button></div>
+          </div>
+          <span class="count" id="index-count">…</span>
+        </div>
       </div>
       <div class="index-list" id="index-list"><p class="empty">Carregando pastas…</p></div>
     </section>
@@ -49,6 +55,7 @@
       <div class="actions dialog-actions"><button class="button button-secondary" value="cancel">Cancelar</button><button class="button button-danger" id="confirm-shutdown" value="confirm">Desligar</button></div>
     </form>
   </dialog>
-  <script src="configuracoes.js"></script>
+  <dialog id="manager-dialog"><form method="dialog" id="manager-form"><h2 id="manager-title"></h2><p id="manager-description"></p><div id="manager-fields"></div><p class="feedback error" id="manager-error" role="alert"></p><div class="actions dialog-actions"><button class="button button-secondary" value="cancel" type="button" id="manager-cancel">Cancelar</button><button class="button button-primary" type="submit" id="manager-confirm">Salvar</button></div></form></dialog>
+  <script src="configuracoes.js?v=2"></script>
 </body>
 </html>

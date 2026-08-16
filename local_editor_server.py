@@ -16,6 +16,7 @@ import os
 import re
 import shlex
 import stat
+import subprocess
 import sys
 import tempfile
 import threading
@@ -25,6 +26,8 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable
 from urllib.parse import parse_qs, urlsplit
+
+import event_manager
 
 
 LOOPBACK_HOST = "127.0.0.1"
@@ -37,6 +40,9 @@ SAVE_ENDPOINT = f"{API_PREFIX}save"
 INDEXES_ENDPOINT = f"{API_PREFIX}indexes"
 SHORTCUT_ENDPOINT = f"{API_PREFIX}shortcut"
 SHUTDOWN_ENDPOINT = f"{API_PREFIX}shutdown"
+EVENTS_ENDPOINT = f"{API_PREFIX}events"
+SONGS_ENDPOINT = f"{API_PREFIX}songs"
+CAPOS_ENDPOINT = f"{API_PREFIX}capos"
 REVISION_RE = re.compile(r"[0-9a-fA-F]{64}\Z")
 
 
@@ -253,24 +259,31 @@ class EditorService:
             revision=loaded.revision,
         )
 
-    def list_indexes(self) -> list[dict[str, str]]:
+    def list_indexes(self) -> list[dict[str, Any]]:
         """Lista pastas que possuem index.html sem expor links externos."""
-        indexes: list[dict[str, str]] = []
-        for target in self.root.rglob("index.html"):
-            try:
-                resolved = target.resolve(strict=True)
-                relative = resolved.relative_to(self.root)
-            except (OSError, RuntimeError, ValueError):
-                continue
-            if resolved.is_file() and relative.name == "index.html":
-                folder = relative.parent.as_posix()
-                indexes.append({
-                    "name": "Início" if folder == "." else folder,
-                    "path": relative.as_posix(),
-                })
-        return sorted(indexes, key=lambda item: item["name"].casefold(), reverse=True)
+        return event_manager.list_events(self.root)
+
+    def manage(self, operation: str, payload: Any) -> dict[str, Any]:
+        if not isinstance(payload, dict):
+            raise EditorError(400, "invalid_request", "O corpo JSON deve ser um objeto.")
+        actions: dict[str, Callable[[Path, dict[str, object]], Any]] = {
+            "create_event": event_manager.create_event,
+            "create_song": event_manager.create_song,
+            "add_capo": event_manager.add_capo,
+            "delete_event": event_manager.delete_event,
+            "delete_song": event_manager.delete_song,
+            "delete_capo": event_manager.delete_capo,
+        }
+        try:
+            result = actions[operation](self.root, payload)
+        except event_manager.ManagerError as error:
+            raise EditorError(error.status, error.code, error.message) from error
+        return result or {}
 
     def create_desktop_shortcut(self, port: int) -> Path:
+        if _is_windows():
+            return self._create_windows_shortcut(port)
+
         desktop = _desktop_directory()
         desktop.mkdir(parents=True, exist_ok=True)
         shortcut = desktop / "Cifras 2IPB Caratinga.desktop"
@@ -292,6 +305,64 @@ class EditorService:
         except OSError as exc:
             raise EditorError(500, "shortcut_failed", "Não foi possível criar o atalho na área de trabalho.") from exc
         return shortcut
+
+    def _create_windows_shortcut(self, port: int) -> Path:
+        launcher = self.root / "local_app_launcher.py"
+        if not launcher.is_file():
+            raise EditorError(500, "launcher_not_found", "O iniciador do aplicativo não foi encontrado.")
+
+        python_executable = Path(sys.executable)
+        pythonw = python_executable.with_name("pythonw.exe")
+        if pythonw.is_file():
+            python_executable = pythonw
+        arguments = subprocess.list2cmdline([
+            str(launcher), "--root", str(self.root), "--port", str(port)
+        ])
+        environment = os.environ.copy()
+        environment.update({
+            "CIFRAS_PYTHON": str(python_executable),
+            "CIFRAS_ARGUMENTS": arguments,
+            "CIFRAS_ROOT": str(self.root),
+        })
+        shortcut_script = self.root / "windows" / "criar_atalho.ps1"
+        if not shortcut_script.is_file():
+            raise EditorError(
+                500, "launcher_not_found", "O criador de atalhos do Windows não foi encontrado."
+            )
+        try:
+            result = subprocess.run(
+                [
+                    "powershell.exe",
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    str(shortcut_script),
+                ],
+                env=environment,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                timeout=20,
+                check=False,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise EditorError(
+                500, "shortcut_failed", "Não foi possível executar o criador de atalhos do Windows."
+            ) from exc
+        if result.returncode != 0:
+            raise EditorError(
+                500, "shortcut_failed", "O Windows não permitiu criar o atalho na Área de Trabalho."
+            )
+        output = result.stdout.strip().splitlines()
+        if not output:
+            raise EditorError(
+                500, "shortcut_failed", "O Windows não informou onde o atalho foi criado."
+            )
+        return Path(output[-1])
+
     def _atomic_replace(
         self, target: Path, new_data: bytes, expected_revision: str
     ) -> None:
@@ -394,6 +465,10 @@ class EditorService:
             return SaveResult(revision=new_revision)
 
 
+def _is_windows() -> bool:
+    return sys.platform == "win32"
+
+
 def _desktop_directory() -> Path:
     home = Path.home()
     config = home / ".config" / "user-dirs.dirs"
@@ -483,6 +558,17 @@ class EditorAPI:
             return ApiResponse(200, {"ok": True, "path": str(shortcut)})
         if parsed.path == SHUTDOWN_ENDPOINT:
             return ApiResponse(200, {"ok": True, "message": "Servidor encerrado."})
+        operations = {
+            EVENTS_ENDPOINT: "create_event",
+            SONGS_ENDPOINT: "create_song",
+            CAPOS_ENDPOINT: "add_capo",
+        }
+        if parsed.path in operations:
+            try:
+                result = self.service.manage(operations[parsed.path], payload)
+            except EditorError as error:
+                return _error_response(error)
+            return ApiResponse(201, {"ok": True, **result})
         if parsed.path != SAVE_ENDPOINT:
             return _error_response(
                 EditorError(404, "endpoint_not_found", "Endpoint da API não encontrado.")
@@ -508,6 +594,21 @@ class EditorAPI:
         except EditorError as error:
             return _error_response(error)
         return ApiResponse(200, {"ok": True, "revision": result.revision})
+
+    def delete(self, request_target: str, payload: Any) -> ApiResponse:
+        parsed = urlsplit(request_target)
+        operations = {
+            EVENTS_ENDPOINT: "delete_event",
+            SONGS_ENDPOINT: "delete_song",
+            CAPOS_ENDPOINT: "delete_capo",
+        }
+        if parsed.query or parsed.path not in operations:
+            return _error_response(EditorError(404, "endpoint_not_found", "Endpoint da API não encontrado."))
+        try:
+            self.service.manage(operations[parsed.path], payload)
+        except EditorError as error:
+            return _error_response(error)
+        return ApiResponse(200, {"ok": True})
 
 
 def _allowed_host(host_header: str | None) -> bool:
@@ -623,7 +724,7 @@ def make_handler(
             if self._reject_nonlocal_host():
                 return
             parsed = urlsplit(self.path)
-            if parsed.path not in {SAVE_ENDPOINT, SHORTCUT_ENDPOINT, SHUTDOWN_ENDPOINT} or parsed.query:
+            if parsed.path not in {SAVE_ENDPOINT, SHORTCUT_ENDPOINT, SHUTDOWN_ENDPOINT, EVENTS_ENDPOINT, SONGS_ENDPOINT, CAPOS_ENDPOINT} or parsed.query:
                 self._send_api(api.post(self.path, {}))
                 return
             try:
@@ -635,6 +736,16 @@ def make_handler(
             self._send_api(response)
             if parsed.path == SHUTDOWN_ENDPOINT and response.status == 200:
                 threading.Thread(target=self.server.shutdown, daemon=True).start()
+
+        def do_DELETE(self) -> None:
+            if self._reject_nonlocal_host():
+                return
+            try:
+                payload = self._read_json()
+            except EditorError as error:
+                self._send_api(_error_response(error))
+                return
+            self._send_api(api.delete(self.path, payload))
 
         def do_OPTIONS(self) -> None:
             # Não habilitar CORS impede páginas de outras origens de gravarem

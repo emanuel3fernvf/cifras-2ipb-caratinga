@@ -53,13 +53,9 @@ class EditorServiceTests(unittest.TestCase):
         (self.root / "outra").mkdir()
         (self.root / "outra" / "index.html").write_text("índice", encoding="utf-8")
 
-        self.assertEqual(
-            self.service.list_indexes(),
-            [
-                {"name": "outra", "path": "outra/index.html"},
-                {"name": "culto", "path": "culto/index.html"},
-            ],
-        )
+        indexes = self.service.list_indexes()
+        self.assertEqual([(item["name"], item["path"]) for item in indexes], [("outra", "outra/index.html"), ("culto", "culto/index.html")])
+        self.assertEqual(indexes[1]["songs"][0]["filename"], "Música & Teste.html")
 
     def test_creates_executable_desktop_shortcut_for_current_port(self) -> None:
         launcher = self.root / "local_app_launcher.py"
@@ -358,7 +354,9 @@ class EditorApiTests(unittest.TestCase):
 
         assert indexes is not None
         self.assertEqual(indexes.status, 200)
-        self.assertEqual(indexes.body["indexes"], [{"name": "pasta", "path": "pasta/index.html"}])
+        self.assertEqual(indexes.body["indexes"][0]["name"], "pasta")
+        self.assertEqual(indexes.body["indexes"][0]["path"], "pasta/index.html")
+        self.assertEqual(indexes.body["indexes"][0]["songs"][0]["filename"], "Cântico.html")
         self.assertEqual(shutdown, server.ApiResponse(200, {"ok": True, "message": "Servidor encerrado."}))
 
 

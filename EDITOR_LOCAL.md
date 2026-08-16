@@ -5,11 +5,31 @@ vinculado exclusivamente a `127.0.0.1`.
 
 ## Iniciar
 
-Na raiz do repositório:
+### Windows 10 e 11
+
+Dê duplo clique em `windows\instalar_e_rodar.bat`. Na primeira execução, ele
+procura Python 3.10 ou superior e cria o ambiente local em `windows\venv`. Se Python não estiver
+instalado, tenta instalar Python 3.12 com winget; caso isso não seja possível,
+abre a página oficial de instalação e mostra as instruções necessárias.
+
+Nas próximas execuções, o mesmo arquivo abre o aplicativo diretamente, sem
+manter uma janela de terminal. Depois, o botão de atalho nas configurações cria
+um arquivo .lnk na Área de Trabalho do perfil atual, inclusive quando ela é
+redirecionada pelo OneDrive.
+
+### Linux
+
+Na raiz do repositório, autorize a execução uma única vez e inicie o aplicativo:
 
 ```bash
-python3 local_editor_server.py
+chmod +x linux/instalar_e_rodar.sh
+./linux/instalar_e_rodar.sh
 ```
+
+O instalador procura Python 3.10 ou superior, cria o ambiente local em
+`linux/venv` e abre o aplicativo no navegador. Se o Python não estiver
+disponível, ele tenta instalá-lo por `apt`, `dnf` ou `pacman`, conforme a
+distribuição. Nas execuções seguintes, basta executar novamente o mesmo `.sh`.
 
 Depois, abra <http://127.0.0.1:8000/configuracoes.html>. Nessa página é
 possível abrir qualquer pasta que contenha `index.html`, criar o atalho na
@@ -48,11 +68,17 @@ Resposta `200`:
 GET /__chord_editor__/indexes
 ```
 
+Quando aberto em `127.0.0.1` ou `localhost`, o painel também usa os endpoints
+locais `events`, `songs` e `capos` para criar e excluir eventos, cifras e links
+de capotraste. Esses controles permanecem ocultos fora do servidor local. As
+exclusões de eventos e cifras são movidas para `_lixeira`.
+
 ### Criar atalho e desligar
 
 Os controles da página usam `POST /__chord_editor__/shortcut` para criar um
-arquivo `.desktop` e `POST /__chord_editor__/shutdown` para encerrar o processo.
-O atalho inicia o servidor quando necessário e abre as configurações.
+arquivo `.lnk` no Windows ou `.desktop` no Linux, e
+`POST /__chord_editor__/shutdown` para encerrar o processo. O atalho inicia o
+servidor quando necessário e abre as configurações.
 
 ### Ler texto e revisão atuais
 

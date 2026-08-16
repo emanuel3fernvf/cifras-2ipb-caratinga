@@ -11,6 +11,7 @@ from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parent
 OUTPUT = ROOT / "catalogo.json"
+IGNORED_DIRECTORIES = {"_referencia_evento", "_lixeira"}
 
 
 class IndexParser(HTMLParser):
@@ -56,7 +57,10 @@ class IndexParser(HTMLParser):
 
 def build_catalog(root: Path = ROOT) -> dict[str, object]:
     folders: list[dict[str, object]] = []
-    indexes = sorted(root.glob("*/index.html"), key=lambda path: path.parent.name.casefold(), reverse=True)
+    indexes = sorted(
+        (path for path in root.glob("*/index.html") if path.parent.name not in IGNORED_DIRECTORIES),
+        key=lambda path: path.parent.name.casefold(), reverse=True
+    )
     for index in indexes:
         parser = IndexParser()
         parser.feed(index.read_text(encoding="utf-8"))
