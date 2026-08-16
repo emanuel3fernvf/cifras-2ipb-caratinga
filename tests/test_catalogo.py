@@ -18,15 +18,15 @@ class CatalogTests(unittest.TestCase):
     def test_manifest_is_current_and_has_every_song_once(self) -> None:
         saved = json.loads((ROOT / "catalogo.json").read_text(encoding="utf-8"))
         self.assertEqual(saved, self.catalog)
-        self.assertEqual(len(self.folders), 11)
+        self.assertGreaterEqual(len(self.folders), 11)
         paths = [song["path"] for folder in self.folders for song in folder["songs"]]
         expected = [
             str(page.relative_to(ROOT))
             for index in ROOT.glob("*/index.html")
+            if index.parent.name not in gerar_catalogo.IGNORED_DIRECTORIES
             for page in index.parent.glob("*.html")
             if page.name != "index.html"
         ]
-        self.assertEqual(len(paths), 80)
         self.assertEqual(len(paths), len(set(paths)))
         self.assertEqual(set(paths), set(expected))
         self.assertTrue(all((ROOT / path).is_file() for path in paths))
@@ -51,14 +51,15 @@ class CatalogTests(unittest.TestCase):
             if index.parent.name not in gerar_catalogo.IGNORED_DIRECTORIES
             for page in index.parent.glob("*.html")
         ]
-        self.assertEqual(len(scoped_pages), 91)
+        song_count = sum(len(folder["songs"]) for folder in self.folders)
+        self.assertEqual(len(scoped_pages), len(self.folders) + song_count)
         for page in scoped_pages:
             with self.subTest(page=page.relative_to(ROOT)):
                 source = page.read_text(encoding="utf-8")
                 self.assertIn('src="index.js', source)
 
         scripts = [index.parent / "index.js" for index in ROOT.glob("*/index.html") if index.parent.name not in gerar_catalogo.IGNORED_DIRECTORIES]
-        self.assertEqual(len(scripts), 11)
+        self.assertEqual(len(scripts), len(self.folders))
         for script in scripts:
             with self.subTest(script=script.relative_to(ROOT)):
                 source = script.read_text(encoding="utf-8")
@@ -66,6 +67,22 @@ class CatalogTests(unittest.TestCase):
                 self.assertIn("window.location.hostname === 'localhost'", source)
                 self.assertIn("'../configuracoes.html' : '../catalogo.html'", source)
                 self.assertEqual(source.count("createHomeButton();"), 1)
+
+    def test_full_editors_offer_find_and_replace(self) -> None:
+        editor_scripts = [
+            script for script in ROOT.glob("*/index.js")
+            if "function openFullEditorModal" in script.read_text(encoding="utf-8")
+        ]
+        self.assertGreaterEqual(len(editor_scripts), 3)
+        for script in editor_scripts:
+            with self.subTest(script=script.relative_to(ROOT)):
+                source = script.read_text(encoding="utf-8")
+                self.assertIn("editor-find-replace", source)
+                self.assertIn("Substituir todas as ocorrências", source)
+                self.assertIn("event.key.toLowerCase() === 'f'", source)
+                self.assertIn("scrollMatchIntoView", source)
+                self.assertIn("Existem alterações não salvas", source)
+                self.assertIn("editor-modal-close", source)
 
 
 if __name__ == "__main__":

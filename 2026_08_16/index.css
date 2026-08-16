@@ -617,15 +617,124 @@ body.local-editor-busy .chord-palette-item {
 }
 
 .editor-modal-header {
+    position: relative;
     padding: 16px 18px 12px;
     border-bottom: 1px solid #ececec;
 }
 
 .editor-modal-title {
+    padding-right: 42px;
     margin: 0;
     color: #252525;
     font-size: 18px;
     line-height: 1.3;
+}
+
+.editor-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #555;
+    font: 700 24px/1 Arial, sans-serif;
+    cursor: pointer;
+}
+
+.editor-modal-close:hover:not(:disabled) {
+    background: #f0f0f0;
+    color: #111;
+}
+
+.editor-modal-close:disabled {
+    cursor: progress;
+    opacity: 0.45;
+}
+
+.editor-find-replace {
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) auto repeat(5, auto);
+    gap: 7px;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.editor-find-replace .editor-modal-input {
+    min-width: 0;
+    padding: 8px 9px;
+    font-size: 13px;
+}
+
+.editor-find-status {
+    min-width: 58px;
+    color: #666;
+    font-size: 12px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.editor-find-button {
+    min-height: 34px;
+    border: 1px solid #d2d2d2;
+    border-radius: 7px;
+    padding: 6px 9px;
+    background: #f4f4f4;
+    color: #252525;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.editor-find-button:hover:not(:disabled),
+.editor-find-button.is-active {
+    border-color: #ff7700;
+    background: #fff3e8;
+}
+
+.editor-find-button:disabled {
+    cursor: default;
+    opacity: 0.45;
+}
+
+@media (max-width: 760px) {
+    .editor-find-replace {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) repeat(3, auto);
+    }
+
+    .editor-find-status {
+        grid-column: 1;
+        text-align: left;
+    }
+
+    .editor-find-button:nth-last-child(-n+2) {
+        min-width: 74px;
+    }
+}
+
+@media (max-width: 520px) {
+    .editor-modal-header {
+        padding: 13px 12px 10px;
+    }
+
+    .editor-find-replace {
+        grid-template-columns: minmax(0, 1fr) repeat(3, auto);
+    }
+
+    .editor-replace-input {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .editor-find-status {
+        grid-column: 1;
+        grid-row: 3;
+    }
 }
 
 .editor-modal-body {

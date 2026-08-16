@@ -833,7 +833,8 @@
 
     var header = document.createElement('div');
     header.className = 'editor-modal-header';
-    header.appendChild(heading);
+    var closeButton = document.createElement('button'); closeButton.type = 'button'; closeButton.className = 'editor-modal-close'; closeButton.textContent = '×'; closeButton.title = 'Fechar'; closeButton.setAttribute('aria-label', 'Fechar janela');
+    header.append(heading, closeButton);
 
     var body = document.createElement('div');
     body.className = 'editor-modal-body';
@@ -861,12 +862,16 @@
 
     var api = {
       overlay: overlay,
+      header: header,
       body: body,
       primaryButton: primaryButton,
       cancelButton: cancelButton,
+      closeButton: closeButton,
+      beforeClose: null,
       pending: false,
       close: function (force) {
         if (api.pending && !force) return;
+        if (!force && api.beforeClose && api.beforeClose() === false) return;
         document.removeEventListener('keydown', onModalKeyDown, true);
         if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
         if (localEditor.modal === api) localEditor.modal = null;
@@ -875,6 +880,7 @@
         api.pending = !!pending;
         primaryButton.disabled = api.pending;
         cancelButton.disabled = api.pending;
+        closeButton.disabled = api.pending;
         var fields = modal.querySelectorAll('input, textarea, select');
         for (var i = 0; i < fields.length; i++) {
           fields[i].disabled = api.pending;
@@ -928,6 +934,7 @@
     cancelButton.addEventListener('click', function () {
       api.close(false);
     });
+    closeButton.addEventListener('click', function () { api.close(false); });
     overlay.addEventListener('mousedown', function (event) {
       if (event.target === overlay) api.close(false);
     });
@@ -948,6 +955,31 @@
     textarea.spellcheck = false;
     textarea.setAttribute('aria-label', 'Conteúdo completo da cifra');
     editor.body.appendChild(textarea);
+
+    var searchBar = document.createElement('div'); searchBar.className = 'editor-find-replace';
+    var findInput = document.createElement('input'); findInput.type = 'search'; findInput.className = 'editor-modal-input editor-find-input'; findInput.placeholder = 'Localizar'; findInput.setAttribute('aria-label', 'Localizar na cifra');
+    var replaceInput = document.createElement('input'); replaceInput.type = 'text'; replaceInput.className = 'editor-modal-input editor-replace-input'; replaceInput.placeholder = 'Substituir por'; replaceInput.setAttribute('aria-label', 'Substituir por');
+    var matchStatus = document.createElement('span'); matchStatus.className = 'editor-find-status'; matchStatus.setAttribute('aria-live', 'polite');
+    function searchButton(text, title) { var button = document.createElement('button'); button.type = 'button'; button.className = 'editor-find-button'; button.textContent = text; button.title = title; return button; }
+    var caseButton = searchButton('Aa', 'Diferenciar maiúsculas e minúsculas'); caseButton.setAttribute('aria-pressed', 'false');
+    var previousButton = searchButton('↑', 'Ocorrência anterior'); var nextButton = searchButton('↓', 'Próxima ocorrência');
+    var replaceButton = searchButton('Substituir', 'Substituir ocorrência atual'); var replaceAllButton = searchButton('Todos', 'Substituir todas as ocorrências');
+    searchBar.append(findInput, replaceInput, matchStatus, caseButton, previousButton, nextButton, replaceButton, replaceAllButton); editor.header.appendChild(searchBar);
+    var matchPositions = [], currentMatch = -1;
+    function isCaseSensitive() { return caseButton.getAttribute('aria-pressed') === 'true'; }
+    function updateSearchStatus() { matchStatus.textContent = findInput.value ? (matchPositions.length ? (currentMatch + 1) + ' de ' + matchPositions.length : 'Nenhum') : ''; var disabled = !matchPositions.length; previousButton.disabled = disabled; nextButton.disabled = disabled; replaceButton.disabled = disabled; replaceAllButton.disabled = disabled; }
+    function rebuildMatches(position) { matchPositions = []; var query = findInput.value; if (query) { var source = isCaseSensitive() ? textarea.value : textarea.value.toLocaleLowerCase(); var needle = isCaseSensitive() ? query : query.toLocaleLowerCase(); for (var from = 0; from <= source.length - needle.length;) { var found = source.indexOf(needle, from); if (found < 0) break; matchPositions.push(found); from = found + Math.max(needle.length, 1); } } currentMatch = -1; if (matchPositions.length) { position = typeof position === 'number' ? position : textarea.selectionStart; for (var i = 0; i < matchPositions.length; i++) { if (matchPositions[i] >= position) { currentMatch = i; break; } } if (currentMatch < 0) currentMatch = 0; } updateSearchStatus(); }
+    function scrollMatchIntoView(start) { var styles = window.getComputedStyle(textarea); var lineHeight = parseFloat(styles.lineHeight); if (!isFinite(lineHeight)) lineHeight = parseFloat(styles.fontSize) * 1.35; var line = (textarea.value.slice(0, start).match(/\n/g) || []).length; var matchTop = line * lineHeight; var visibleTop = textarea.scrollTop; var visibleBottom = visibleTop + textarea.clientHeight - lineHeight; if (matchTop < visibleTop || matchTop > visibleBottom) textarea.scrollTop = Math.max(0, matchTop - (textarea.clientHeight - lineHeight) / 2); }
+    function selectCurrentMatch() { if (currentMatch < 0) return; var start = matchPositions[currentMatch]; textarea.focus(); textarea.setSelectionRange(start, start + findInput.value.length); scrollMatchIntoView(start); }
+    function moveMatch(step) { if (!matchPositions.length) return; currentMatch = (currentMatch + step + matchPositions.length) % matchPositions.length; updateSearchStatus(); selectCurrentMatch(); }
+    function replaceCurrent() { if (currentMatch < 0) return; var start = matchPositions[currentMatch]; textarea.setRangeText(replaceInput.value, start, start + findInput.value.length, 'end'); rebuildMatches(start + replaceInput.value.length); selectCurrentMatch(); }
+    function replaceAll() { if (!matchPositions.length) return; var total = matchPositions.length; for (var i = total - 1; i >= 0; i--) textarea.setRangeText(replaceInput.value, matchPositions[i], matchPositions[i] + findInput.value.length, 'preserve'); rebuildMatches(0); showLocalEditorNotification(total + (total === 1 ? ' ocorrência substituída.' : ' ocorrências substituídas.'), 'success'); replaceInput.focus(); }
+    findInput.addEventListener('input', function () { rebuildMatches(0); }); textarea.addEventListener('input', function () { rebuildMatches(textarea.selectionStart); });
+    caseButton.addEventListener('click', function () { var active = !isCaseSensitive(); caseButton.setAttribute('aria-pressed', active ? 'true' : 'false'); caseButton.classList.toggle('is-active', active); rebuildMatches(0); });
+    previousButton.addEventListener('click', function () { moveMatch(-1); }); nextButton.addEventListener('click', function () { moveMatch(1); }); replaceButton.addEventListener('click', replaceCurrent); replaceAllButton.addEventListener('click', replaceAll);
+    findInput.addEventListener('keydown', function (event) { if (event.key === 'Enter') { event.preventDefault(); moveMatch(event.shiftKey ? -1 : 1); } });
+    textarea.addEventListener('keydown', function (event) { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') { event.preventDefault(); findInput.focus(); findInput.select(); } }); rebuildMatches(0);
+    editor.beforeClose = function () { if (textarea.value === localEditor.preText) return true; return window.confirm('Existem alterações não salvas. Deseja descartá-las?'); };
 
     editor.primaryButton.addEventListener('click', function () {
       if (editor.pending) return;

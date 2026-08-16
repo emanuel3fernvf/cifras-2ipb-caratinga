@@ -1,3 +1,4 @@
+@import url("../editor-find-replace.css");
 /* Reserva espaço no topo para o botão "Mostrar Pad" (fixed) */
 :root {
     --video-top-offset: 52px;
