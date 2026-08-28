@@ -85,16 +85,35 @@ class LauncherCompatibilityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_directory:
             with (
                 mock.patch("local_app_launcher.is_running", side_effect=[False, True]),
+                mock.patch("local_app_launcher.available_port", return_value=8125),
                 mock.patch("local_app_launcher.tempfile.gettempdir", return_value=temp_directory),
                 mock.patch("local_app_launcher.background_process_options", return_value={"sentinel": True}),
                 mock.patch("local_app_launcher.subprocess.Popen") as popen,
-                mock.patch("local_app_launcher.webbrowser.open"),
+                mock.patch("local_app_launcher.webbrowser.open") as browser,
             ):
                 result = launcher.main(["--root", str(Path.cwd()), "--port", "8124"])
 
             self.assertEqual(result, 0)
             self.assertTrue((Path(temp_directory) / "cifras-2ipb-servidor.log").exists())
             self.assertTrue(popen.call_args.kwargs["sentinel"])
+            self.assertEqual(popen.call_args.args[0][-1], "8125")
+            browser.assert_called_once_with("http://127.0.0.1:8125/configuracoes.html")
+
+    def test_available_port_skips_ports_that_cannot_be_bound(self) -> None:
+        first_probe = mock.MagicMock()
+        first_probe.__enter__.return_value.bind.side_effect = OSError("ocupada")
+        second_probe = mock.MagicMock()
+
+        with mock.patch(
+            "local_app_launcher.socket.socket",
+            side_effect=[first_probe, second_probe],
+        ):
+            port = launcher.available_port(8124, attempts=2)
+
+        self.assertEqual(port, 8125)
+        second_probe.__enter__.return_value.bind.assert_called_once_with(
+            ("127.0.0.1", 8125)
+        )
 
     def test_windows_installer_contains_required_fallbacks(self) -> None:
         source = (Path(__file__).resolve().parents[1] / "windows" / "instalar_e_rodar.bat").read_text(
