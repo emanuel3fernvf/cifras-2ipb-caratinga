@@ -5,6 +5,7 @@ import io
 import json
 import os
 import stat
+import subprocess
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -62,13 +63,23 @@ class EditorServiceTests(unittest.TestCase):
         launcher.write_text("# launcher", encoding="utf-8")
         desktop = self.root / "Desktop"
 
-        with mock.patch("local_editor_server._desktop_directory", return_value=desktop):
+        with (
+            mock.patch("local_editor_server._desktop_directory", return_value=desktop),
+            mock.patch("local_editor_server.subprocess.run") as run,
+        ):
             shortcut = self.service.create_desktop_shortcut(8765)
 
         source = shortcut.read_text(encoding="utf-8")
         self.assertIn("Name=Cifras 2IPB Caratinga", source)
         self.assertIn("--port 8765", source)
         self.assertTrue(stat.S_IMODE(shortcut.stat().st_mode) & stat.S_IXUSR)
+        run.assert_called_once_with(
+            ["gio", "set", str(shortcut), "metadata::trusted", "true"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=5,
+            check=False,
+        )
 
     def test_save_escapes_text_and_preserves_everything_outside_pre(self) -> None:
         os.chmod(self.page_path, 0o640)

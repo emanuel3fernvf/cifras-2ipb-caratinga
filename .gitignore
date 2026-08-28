@@ -1,3 +1,13 @@
 linux/venv/
 windows/venv/
 _lixeira/
+
+# Artefatos gerados pelo Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ambientes virtuais locais
+.venv/
+venv/
+env/

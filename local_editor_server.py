@@ -304,6 +304,20 @@ class EditorService:
             shortcut.chmod(0o755)
         except OSError as exc:
             raise EditorError(500, "shortcut_failed", "Não foi possível criar o atalho na área de trabalho.") from exc
+        # GNOME exige, além da permissão de execução, que lançadores criados
+        # programaticamente sejam marcados como confiáveis. Outros ambientes
+        # ignoram o atributo, portanto a tentativa pode falhar sem invalidar o
+        # atalho recém-criado.
+        try:
+            subprocess.run(
+                ["gio", "set", str(shortcut), "metadata::trusted", "true"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=5,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            pass
         return shortcut
 
     def _create_windows_shortcut(self, port: int) -> Path:
