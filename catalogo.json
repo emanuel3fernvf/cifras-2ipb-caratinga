@@ -44,6 +44,29 @@
       ]
     },
     {
+      "name": "Evento",
+      "directory": "2026_08_30",
+      "index": "2026_08_30/index.html",
+      "songs": [
+        {
+          "title": "Estamos de Pé — Marcus Salles",
+          "path": "2026_08_30/Estamos de Pé - Marcus Salles.html"
+        },
+        {
+          "title": "Consagração — Aline Barros",
+          "path": "2026_08_30/Consagração - Aline Barros.html"
+        },
+        {
+          "title": "Cartas Para O Mundo — Ibab",
+          "path": "2026_08_30/Cartas Para O Mundo - Ibab.html"
+        },
+        {
+          "title": "Poder Pra Salvar — Hilsong em Português",
+          "path": "2026_08_30/Poder Pra Salvar - Hilsong em Português.html"
+        }
+      ]
+    },
+    {
       "name": "Culto DOM",
       "directory": "2026_08_16",
       "index": "2026_08_16/index.html",
