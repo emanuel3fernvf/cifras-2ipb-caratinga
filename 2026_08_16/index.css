@@ -536,6 +536,16 @@ body.local-editor-busy .chord-palette-item {
     cursor: grabbing;
 }
 
+.chord-palette-actions {
+    display: flex;
+    justify-content: center;
+    gap: 7px;
+}
+
+.chord-palette-actions .local-editor-toolbar-btn {
+    margin: 0;
+}
+
 .chord-palette-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(58px, 1fr));

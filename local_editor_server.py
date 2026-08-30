@@ -269,6 +269,8 @@ class EditorService:
         actions: dict[str, Callable[[Path, dict[str, object]], Any]] = {
             "create_event": event_manager.create_event,
             "create_song": event_manager.create_song,
+            "update_event": event_manager.update_event,
+            "update_song": event_manager.update_song,
             "add_capo": event_manager.add_capo,
             "delete_event": event_manager.delete_event,
             "delete_song": event_manager.delete_song,
@@ -624,6 +626,20 @@ class EditorAPI:
             return _error_response(error)
         return ApiResponse(200, {"ok": True})
 
+    def put(self, request_target: str, payload: Any) -> ApiResponse:
+        parsed = urlsplit(request_target)
+        operations = {
+            EVENTS_ENDPOINT: "update_event",
+            SONGS_ENDPOINT: "update_song",
+        }
+        if parsed.query or parsed.path not in operations:
+            return _error_response(EditorError(404, "endpoint_not_found", "Endpoint da API não encontrado."))
+        try:
+            result = self.service.manage(operations[parsed.path], payload)
+        except EditorError as error:
+            return _error_response(error)
+        return ApiResponse(200, {"ok": True, **result})
+
 
 def _allowed_host(host_header: str | None) -> bool:
     if not host_header:
@@ -760,6 +776,16 @@ def make_handler(
                 self._send_api(_error_response(error))
                 return
             self._send_api(api.delete(self.path, payload))
+
+        def do_PUT(self) -> None:
+            if self._reject_nonlocal_host():
+                return
+            try:
+                payload = self._read_json()
+            except EditorError as error:
+                self._send_api(_error_response(error))
+                return
+            self._send_api(api.put(self.path, payload))
 
         def do_OPTIONS(self) -> None:
             # Não habilitar CORS impede páginas de outras origens de gravarem

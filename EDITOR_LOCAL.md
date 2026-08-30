@@ -73,6 +73,12 @@ locais `events`, `songs` e `capos` para criar e excluir eventos, cifras e links
 de capotraste. Esses controles permanecem ocultos fora do servidor local. As
 exclusões de eventos e cifras são movidas para `_lixeira`.
 
+`PUT /__chord_editor__/songs` edita título, artista e vídeo do YouTube de uma
+cifra. Se o título ou o artista mudar, o arquivo e seus links de capotraste são
+renomeados juntos. `PUT /__chord_editor__/events` edita título, subtítulo e nome
+da pasta do evento. Essas operações atualizam o catálogo e revertem os arquivos
+se alguma etapa falhar.
+
 ### Criar atalho e desligar
 
 Os controles da página usam `POST /__chord_editor__/shortcut` para criar um

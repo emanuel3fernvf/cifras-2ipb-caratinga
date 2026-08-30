@@ -494,7 +494,6 @@
 
     row.appendChild(dropdown);
     row.appendChild(hideChordsBtnEl);
-    createLocalEditorToolbarButtons(row);
     parent.appendChild(row);
   }
 
@@ -1679,6 +1678,10 @@
     title.className = 'chord-palette-title';
     title.textContent = 'Acordes';
 
+    var actions = document.createElement('div');
+    actions.className = 'chord-palette-actions';
+    createLocalEditorToolbarButtons(actions);
+
     var grid = document.createElement('div');
     grid.className = 'chord-palette-grid';
 
@@ -1687,6 +1690,7 @@
     empty.textContent = 'Nenhum acorde';
 
     palette.appendChild(title);
+    palette.appendChild(actions);
     palette.appendChild(grid);
     palette.appendChild(empty);
     document.body.appendChild(palette);

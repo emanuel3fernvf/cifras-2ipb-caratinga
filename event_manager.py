@@ -12,7 +12,7 @@ import unicodedata
 from datetime import datetime
 from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import parse_qs, quote, urlsplit
 
 
 HIDDEN_FOLDERS = {"_referencia_evento", "_lixeira"}
@@ -32,15 +32,23 @@ class _MetadataParser(HTMLParser):
         self.title = ""
         self.artist = ""
         self.heading = ""
+        self.subtitle = ""
+        self.youtube = ""
+        self._in_event_header = False
         self._capture = ""
         self._parts: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        classes = set((dict(attrs).get("class") or "").split())
+        attributes = dict(attrs)
+        classes = set((attributes.get("class") or "").split())
+        if tag == "header" and "top" in classes: self._in_event_header = True
+        if tag == "iframe" and "sticky-top" in classes:
+            self.youtube = _youtube_watch_url(attributes.get("src") or "") or ""
         kind = ""
         if "holyrics-title" in classes: kind = "song-title"
         elif "holyrics-artist" in classes: kind = "artist"
         elif tag == "h1" and not self.heading: kind = "heading"
+        elif tag == "p" and self._in_event_header and not self.subtitle: kind = "subtitle"
         elif tag == "title" and not self.title: kind = "title"
         if kind:
             self._capture, self._parts = kind, []
@@ -49,20 +57,57 @@ class _MetadataParser(HTMLParser):
         if self._capture: self._parts.append(data)
 
     def handle_endtag(self, tag: str) -> None:
-        expected = {"song-title": "span", "artist": "span", "heading": "h1", "title": "title"}.get(self._capture)
+        if tag == "header": self._in_event_header = False
+        expected = {"song-title": "span", "artist": "span", "heading": "h1", "subtitle": "p", "title": "title"}.get(self._capture)
         if tag != expected: return
         value = " ".join("".join(self._parts).split())
         if self._capture == "artist": self.artist = value
         elif self._capture == "heading": self.heading = value
+        elif self._capture == "subtitle": self.subtitle = value
         else: self.title = value
         self._capture, self._parts = "", []
 
 
-def _read_metadata(path: Path) -> tuple[str, str]:
+def _read_page_metadata(path: Path) -> _MetadataParser:
     parser = _MetadataParser()
     try: parser.feed(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError): return path.stem, ""
-    return parser.title or path.stem, parser.artist
+    except (OSError, UnicodeError): pass
+    return parser
+
+
+def _youtube_video_id(value: str) -> str | None:
+    if not value: return None
+    try: parsed = urlsplit(value.strip())
+    except ValueError: return None
+    host = (parsed.hostname or "").lower()
+    if parsed.scheme != "https" or host not in {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be", "www.youtu.be"}: return None
+    parts = [part for part in parsed.path.split("/") if part]
+    candidate = ""
+    if host.endswith("youtu.be") and parts: candidate = parts[0]
+    elif parsed.path == "/watch": candidate = parse_qs(parsed.query).get("v", [""])[0]
+    elif len(parts) >= 2 and parts[0] in {"embed", "shorts", "live"}: candidate = parts[1]
+    return candidate if re.fullmatch(r"[A-Za-z0-9_-]{11}", candidate) else None
+
+
+def _youtube_embed_url(value: object) -> str:
+    if value in {None, ""}: return ""
+    if not isinstance(value, str): raise ManagerError(400, "invalid_request", "O link do YouTube deve ser um texto.")
+    video_id = _youtube_video_id(value)
+    if not video_id: raise ManagerError(422, "invalid_youtube", "Informe um link válido do YouTube.")
+    return f"https://www.youtube.com/embed/{video_id}"
+
+
+def _youtube_watch_url(value: str) -> str | None:
+    video_id = _youtube_video_id(value)
+    return f"https://www.youtube.com/watch?v={video_id}" if video_id else None
+
+
+def _youtube_iframe(embed_url: str, label: str) -> str:
+    return (
+        f'<iframe class="sticky-top" src="{html.escape(embed_url, quote=True)}" title="{html.escape(label, quote=True)}" '
+        'frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" '
+        'referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>\n'
+    )
 
 
 def _safe_folder(root: Path, folder: object) -> Path:
@@ -114,16 +159,18 @@ def list_events(root: Path) -> list[dict[str, object]]:
     events: list[dict[str, object]] = []
     for index in root.glob("*/index.html"):
         if index.parent.name in HIDDEN_FOLDERS: continue
-        heading, _ = _read_metadata(index)
+        event_metadata = _read_page_metadata(index)
+        heading = event_metadata.heading or event_metadata.title
         source = index.read_text(encoding="utf-8")
         songs = []
         for page in sorted(index.parent.glob("*.html"), key=lambda p: p.name.casefold()):
             if page.name == "index.html": continue
-            title, artist = _read_metadata(page)
+            metadata = _read_page_metadata(page)
+            title, artist = metadata.title or page.stem, metadata.artist
             encoded = quote(page.name)
             frets = sorted({int(n) for n in re.findall(re.escape(encoded) + r"\?tr=-(\d+)", source) if 1 <= int(n) <= 11})
-            songs.append({"title": title, "artist": artist, "path": f"{index.parent.name}/{page.name}", "filename": page.name, "capos": frets})
-        events.append({"name": index.parent.name, "title": heading or index.parent.name, "path": f"{index.parent.name}/index.html", "songs": songs})
+            songs.append({"title": title, "artist": artist, "youtube": metadata.youtube, "path": f"{index.parent.name}/{page.name}", "filename": page.name, "capos": frets})
+        events.append({"name": index.parent.name, "title": heading or index.parent.name, "subtitle": event_metadata.subtitle, "path": f"{index.parent.name}/index.html", "songs": songs})
     return sorted(events, key=lambda item: str(item["name"]).casefold(), reverse=True)
 
 
@@ -177,11 +224,14 @@ def _managed_link(filename: str, label: str) -> str:
 def create_song(root: Path, payload: dict[str, object]) -> dict[str, object]:
     event = _safe_folder(root, payload.get("folder"))
     title = _safe_text(payload.get("title"), "título", 100); artist = _safe_text(payload.get("artist"), "artista", 100)
+    youtube = _youtube_embed_url(payload.get("youtube"))
     filename = f"{title} - {artist}.html"; target = event / filename
     if target.exists(): raise ManagerError(409, "song_exists", "Essa cifra já existe no evento.")
     template = root / "_referencia_evento" / "cifra.html.template"
     try:
         song_source = template.read_text(encoding="utf-8").replace("{{SONG_TITLE}}", html.escape(title)).replace("{{SONG_ARTIST}}", html.escape(artist))
+        if youtube:
+            song_source = song_source.replace("<pre>", _youtube_iframe(youtube, f"{title} — {artist}") + "<pre>", 1)
         index = event / "index.html"; original_index = index.read_text(encoding="utf-8"); old_index = original_index
         marker = "<!-- MANAGED_SONGS -->"
         if marker not in old_index:
@@ -205,6 +255,87 @@ def create_song(root: Path, payload: dict[str, object]) -> dict[str, object]:
     except ManagerError: raise
     except Exception as exc: raise ManagerError(500, "create_failed", "Não foi possível criar a cifra.") from exc
     return {"path": f"{event.name}/{filename}", "filename": filename}
+
+
+def _replace_element_text(source: str, tag: str, class_name: str | None, value: str, *, count: int = 1) -> str:
+    class_part = rf'(?=[^>]*\bclass=["\'][^"\']*\b{re.escape(class_name)}\b)' if class_name else ""
+    pattern = re.compile(rf'(<{tag}\b{class_part}[^>]*>).*?(</{tag}>)', re.I | re.S)
+    updated, changed = pattern.subn(lambda match: match.group(1) + html.escape(value) + match.group(2), source, count=count)
+    if not changed: raise ManagerError(422, "invalid_html", f"Não foi possível localizar {tag} no arquivo.")
+    return updated
+
+
+def _updated_song_source(source: str, title: str, artist: str, youtube: str) -> str:
+    label = f"{title} — {artist}"
+    source = _replace_element_text(source, "title", None, label)
+    source = _replace_element_text(source, "span", "holyrics-title", title)
+    source = _replace_element_text(source, "span", "holyrics-artist", artist)
+    pre_pattern = re.compile(r'(<pre\b[^>]*>)([^\r\n<]*)(\r?\n)', re.I)
+    source, changed = pre_pattern.subn(lambda match: match.group(1) + html.escape(label) + match.group(3), source, count=1)
+    if not changed: raise ManagerError(422, "invalid_html", "A cifra não possui uma linha de título editável.")
+    iframe_pattern = re.compile(r'<iframe\b(?=[^>]*\bclass=["\'][^"\']*\bsticky-top\b)[^>]*>\s*</iframe>\s*', re.I | re.S)
+    source = iframe_pattern.sub("", source)
+    if youtube:
+        marker = re.search(r'<pre\b', source, re.I)
+        if not marker: raise ManagerError(422, "invalid_html", "A cifra não possui o conteúdo esperado.")
+        source = source[:marker.start()] + _youtube_iframe(youtube, label) + source[marker.start():]
+    return source
+
+
+def update_song(root: Path, payload: dict[str, object]) -> dict[str, object]:
+    event, song = _song_target(root, payload.get("folder"), payload.get("filename"))
+    title = _safe_text(payload.get("title"), "título", 100); artist = _safe_text(payload.get("artist"), "artista", 100)
+    youtube = _youtube_embed_url(payload.get("youtube")); filename = f"{title} - {artist}.html"; target = event / filename
+    if target != song and target.exists(): raise ManagerError(409, "song_exists", "Já existe uma cifra com esse título e artista.")
+    index = event / "index.html"; old_song = song.read_text(encoding="utf-8"); old_index = index.read_text(encoding="utf-8")
+    new_song = _updated_song_source(old_song, title, artist, youtube)
+    old_encoded, new_encoded = quote(song.name), quote(filename)
+    new_index = old_index.replace(old_encoded, new_encoded)
+    new_index = new_index.replace(html.escape(song.name, quote=True), html.escape(filename, quote=True)).replace(song.name, filename)
+    anchor_pattern = re.compile(r'(<a\b(?=[^>]*href=["\']' + re.escape(new_encoded) + r'["\'])[^>]*>).*?(</a>)', re.I | re.S)
+    new_index, changed = anchor_pattern.subn(lambda match: match.group(1) + html.escape(f"{title} — {artist}") + match.group(2), new_index, count=1)
+    if not changed: raise ManagerError(422, "song_link_missing", "A música não possui link no índice.")
+    renamed = target != song
+    try:
+        _atomic_text(song, new_song); _atomic_text(index, new_index)
+        if renamed: os.replace(song, target)
+        update_catalog(root)
+    except Exception as exc:
+        try:
+            if renamed and target.exists(): os.replace(target, song)
+            _atomic_text(song, old_song); _atomic_text(index, old_index); update_catalog(root)
+        except Exception: pass
+        if isinstance(exc, ManagerError): raise
+        raise ManagerError(500, "update_failed", "Não foi possível atualizar a cifra.") from exc
+    return {"path": f"{event.name}/{filename}", "filename": filename}
+
+
+def update_event(root: Path, payload: dict[str, object]) -> dict[str, object]:
+    event = _safe_folder(root, payload.get("folder")); title = _safe_text(payload.get("title"), "título", 100)
+    subtitle = _safe_text(payload.get("subtitle"), "subtítulo", 100); new_folder = _safe_text(payload.get("newFolder"), "pasta", 100)
+    if not re.fullmatch(r"[a-z0-9]+(?:[a-z0-9_-]*[a-z0-9])?", new_folder) or new_folder in HIDDEN_FOLDERS:
+        raise ManagerError(422, "invalid_name", "A pasta deve usar apenas letras minúsculas, números, hífens e underlines.")
+    target = root / new_folder
+    if target != event and target.exists(): raise ManagerError(409, "event_exists", "Já existe um evento com essa pasta.")
+    index = event / "index.html"; original = index.read_text(encoding="utf-8")
+    updated = _replace_element_text(original, "title", None, f"{title} — {subtitle}")
+    updated = _replace_element_text(updated, "h1", None, title)
+    header_pattern = re.compile(r'(<header\b[^>]*\bclass=["\'][^"\']*\btop\b[^>]*>.*?<p\b[^>]*>).*?(</p>)', re.I | re.S)
+    updated, changed = header_pattern.subn(lambda match: match.group(1) + html.escape(subtitle) + match.group(2), updated, count=1)
+    if not changed: raise ManagerError(422, "invalid_html", "O evento não possui subtítulo editável.")
+    renamed = target != event
+    try:
+        _atomic_text(index, updated)
+        if renamed: os.replace(event, target)
+        update_catalog(root)
+    except Exception as exc:
+        try:
+            if renamed and target.exists(): os.replace(target, event)
+            _atomic_text(event / "index.html", original); update_catalog(root)
+        except Exception: pass
+        if isinstance(exc, ManagerError): raise
+        raise ManagerError(500, "update_failed", "Não foi possível atualizar o evento.") from exc
+    return {"name": new_folder, "path": f"{new_folder}/index.html"}
 
 
 def _first_song_anchor(source: str, filename: str) -> re.Match[str] | None:
