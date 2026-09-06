@@ -978,6 +978,22 @@
     previousButton.addEventListener('click', function () { moveMatch(-1); }); nextButton.addEventListener('click', function () { moveMatch(1); }); replaceButton.addEventListener('click', replaceCurrent); replaceAllButton.addEventListener('click', replaceAll);
     findInput.addEventListener('keydown', function (event) { if (event.key === 'Enter') { event.preventDefault(); moveMatch(event.shiftKey ? -1 : 1); } });
     textarea.addEventListener('keydown', function (event) { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') { event.preventDefault(); findInput.focus(); findInput.select(); } }); rebuildMatches(0);
+
+    // Carrega a integração compartilhada somente no editor local.
+    if (!window.cifraClubImportReady) {
+      window.cifraClubImportReady = new Promise(function (resolve, reject) {
+        var script = document.createElement('script');
+        script.src = '/extrator_cifraclub/editor.js?v=1';
+        script.onload = resolve; script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+    window.cifraClubImportReady.then(function () {
+      window.mountCifraClubImport(editor, textarea);
+    }).catch(function () {
+      window.cifraClubImportReady = null;
+      if (editor.overlay.isConnected) showLocalEditorNotification('Não foi possível carregar a importação por imagem.', 'error');
+    });
     editor.beforeClose = function () { if (textarea.value === localEditor.preText) return true; return window.confirm('Existem alterações não salvas. Deseja descartá-las?'); };
 
     editor.primaryButton.addEventListener('click', function () {
@@ -2107,6 +2123,14 @@
     };
   }
 
+  function holyricsExportPrefix() {
+    var parts = (window.location.pathname || '').split('/').filter(Boolean);
+    var folder = parts.length ? parts[parts.length - ( /index\.html$/i.test(parts[parts.length - 1]) ? 2 : 1 )] : '';
+    var match = /^(\d{4})_(\d{2})_(\d{2})/.exec(folder || '');
+    if (match) return match[1] + '-' + match[2] + '-' + match[3] + '_holyrics-';
+    return (folder || 'evento') + '_holyrics-';
+  }
+
   function exportHolyrics(mode) {
     var withChords = mode === 'cifra';
     var urls = getSongLinksFromIndex();
@@ -2138,10 +2162,7 @@
         );
       });
       var suffix = withChords ? 'cifra' : 'letra';
-      // IA / agentes: ao copiar ou editar esta pasta para outro culto,
-      // atualizar este prefixo para a data da pasta. Manter o formato
-      // AAAA-MM-DD_holyrics-letra.json ou AAAA-MM-DD_holyrics-cifra.json.
-      downloadJson('2026-08-16_holyrics-' + suffix + '.json', songs);
+      downloadJson(holyricsExportPrefix() + suffix + '.json', songs);
     }).catch(function (err) {
       console.error(err);
       window.alert('Erro ao exportar: ' + (err && err.message ? err.message : String(err)));

@@ -44,6 +44,33 @@
       ]
     },
     {
+      "name": "Louvor",
+      "directory": "2026_09_06",
+      "index": "2026_09_06/index.html",
+      "songs": [
+        {
+          "title": "Canção do Apocalipse — Diante do Trono",
+          "path": "2026_09_06/Canção do Apocalipse - Diante do Trono.html"
+        },
+        {
+          "title": "Me Lembrarei — Hillsong Em Português",
+          "path": "2026_09_06/Me Lembrarei - Hillsong Em Português.html"
+        },
+        {
+          "title": "Jesus — Suylô",
+          "path": "2026_09_06/Jesus - Suylô.html"
+        },
+        {
+          "title": "Tua Palavra (Your Words) — Paulo César Baruk",
+          "path": "2026_09_06/Tua Palavra (Your Words) - Paulo César Baruk.html"
+        },
+        {
+          "title": "Ao Pé da Cruz — Ipalpha",
+          "path": "2026_09_06/Ao Pé da Cruz - Ipalpha.html"
+        }
+      ]
+    },
+    {
       "name": "Culto de Domingo",
       "directory": "2026_08_30",
       "index": "2026_08_30/index.html",

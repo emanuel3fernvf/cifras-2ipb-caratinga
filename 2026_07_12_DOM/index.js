@@ -719,6 +719,14 @@
     };
   }
 
+  function holyricsExportPrefix() {
+    var parts = (window.location.pathname || '').split('/').filter(Boolean);
+    var folder = parts.length ? parts[parts.length - ( /index\.html$/i.test(parts[parts.length - 1]) ? 2 : 1 )] : '';
+    var match = /^(\d{4})_(\d{2})_(\d{2})/.exec(folder || '');
+    if (match) return match[1] + '-' + match[2] + '-' + match[3] + '_holyrics-';
+    return (folder || 'evento') + '_holyrics-';
+  }
+
   function exportHolyrics(mode) {
     var withChords = mode === 'cifra';
     var urls = getSongLinksFromIndex();
@@ -750,7 +758,7 @@
         );
       });
       var suffix = withChords ? 'cifra' : 'letra';
-      downloadJson('2026-07-12_holyrics-' + suffix + '.json', songs);
+      downloadJson(holyricsExportPrefix() + suffix + '.json', songs);
     }).catch(function (err) {
       console.error(err);
       window.alert('Erro ao exportar: ' + (err && err.message ? err.message : String(err)));

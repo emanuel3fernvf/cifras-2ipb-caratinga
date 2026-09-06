@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Servidor HTTP local e seguro para o editor de cifras.
 
-O servidor usa apenas a biblioteca padrão. Ele serve os arquivos estáticos do
+O núcleo do servidor usa apenas a biblioteca padrão; a importação por imagem
+carrega suas dependências opcionais sob demanda. Ele serve os arquivos estáticos do
 repositório e expõe uma API pequena para ler e substituir o texto do único
 elemento ``<pre>`` de uma página HTML.
 """
@@ -36,6 +37,7 @@ MAX_REQUEST_BYTES = 4 * 1024 * 1024
 API_PREFIX = "/__chord_editor__/"
 HEALTH_ENDPOINT = f"{API_PREFIX}health"
 DOCUMENT_ENDPOINT = f"{API_PREFIX}document"
+IMPORT_ENDPOINT = f"{API_PREFIX}import-cifraclub"
 SAVE_ENDPOINT = f"{API_PREFIX}save"
 INDEXES_ENDPOINT = f"{API_PREFIX}indexes"
 SHORTCUT_ENDPOINT = f"{API_PREFIX}shortcut"
@@ -566,6 +568,15 @@ class EditorAPI:
             return _error_response(
                 EditorError(404, "endpoint_not_found", "Endpoint da API não encontrado.")
             )
+        if parsed.path == IMPORT_ENDPOINT:
+            from extrator_cifraclub.extractor import import_cifra, ImportFailure
+            if not isinstance(payload, dict) or not isinstance(payload.get("url"), str):
+                return _error_response(EditorError(400, "invalid_request", "Informe o campo url."))
+            try:
+                result = import_cifra(payload["url"])
+            except ImportFailure as error:
+                return _error_response(EditorError(error.status, error.code, str(error)))
+            return ApiResponse(200, {"ok": True, **result})
         if parsed.path == SHORTCUT_ENDPOINT:
             try:
                 shortcut = self.service.create_desktop_shortcut(server_port)
@@ -754,7 +765,7 @@ def make_handler(
             if self._reject_nonlocal_host():
                 return
             parsed = urlsplit(self.path)
-            if parsed.path not in {SAVE_ENDPOINT, SHORTCUT_ENDPOINT, SHUTDOWN_ENDPOINT, EVENTS_ENDPOINT, SONGS_ENDPOINT, CAPOS_ENDPOINT} or parsed.query:
+            if parsed.path not in {IMPORT_ENDPOINT, SAVE_ENDPOINT, SHORTCUT_ENDPOINT, SHUTDOWN_ENDPOINT, EVENTS_ENDPOINT, SONGS_ENDPOINT, CAPOS_ENDPOINT} or parsed.query:
                 self._send_api(api.post(self.path, {}))
                 return
             try:
