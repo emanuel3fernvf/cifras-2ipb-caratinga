@@ -16,6 +16,10 @@
         box-sizing: border-box;
       }
 
+      [hidden] {
+        display: none !important;
+      }
+
       body {
         min-height: 100vh;
         min-height: 100dvh;
@@ -80,6 +84,9 @@
         background: #338574;
         font-size: 1.05rem;
         font-weight: 700;
+        font-family: inherit;
+        border: 0;
+        cursor: pointer;
         text-decoration: none;
         transition: background 150ms ease, transform 150ms ease;
       }
@@ -122,15 +129,32 @@
         font-style: italic;
       }
 
-      .erro {
-        margin: 0;
-        color: #a12622;
-        line-height: 1.5;
+      dialog {
+        width: min(100%, 520px);
+        padding: 28px;
+        border: 1px solid #dce5df;
+        border-radius: 20px;
+        color: #17221c;
+        background: #fff;
+        box-shadow: 0 16px 45px rgb(23 34 28 / 20%);
+      }
+
+      dialog::backdrop {
+        background: rgb(23 34 28 / 55%);
+      }
+
+      dialog h2 {
+        margin: 0 0 16px;
+      }
+
+      dialog form {
+        margin-top: 24px;
+        text-align: right;
       }
     </style>
   </head>
   <body>
-    <main>
+    <main hidden>
       <h1 id="saudacao">Olá</h1>
 
       <p class="mensagem">
@@ -176,9 +200,16 @@
       </p>
 
       <a class="botao" id="abrir-ntfy" href="#">Abrir no ntfy</a>
-      <p id="erro" class="erro" hidden></p>
       <p class="assinatura">Ass: Emanuel</p>
     </main>
+
+    <dialog id="aviso" aria-labelledby="aviso-titulo" aria-describedby="aviso-mensagem">
+      <h2 id="aviso-titulo">Este link é pessoal</h2>
+      <p id="aviso-mensagem" class="mensagem"></p>
+      <form method="dialog">
+        <button class="botao" value="confirmar" autofocus>Entendi, abrir no ntfy</button>
+      </form>
+    </dialog>
 
     <script>
       const parametros = new URLSearchParams(window.location.search);
@@ -186,17 +217,26 @@
       const display = parametros.get("display")?.trim();
       const saudacao = document.querySelector("#saudacao");
       const botao = document.querySelector("#abrir-ntfy");
-      const erro = document.querySelector("#erro");
+      const conteudo = document.querySelector("main");
+      const aviso = document.querySelector("#aviso");
+      const mensagemDoAviso = document.querySelector("#aviso-mensagem");
 
       if (topico && display) {
         saudacao.textContent = `Olá ${display}`;
         const nomeDoTopico = `Escala 2IPB - ${display}`;
         botao.href = `ntfy://ntfy.sh/${encodeURIComponent(topico)}?display=${encodeURIComponent(nomeDoTopico)}`;
-      } else {
-        saudacao.textContent = "Link incompleto";
-        botao.hidden = true;
-        erro.hidden = false;
-        erro.textContent = "Os parâmetros “topico” e “display” são obrigatórios.";
+        mensagemDoAviso.textContent = `${display}, este link é exclusivo para as suas notificações de escala. Compartilhe apenas com quem você deseja que também as receba. Para receber as próprias notificações, cada integrante deve usar seu próprio link.`;
+        conteudo.hidden = false;
+        botao.addEventListener("click", (event) => {
+          event.preventDefault();
+          aviso.returnValue = "";
+          aviso.showModal();
+        });
+        aviso.addEventListener("close", () => {
+          if (aviso.returnValue === "confirmar") {
+            window.location.href = botao.href;
+          }
+        });
       }
     </script>
   </body>
