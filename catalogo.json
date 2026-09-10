@@ -44,6 +44,33 @@
       ]
     },
     {
+      "name": "Culto da UMP",
+      "directory": "2026_09_12",
+      "index": "2026_09_12/index.html",
+      "songs": [
+        {
+          "title": "130 — Projeto Sola",
+          "path": "2026_09_12/130 - Projeto Sola.html"
+        },
+        {
+          "title": "Salmo 139 — João Manô",
+          "path": "2026_09_12/Salmo 139 - João Manô.html"
+        },
+        {
+          "title": "Meia Noite — FHOP",
+          "path": "2026_09_12/Meia Noite - FHOP.html"
+        },
+        {
+          "title": "Hosana — Hillsong",
+          "path": "2026_09_12/Hosana - Hillsong.html"
+        },
+        {
+          "title": "Redenção — Projeto Sola",
+          "path": "2026_09_12/Redenção - Projeto Sola.html"
+        }
+      ]
+    },
+    {
       "name": "Louvor",
       "directory": "2026_09_06",
       "index": "2026_09_06/index.html",
