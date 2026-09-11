@@ -12,7 +12,9 @@
 - [x] Criar “Meia Noite — FHOP”.
 - [x] Copiar para “Meia Noite” a cifra existente em `2026_05_31`.
 - [x] Criar “Hosana — Hillsong” e copiar a versão de `2026_06_27`.
-- [x] Criar “Redenção — Projeto Sola” vazia.
+- [x] Manter a cifra cadastrada de “Redenção — Projeto Sola”.
+- [x] Importar “Ao Pé da Cruz — Ipalpha” de `2026_09_06` como Hino 107.
+- [x] Inserir a ordem litúrgica completa no índice.
 - [x] Conferir a ordem das músicas no índice.
 - [x] Corrigir o retorno ao índice e a sequência de próxima música.
 

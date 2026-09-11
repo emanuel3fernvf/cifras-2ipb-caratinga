@@ -8,6 +8,7 @@
   <style>
     *{box-sizing:border-box}body{display:flex;justify-content:center;margin:0;font-family:"Roboto Mono",monospace}.box-center{width:100%;max-width:500px;margin:40px 20px;padding:20px;border:2px solid gray;border-radius:10px}.top{text-align:center}.top h2{color:#ff7700}.managed-song-row{display:flex;gap:8px;margin:10px 0}.managed-song-row a{display:flex;flex:1;align-items:center;justify-content:center;padding:10px 14px;border-radius:10px;background:#0068ff;color:#fff;font-weight:bold;text-align:center;text-decoration:none}.managed-song-row a.capo-btn{flex:0 0 auto;background:#ff7700}
   .box-center{position:relative}.top{margin-top:20px}.holyrics-export{position:absolute;top:10px;right:10px;z-index:300}.holyrics-export-btn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border:0;background:#ff7700;color:#fff;border-radius:8px;cursor:pointer;padding:0;box-shadow:0 2px 6px rgba(0,0,0,.18)}.holyrics-export-btn:hover{background:#e56600}.holyrics-export-btn svg{display:block;pointer-events:none}.holyrics-export-menu{position:absolute;top:calc(100% + 4px);right:0;min-width:240px;z-index:301;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.15);overflow:hidden}.holyrics-export-menu[hidden]{display:none}.holyrics-export-option{display:block;width:100%;border:0;background:#fff;color:#222;padding:12px 14px;text-align:left;cursor:pointer;font:13px inherit;white-space:nowrap}.holyrics-export-option:hover{background:#fff3e8}
+  body.holyrics-review-open{overflow:hidden}.holyrics-review-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.58)}.holyrics-review-modal[hidden]{display:none}.holyrics-review-dialog{display:flex;flex-direction:column;width:min(860px,100%);max-height:calc(100vh - 32px);overflow:hidden;background:#fff;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.35)}.holyrics-review-header{padding:20px 20px 10px}.holyrics-review-header h2{margin:0 0 6px;outline:none}.holyrics-review-header p{margin:0;color:#555}.holyrics-review-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:12px;overflow-y:auto;padding:10px 20px 20px}.holyrics-review-card{min-width:0;margin:0;padding:10px;border:1px solid #ccc;border-radius:8px}.holyrics-review-card legend{padding:0 4px;font-size:12px;color:#555}.holyrics-review-choice{display:flex;align-items:flex-start;gap:8px;width:100%;margin-top:6px;padding:9px;border:2px solid transparent;border-radius:7px;background:#f4f4f4;cursor:pointer}.holyrics-review-choice:has(input:checked){border-color:#0068ff;background:#eaf2ff;font-weight:bold}.holyrics-review-choice:has(input:checked)::after{content:'✓';margin-left:auto}.holyrics-review-choice span{min-width:0;overflow-wrap:anywhere}.holyrics-review-actions{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid #ddd}.holyrics-review-actions button{padding:10px 18px;border:1px solid #bbb;border-radius:7px;cursor:pointer;font:inherit}.holyrics-review-confirm{border-color:#0068ff!important;background:#0068ff;color:#fff}.holyrics-review-empty{grid-column:1/-1;margin:8px 0}
   </style>
 </head>
 <body>
@@ -34,6 +35,19 @@
 <!-- MANAGED_SONGS -->
     </div>
   </main>
-  <script src="index.js?v=5"></script>
++  <div class="holyrics-review-modal" id="holyrics-review-modal" hidden>
+    <section class="holyrics-review-dialog" role="dialog" aria-modal="true" aria-labelledby="holyrics-review-title" aria-describedby="holyrics-review-description">
+      <header class="holyrics-review-header">
+        <h2 id="holyrics-review-title" tabindex="-1">Revisar palavras da exportação</h2>
+        <p id="holyrics-review-description">Escolha quais palavras devem ser exportadas sem traços ou underlines.</p>
+      </header>
+      <div class="holyrics-review-list" id="holyrics-review-list"></div>
+      <footer class="holyrics-review-actions">
+        <button type="button" id="holyrics-review-cancel">Cancelar</button>
+        <button type="button" class="holyrics-review-confirm" id="holyrics-review-confirm">Baixar</button>
+      </footer>
+    </section>
+  </div>
+  <script src="index.js?v=6"></script>
 </body>
 </html>
