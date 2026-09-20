@@ -167,6 +167,30 @@ class EventManagerTests(unittest.TestCase):
                 self.assertNotIn("createLocalEditorToolbarButtons(row);", source)
                 self.assertIn(".chord-palette-actions", styles)
 
+    def test_full_editor_can_split_a_chord_and_lyric_pair(self) -> None:
+        folders = (
+            "_referencia_evento",
+            "2026_08_02",
+            "2026_08_16",
+            "2026_08_30",
+            "2026_09_06",
+            "2026_09_12",
+            "2026_09_20",
+        )
+        for folder in folders:
+            with self.subTest(folder=folder):
+                source = (ROOT / folder / "index.js").read_text(encoding="utf-8")
+                self.assertIn("Quebrar acorde + letra", source)
+                self.assertIn("function splitChordAndLyricPair()", source)
+                self.assertIn("if (!isChordLine(chordLine))", source)
+                self.assertIn("column < chords[i].end", source)
+                self.assertIn("var chordAfter = chordLine.slice(column);", source)
+                self.assertIn("lyricLine.slice(column).replace(/^\\s+/, '')", source)
+                self.assertIn("letter.toLocaleUpperCase('pt-BR')", source)
+                self.assertIn("textarea.setSelectionRange(newLyricStart, newLyricStart)", source)
+                self.assertNotIn("new Array(column + 1).join(' ')", source)
+                self.assertIn("textarea.dispatchEvent(new Event('input'", source)
+
 
 if __name__ == "__main__":
     unittest.main()

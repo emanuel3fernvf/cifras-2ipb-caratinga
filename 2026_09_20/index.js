@@ -964,6 +964,8 @@
     var previousButton = searchButton('↑', 'Ocorrência anterior'); var nextButton = searchButton('↓', 'Próxima ocorrência');
     var replaceButton = searchButton('Substituir', 'Substituir ocorrência atual'); var replaceAllButton = searchButton('Todos', 'Substituir todas as ocorrências');
     searchBar.append(findInput, replaceInput, matchStatus, caseButton, previousButton, nextButton, replaceButton, replaceAllButton); editor.header.appendChild(searchBar);
+    var splitPairButton = searchButton('Quebrar acorde + letra', 'Quebrar simultaneamente a linha de acordes e a linha de letra');
+    searchBar.appendChild(splitPairButton);
     var matchPositions = [], currentMatch = -1;
     function isCaseSensitive() { return caseButton.getAttribute('aria-pressed') === 'true'; }
     function updateSearchStatus() { matchStatus.textContent = findInput.value ? (matchPositions.length ? (currentMatch + 1) + ' de ' + matchPositions.length : 'Nenhum') : ''; var disabled = !matchPositions.length; previousButton.disabled = disabled; nextButton.disabled = disabled; replaceButton.disabled = disabled; replaceAllButton.disabled = disabled; }
@@ -978,6 +980,69 @@
     previousButton.addEventListener('click', function () { moveMatch(-1); }); nextButton.addEventListener('click', function () { moveMatch(1); }); replaceButton.addEventListener('click', replaceCurrent); replaceAllButton.addEventListener('click', replaceAll);
     findInput.addEventListener('keydown', function (event) { if (event.key === 'Enter') { event.preventDefault(); moveMatch(event.shiftKey ? -1 : 1); } });
     textarea.addEventListener('keydown', function (event) { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') { event.preventDefault(); findInput.focus(); findInput.select(); } }); rebuildMatches(0);
+
+    function splitChordAndLyricPair() {
+      var start = textarea.selectionStart;
+      var end = textarea.selectionEnd;
+      if (start !== end) {
+        showLocalEditorNotification('Deixe apenas o cursor no ponto da quebra, sem selecionar texto.', 'error');
+        textarea.focus();
+        return;
+      }
+
+      var value = textarea.value;
+      var lyricStart = value.lastIndexOf('\n', start - 1) + 1;
+      var lyricEnd = value.indexOf('\n', start);
+      if (lyricEnd < 0) lyricEnd = value.length;
+      var lyricLine = value.slice(lyricStart, lyricEnd);
+      var column = start - lyricStart;
+      if (column <= 0 || column >= lyricLine.length) {
+        showLocalEditorNotification('Posicione o cursor dentro da linha de letra.', 'error');
+        textarea.focus();
+        return;
+      }
+
+      var chordEnd = lyricStart - 1;
+      if (chordEnd < 0) {
+        showLocalEditorNotification('A linha de letra precisa ter uma linha de acordes imediatamente acima.', 'error');
+        textarea.focus();
+        return;
+      }
+      var chordStart = value.lastIndexOf('\n', chordEnd - 1) + 1;
+      var chordLine = value.slice(chordStart, chordEnd);
+      if (!isChordLine(chordLine)) {
+        showLocalEditorNotification('A linha imediatamente acima não foi reconhecida como linha de acordes.', 'error');
+        textarea.focus();
+        return;
+      }
+
+      var chords = getChordMatches(chordLine);
+      for (var i = 0; i < chords.length; i++) {
+        if (chords[i].start < column && column < chords[i].end) {
+          showLocalEditorNotification('O ponto da quebra não pode dividir um acorde.', 'error');
+          textarea.focus();
+          return;
+        }
+      }
+
+      var chordBefore = chordLine.slice(0, column);
+      var lyricBefore = lyricLine.slice(0, column);
+      var chordAfter = chordLine.slice(column);
+      var lyricAfter = lyricLine.slice(column).replace(/^\s+/, '');
+      lyricAfter = lyricAfter.replace(/[A-Za-zÀ-ÖØ-öø-ÿ]/, function (letter) {
+        return letter.toLocaleUpperCase('pt-BR');
+      });
+
+      var replacement = chordBefore + '\n' + lyricBefore + '\n' + chordAfter + '\n' + lyricAfter;
+      textarea.setRangeText(replacement, chordStart, lyricEnd, 'end');
+      var newLyricStart = chordStart + chordBefore.length + lyricBefore.length + chordAfter.length + 3;
+      textarea.setSelectionRange(newLyricStart, newLyricStart);
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      textarea.focus();
+    }
+
+    splitPairButton.addEventListener('mousedown', function (event) { event.preventDefault(); });
+    splitPairButton.addEventListener('click', splitChordAndLyricPair);
 
     // Carrega a integração compartilhada somente no editor local.
     if (!window.cifraClubImportReady) {
