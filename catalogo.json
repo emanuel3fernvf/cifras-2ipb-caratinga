@@ -44,6 +44,33 @@
       ]
     },
     {
+      "name": "Evento",
+      "directory": "2026_09_20",
+      "index": "2026_09_20/index.html",
+      "songs": [
+        {
+          "title": "130 — Projeto Sola",
+          "path": "2026_09_20/130 - Projeto Sola.html"
+        },
+        {
+          "title": "Um Novo Dia — Get Worship (part. Melk Villar e Vinicius Cruz)",
+          "path": "2026_09_20/Um Novo Dia - Get Worship (part. Melk Villar e Vinicius Cruz).html"
+        },
+        {
+          "title": "Abraça-me — Abraça-me David Quinlan",
+          "path": "2026_09_20/Abraça-me - Abraça-me David Quinlan.html"
+        },
+        {
+          "title": "Oceanos (Oceans) — Ana Nóbrega",
+          "path": "2026_09_20/Oceanos (Oceans) - Ana Nóbrega.html"
+        },
+        {
+          "title": "Alto Preço — Asaph Borba",
+          "path": "2026_09_20/Alto Preço - Asaph Borba.html"
+        }
+      ]
+    },
+    {
       "name": "Culto da UMP",
       "directory": "2026_09_12",
       "index": "2026_09_12/index.html",
