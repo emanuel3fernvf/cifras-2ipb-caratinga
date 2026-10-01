@@ -1,6 +1,17 @@
 {
   "folders": [
     {
+      "name": "Pergunte Aos Animais - Musical",
+      "directory": "pergunte-aos-animais-musical",
+      "index": "pergunte-aos-animais-musical/index.html",
+      "songs": [
+        {
+          "title": "2 - Hoje eu tenho medo — IPALPHA KIDS",
+          "path": "pergunte-aos-animais-musical/2 - Hoje eu tenho medo - IPALPHA KIDS.html"
+        }
+      ]
+    },
+    {
       "name": "Musical Páscoa UMP 2026",
       "directory": "musical_pascoa_UMP_2026",
       "index": "musical_pascoa_UMP_2026/index.html",
@@ -45,6 +56,37 @@
     },
     {
       "name": "Evento",
+      "directory": "2026_10_04",
+      "index": "2026_10_04/index.html",
+      "songs": [
+        {
+          "title": "Ruja o Leão - Que Se Abram Os Céus — Isaias Saad",
+          "path": "2026_10_04/Ruja o Leão - Que Se Abram Os Céus - Isaias Saad.html"
+        },
+        {
+          "title": "Esperança — Júlia Vitória e Gabriel Guedes",
+          "path": "2026_10_04/Esperança - Júlia Vitória e Gabriel Guedes.html"
+        },
+        {
+          "title": "Alfa e Ômega — Marine Friesen",
+          "path": "2026_10_04/Alfa e Ômega - Marine Friesen.html"
+        },
+        {
+          "title": "Digno é o Senhor — Aline Barros",
+          "path": "2026_10_04/Digno é o Senhor - Aline Barros.html"
+        },
+        {
+          "title": "Caminho no Deserto — Soraya Moraes",
+          "path": "2026_10_04/Caminho no Deserto - Soraya Moraes.html"
+        },
+        {
+          "title": "Até Outra Vez — Projeto Sola",
+          "path": "2026_10_04/Até Outra Vez - Projeto Sola.html"
+        }
+      ]
+    },
+    {
+      "name": "Culto Dominical",
       "directory": "2026_09_20",
       "index": "2026_09_20/index.html",
       "songs": [
@@ -61,12 +103,12 @@
           "path": "2026_09_20/Abraça-me - Abraça-me David Quinlan.html"
         },
         {
-          "title": "Oceanos (Oceans) — Ana Nóbrega",
-          "path": "2026_09_20/Oceanos (Oceans) - Ana Nóbrega.html"
-        },
-        {
           "title": "Alto Preço — Asaph Borba",
           "path": "2026_09_20/Alto Preço - Asaph Borba.html"
+        },
+        {
+          "title": "Oceanos (Oceans) — Ana Nóbrega",
+          "path": "2026_09_20/Oceanos (Oceans) - Ana Nóbrega.html"
         }
       ]
     },
