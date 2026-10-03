@@ -61,6 +61,9 @@ class EditorServiceTests(unittest.TestCase):
     def test_creates_executable_desktop_shortcut_for_current_port(self) -> None:
         launcher = self.root / "local_app_launcher.py"
         launcher.write_text("# launcher", encoding="utf-8")
+        python = self.root / "linux" / "venv" / "bin" / "python"
+        python.parent.mkdir(parents=True)
+        python.touch()
         desktop = self.root / "Desktop"
 
         with (
@@ -71,6 +74,7 @@ class EditorServiceTests(unittest.TestCase):
 
         source = shortcut.read_text(encoding="utf-8")
         self.assertIn("Name=Cifras 2IPB Caratinga", source)
+        self.assertIn(str(python), source)
         self.assertIn("--port 8765", source)
         self.assertTrue(stat.S_IMODE(shortcut.stat().st_mode) & stat.S_IXUSR)
         run.assert_called_once_with(

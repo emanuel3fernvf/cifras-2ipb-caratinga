@@ -294,8 +294,11 @@ class EditorService:
         launcher = self.root / "local_app_launcher.py"
         if not launcher.is_file():
             raise EditorError(500, "launcher_not_found", "O iniciador do aplicativo não foi encontrado.")
+        python = self.root / "linux" / "venv" / "bin" / "python"
+        if not python.is_file():
+            python = Path(sys.executable)
         command = " ".join(shlex.quote(value) for value in (
-            sys.executable, str(launcher), "--root", str(self.root), "--port", str(port)
+            str(python), str(launcher), "--root", str(self.root), "--port", str(port)
         ))
         content = (
             "[Desktop Entry]\nType=Application\nVersion=1.0\n"
