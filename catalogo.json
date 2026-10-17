@@ -16,6 +16,10 @@
         {
           "title": "3 - Meu Prazer É Viver — IPALPHA KIDS",
           "path": "pergunte-aos-animais-musical/3 - Meu Prazer É Viver - IPALPHA KIDS.html"
+        },
+        {
+          "title": "4 - O Pecado de Adão — IPALPHA KIDS",
+          "path": "pergunte-aos-animais-musical/4 - O Pecado de Adão - IPALPHA KIDS.html"
         }
       ]
     },
@@ -552,6 +556,33 @@
         {
           "title": "Tão Profundo - Vineyard",
           "path": "2026_03_15_DOM/Tão Profundo - Vineyard.html"
+        }
+      ]
+    },
+    {
+      "name": "17 e 18 de outubro",
+      "directory": "17-e-18-de-outubro",
+      "index": "17-e-18-de-outubro/index.html",
+      "songs": [
+        {
+          "title": "Te adorar (Acústico) — Fernandinho",
+          "path": "17-e-18-de-outubro/Te adorar (Acústico) - Fernandinho.html"
+        },
+        {
+          "title": "O Escudo — Voz da Verdade",
+          "path": "17-e-18-de-outubro/O Escudo - Voz da Verdade.html"
+        },
+        {
+          "title": "Consagração — Aline Barros",
+          "path": "17-e-18-de-outubro/Consagração - Aline Barros.html"
+        },
+        {
+          "title": "Deus de Promessas — Toque no altar",
+          "path": "17-e-18-de-outubro/Deus de Promessas - Toque no altar.html"
+        },
+        {
+          "title": "Meia Noite (Ao Vivo) — FHOP",
+          "path": "17-e-18-de-outubro/Meia Noite (Ao Vivo) - FHOP.html"
         }
       ]
     }
