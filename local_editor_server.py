@@ -10,17 +10,22 @@ elemento ``<pre>`` de uma página HTML.
 from __future__ import annotations
 
 import argparse
+import base64
+import getpass
 import hashlib
 import html
+import ipaddress
 import json
 import os
 import re
 import shlex
+import socket
 import stat
 import subprocess
 import sys
 import tempfile
 import threading
+import secrets
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -33,6 +38,7 @@ import event_manager
 
 LOOPBACK_HOST = "127.0.0.1"
 DEFAULT_PORT = 8000
+AUTH_ITERATIONS = 310_000
 MAX_REQUEST_BYTES = 4 * 1024 * 1024
 API_PREFIX = "/__chord_editor__/"
 HEALTH_ENDPOINT = f"{API_PREFIX}health"
@@ -46,6 +52,121 @@ EVENTS_ENDPOINT = f"{API_PREFIX}events"
 SONGS_ENDPOINT = f"{API_PREFIX}songs"
 CAPOS_ENDPOINT = f"{API_PREFIX}capos"
 REVISION_RE = re.compile(r"[0-9a-fA-F]{64}\Z")
+
+
+class LanAuthenticator:
+    """Verifies an administrator password without storing it in plaintext."""
+
+    def __init__(self, salt: bytes, password_hash: bytes) -> None:
+        self.salt = salt
+        self.password_hash = password_hash
+
+    @classmethod
+    def load_or_create(cls, path: Path) -> LanAuthenticator:
+        try:
+            if path.is_symlink():
+                raise ValueError("O arquivo de autenticação não pode ser um link simbólico.")
+            data = json.loads(path.read_text(encoding="utf-8"))
+            salt = bytes.fromhex(data["salt"])
+            password_hash = bytes.fromhex(data["hash"])
+            iterations = data["iterations"]
+            if iterations != AUTH_ITERATIONS or len(salt) < 16 or len(password_hash) != 32:
+                raise ValueError("formato de credencial inválido")
+            os.chmod(path, 0o600)
+            os.chmod(path.parent, 0o700)
+            return cls(salt, password_hash)
+        except FileNotFoundError:
+            pass
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+            raise ValueError(f"Arquivo de autenticação inválido: {path}") from error
+
+        password = getpass.getpass("Defina a senha administrativa do servidor LAN: ")
+        confirmation = getpass.getpass("Confirme a senha: ")
+        if len(password) < 12:
+            raise ValueError("A senha deve ter pelo menos 12 caracteres.")
+        if not secrets.compare_digest(password, confirmation):
+            raise ValueError("As senhas não coincidem.")
+
+        salt = secrets.token_bytes(16)
+        password_hash = hashlib.pbkdf2_hmac(
+            "sha256", password.encode("utf-8"), salt, AUTH_ITERATIONS
+        )
+        path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        os.chmod(path.parent, 0o700)
+        try:
+            descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError:
+            raise ValueError("O arquivo de autenticação foi criado simultaneamente; reinicie o servidor.")
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+                json.dump(
+                    {
+                        "iterations": AUTH_ITERATIONS,
+                        "salt": salt.hex(),
+                        "hash": password_hash.hex(),
+                    },
+                    stream,
+                )
+                stream.write("\n")
+        except OSError:
+            path.unlink(missing_ok=True)
+            raise
+        return cls(salt, password_hash)
+
+    def verify(self, password: str | None) -> bool:
+        if password is None:
+            return False
+        candidate = hashlib.pbkdf2_hmac(
+            "sha256", password.encode("utf-8"), self.salt, AUTH_ITERATIONS
+        )
+        return secrets.compare_digest(candidate, self.password_hash)
+
+
+def _lan_ipv4_network() -> tuple[str, ipaddress.IPv4Network]:
+    """Find the private IPv4 address and subnet selected by the active route."""
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as route_probe:
+        route_probe.connect(("192.0.2.1", 80))
+        address = route_probe.getsockname()[0]
+
+    parsed_address = ipaddress.ip_address(address)
+    private_ranges = (
+        ipaddress.ip_network("10.0.0.0/8"),
+        ipaddress.ip_network("172.16.0.0/12"),
+        ipaddress.ip_network("192.168.0.0/16"),
+    )
+    if not any(parsed_address in network for network in private_ranges):
+        raise OSError("A rota ativa não usa um endereço IPv4 privado da rede local.")
+
+    try:
+        result = subprocess.run(
+            ["ip", "-o", "-4", "addr", "show"],
+            capture_output=True,
+            check=True,
+            text=True,
+            timeout=5,
+        )
+    except FileNotFoundError as error:
+        raise OSError("Instale a ferramenta de rede com `pkg install iproute2`.") from error
+    except (OSError, subprocess.SubprocessError) as error:
+        raise OSError("Não foi possível detectar a máscara da rede local (comando ip).") from error
+
+    for line in result.stdout.splitlines():
+        fields = line.split()
+        for field in fields:
+            if "/" not in field:
+                continue
+            try:
+                interface = ipaddress.ip_interface(field)
+            except ValueError:
+                continue
+            if interface.ip == parsed_address:
+                interface_name = fields[1].split("@", 1)[0]
+                if interface_name.startswith(("rmnet", "ccmni", "pdp", "wwan", "tun", "tap")):
+                    raise OSError("A rota selecionada não é uma interface Wi-Fi/LAN apropriada.")
+                if hasattr(sys, "getandroidapilevel") and not interface_name.startswith(("wlan", "wifi")):
+                    raise OSError("Conecte o aparelho à rede Wi-Fi antes de iniciar o modo LAN.")
+                return address, interface.network
+    raise OSError("Não foi possível identificar a sub-rede da interface ativa.")
 
 
 class EditorError(Exception):
@@ -655,18 +776,32 @@ class EditorAPI:
         return ApiResponse(200, {"ok": True, **result})
 
 
-def _allowed_host(host_header: str | None) -> bool:
+def _allowed_host(
+    host_header: str | None,
+    *,
+    bind_host: str = LOOPBACK_HOST,
+    server_port: int = DEFAULT_PORT,
+    lan_mode: bool = False,
+) -> bool:
     if not host_header:
         return False
     try:
-        hostname = urlsplit(f"//{host_header}").hostname
+        parsed = urlsplit(f"//{host_header}")
+        hostname = parsed.hostname
+        port = parsed.port
     except ValueError:
         return False
+    if lan_mode:
+        return hostname == bind_host and port == server_port
     return hostname in {LOOPBACK_HOST, "localhost"}
 
 
 def make_handler(
     root: str | os.PathLike[str],
+    *,
+    bind_host: str = LOOPBACK_HOST,
+    allowed_network: ipaddress.IPv4Network | None = None,
+    authenticator: LanAuthenticator | None = None,
 ) -> type[SimpleHTTPRequestHandler]:
     resolved_root = Path(root).resolve(strict=True)
     service = EditorService(resolved_root)
@@ -688,20 +823,116 @@ def make_handler(
             self.send_header("Content-Length", str(len(encoded)))
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
+            if response.status == 401:
+                self.send_header("Connection", "close")
+                self.close_connection = True
             self.end_headers()
             if include_body:
                 self.wfile.write(encoded)
 
         def _reject_nonlocal_host(self) -> bool:
-            if _allowed_host(self.headers.get("Host")):
+            if not allowed_network:
+                allowed = _allowed_host(self.headers.get("Host"))
+            else:
+                try:
+                    client_ip = ipaddress.ip_address(self.client_address[0])
+                    allowed = (
+                        client_ip.version == 4
+                        and client_ip in allowed_network
+                        and _allowed_host(
+                            self.headers.get("Host"),
+                            bind_host=bind_host,
+                            server_port=self.server.server_port,
+                            lan_mode=True,
+                        )
+                    )
+                except ValueError:
+                    allowed = False
+            if allowed:
                 return False
             self._send_api(
                 _error_response(
                     EditorError(
                         403,
                         "host_forbidden",
-                        "Abra o editor por http://127.0.0.1 para usar este servidor.",
+                        (
+                            "Acesse pelo IP e pela porta anunciados pelo servidor."
+                            if allowed_network
+                            else "Abra o editor por http://127.0.0.1 para usar este servidor."
+                        ),
                     )
+                )
+            )
+            return True
+
+        def _reject_private_static_path(self) -> bool:
+            if not allowed_network:
+                return False
+            try:
+                requested = Path(self.translate_path(urlsplit(self.path).path)).resolve()
+                relative = requested.relative_to(resolved_root)
+            except (OSError, ValueError, RuntimeError):
+                self.send_error(404, "File not found")
+                return True
+            forbidden = {".git", ".github", "venv", ".venv", "node_modules", "__pycache__"}
+            if any(part.startswith(".") or part in forbidden for part in relative.parts):
+                self.send_error(404, "File not found")
+                return True
+            return False
+
+        def list_directory(self, path: str):
+            if allowed_network:
+                self.send_error(403, "Directory listings are disabled on the LAN server")
+                return None
+            return super().list_directory(path)
+
+        def _reject_cross_origin_write(self) -> bool:
+            origin = self.headers.get("Origin")
+            referer = self.headers.get("Referer")
+            fetch_site = self.headers.get("Sec-Fetch-Site")
+            if fetch_site == "cross-site":
+                allowed = False
+            elif origin:
+                allowed = origin == f"http://{self.headers.get('Host', '')}"
+            elif referer:
+                try:
+                    parsed_referer = urlsplit(referer)
+                    allowed = (
+                        parsed_referer.scheme == "http"
+                        and parsed_referer.netloc == self.headers.get("Host")
+                    )
+                except ValueError:
+                    allowed = False
+            else:
+                allowed = True
+            if allowed:
+                return False
+            self._send_api(
+                _error_response(
+                    EditorError(403, "origin_forbidden", "A origem da requisição não é permitida.")
+                )
+            )
+            return True
+
+        def _require_write_authentication(self) -> bool:
+            if not authenticator:
+                return False
+            if self._reject_cross_origin_write():
+                return True
+            encoded_password = self.headers.get("X-Editor-Password")
+            try:
+                password = (
+                    base64.b64decode(encoded_password, validate=True).decode("utf-8")
+                    if encoded_password is not None
+                    else None
+                )
+            except (ValueError, UnicodeDecodeError):
+                password = None
+            if authenticator.verify(password):
+                return False
+            self._send_api(
+                _error_response(
+                    EditorError(401, "authentication_required", "Senha administrativa incorreta ou ausente.")
                 )
             )
             return True
@@ -711,8 +942,12 @@ def make_handler(
                 return
             response = api.get(self.path)
             if response is None:
+                if self._reject_private_static_path():
+                    return
                 super().do_GET()
                 return
+            if self.path == HEALTH_ENDPOINT and allowed_network:
+                response = ApiResponse(200, {"ok": True, "mode": "lan", "adminAuth": True})
             self._send_api(response)
 
         def do_HEAD(self) -> None:
@@ -720,8 +955,12 @@ def make_handler(
                 return
             response = api.get(self.path)
             if response is None:
+                if self._reject_private_static_path():
+                    return
                 super().do_HEAD()
                 return
+            if self.path == HEALTH_ENDPOINT and allowed_network:
+                response = ApiResponse(200, {"ok": True, "mode": "lan", "adminAuth": True})
             self._send_api(response, include_body=False)
 
         def _read_json(self) -> Any:
@@ -767,6 +1006,8 @@ def make_handler(
         def do_POST(self) -> None:
             if self._reject_nonlocal_host():
                 return
+            if self._require_write_authentication():
+                return
             parsed = urlsplit(self.path)
             if parsed.path not in {IMPORT_ENDPOINT, SAVE_ENDPOINT, SHORTCUT_ENDPOINT, SHUTDOWN_ENDPOINT, EVENTS_ENDPOINT, SONGS_ENDPOINT, CAPOS_ENDPOINT} or parsed.query:
                 self._send_api(api.post(self.path, {}))
@@ -784,6 +1025,8 @@ def make_handler(
         def do_DELETE(self) -> None:
             if self._reject_nonlocal_host():
                 return
+            if self._require_write_authentication():
+                return
             try:
                 payload = self._read_json()
             except EditorError as error:
@@ -793,6 +1036,8 @@ def make_handler(
 
         def do_PUT(self) -> None:
             if self._reject_nonlocal_host():
+                return
+            if self._require_write_authentication():
                 return
             try:
                 payload = self._read_json()
@@ -814,13 +1059,47 @@ def make_handler(
 
 
 def create_server(
-    root: str | os.PathLike[str], port: int = DEFAULT_PORT
+    root: str | os.PathLike[str],
+    port: int = DEFAULT_PORT,
+    *,
+    bind_host: str = LOOPBACK_HOST,
+    allowed_network: ipaddress.IPv4Network | None = None,
+    authenticator: LanAuthenticator | None = None,
 ) -> ThreadingHTTPServer:
-    """Cria o servidor sempre vinculado exclusivamente ao IPv4 de loopback."""
+    """Create a server bound to loopback by default or to an explicit LAN IP."""
 
     if not 0 <= port <= 65535:
         raise ValueError("A porta deve estar entre 0 e 65535.")
-    server = ThreadingHTTPServer((LOOPBACK_HOST, port), make_handler(root))
+    if bind_host == LOOPBACK_HOST:
+        if allowed_network is not None or authenticator is not None:
+            raise ValueError("A autenticação e a sub-rede são exclusivas do modo LAN.")
+    else:
+        try:
+            parsed_bind = ipaddress.ip_address(bind_host)
+        except ValueError as error:
+            raise ValueError("O modo LAN deve usar um endereço IPv4 privado explícito.") from error
+        private_ranges = (
+            ipaddress.ip_network("10.0.0.0/8"),
+            ipaddress.ip_network("172.16.0.0/12"),
+            ipaddress.ip_network("192.168.0.0/16"),
+        )
+        if (
+            parsed_bind.version != 4
+            or not any(parsed_bind in network for network in private_ranges)
+            or allowed_network is None
+            or parsed_bind not in allowed_network
+            or authenticator is None
+        ):
+            raise ValueError("O modo LAN exige endereço privado, sub-rede correspondente e autenticação.")
+    server = ThreadingHTTPServer(
+        (bind_host, port),
+        make_handler(
+            root,
+            bind_host=bind_host,
+            allowed_network=allowed_network,
+            authenticator=authenticator,
+        ),
+    )
     server.daemon_threads = True
     return server
 
@@ -849,17 +1128,62 @@ def main(argv: list[str] | None = None) -> int:
         default=DEFAULT_PORT,
         help=f"porta HTTP local (padrão: {DEFAULT_PORT})",
     )
+    parser.add_argument(
+        "--lan",
+        action="store_true",
+        help="expõe o servidor somente no IPv4 privado da rota ativa e exige senha",
+    )
+    parser.add_argument(
+        "--auth-file",
+        type=Path,
+        help="arquivo privado de autenticação do modo LAN (padrão: ~/.config/cifras-2ipb/server-auth.json)",
+    )
     args = parser.parse_args(argv)
     repository_root = args.root.expanduser().resolve()
+    bind_host = LOOPBACK_HOST
+    allowed_network = None
+    authenticator = None
+    if args.lan:
+        try:
+            bind_host, allowed_network = _lan_ipv4_network()
+            auth_path = (
+                args.auth_file.expanduser()
+                if args.auth_file
+                else Path.home() / ".config" / "cifras-2ipb" / "server-auth.json"
+            )
+            if auth_path.resolve().is_relative_to(repository_root):
+                raise ValueError("O arquivo de autenticação precisa ficar fora da cópia do projeto.")
+            authenticator = LanAuthenticator.load_or_create(auth_path)
+        except (OSError, ValueError) as exc:
+            print(f"Não foi possível preparar o modo LAN: {exc}", file=sys.stderr)
+            return 1
 
     try:
-        server = create_server(repository_root, args.port)
+        if args.lan:
+            server = create_server(
+                repository_root,
+                args.port,
+                bind_host=bind_host,
+                allowed_network=allowed_network,
+                authenticator=authenticator,
+            )
+        else:
+            server = create_server(repository_root, args.port)
     except OSError as exc:
-        print(f"Não foi possível iniciar o servidor: {exc}", file=sys.stderr)
+        print(
+            f"Não foi possível iniciar o servidor em {bind_host}:{args.port}: {exc}",
+            file=sys.stderr,
+        )
         return 1
 
-    print(f"Editor local disponível em http://{LOOPBACK_HOST}:{args.port}/configuracoes.html")
-    print(f"Exemplo de repertório: http://{LOOPBACK_HOST}:{args.port}/2026_08_02/")
+    if args.lan:
+        print(f"Editor disponível na rede local em http://{bind_host}:{args.port}/configuracoes.html")
+        print(f"Exemplo de repertório: http://{bind_host}:{args.port}/2026_08_02/")
+        print("A leitura está aberta à sub-rede local; alterações exigem senha.")
+        print("HTTP não cifra o tráfego. Use somente uma rede Wi-Fi confiável.")
+    else:
+        print(f"Editor local disponível em http://{LOOPBACK_HOST}:{args.port}/configuracoes.html")
+        print(f"Exemplo de repertório: http://{LOOPBACK_HOST}:{args.port}/2026_08_02/")
     print("Pressione Ctrl+C para encerrar.")
     try:
         server.serve_forever()

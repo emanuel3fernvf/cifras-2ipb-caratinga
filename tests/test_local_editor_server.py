@@ -1,18 +1,24 @@
 from __future__ import annotations
 
 import hashlib
+import base64
+import ipaddress
 import io
 import json
 import os
 import stat
 import subprocess
 import tempfile
+import threading
 import unittest
 from contextlib import redirect_stdout
 from email.message import Message
 from pathlib import Path
 from unittest import mock
+from urllib.error import HTTPError
 from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+from http.server import ThreadingHTTPServer
 
 import local_editor_server as server
 
@@ -433,6 +439,30 @@ class HttpAdapterTests(unittest.TestCase):
         self.assertTrue(server._allowed_host("localhost:8000"))
         self.assertFalse(server._allowed_host("example.com"))
         self.assertFalse(server._allowed_host(None))
+        self.assertTrue(
+            server._allowed_host(
+                "192.168.1.25:8000",
+                bind_host="192.168.1.25",
+                server_port=8000,
+                lan_mode=True,
+            )
+        )
+        self.assertFalse(
+            server._allowed_host(
+                "192.168.1.25:8001",
+                bind_host="192.168.1.25",
+                server_port=8000,
+                lan_mode=True,
+            )
+        )
+        self.assertFalse(
+            server._allowed_host(
+                "example.com:8000",
+                bind_host="192.168.1.25",
+                server_port=8000,
+                lan_mode=True,
+            )
+        )
 
     def test_cli_accepts_root_and_optional_port(self) -> None:
         fake_server = mock.Mock()
@@ -449,6 +479,133 @@ class HttpAdapterTests(unittest.TestCase):
         create_server.assert_called_once_with(self.root.resolve(), 8765)
         fake_server.server_close.assert_called_once_with()
         self.assertIn("http://127.0.0.1:8765/2026_08_02/", output.getvalue())
+
+
+class LanAuthenticationTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temporary_directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary_directory.cleanup)
+        self.root = Path(self.temporary_directory.name)
+        self.page_path = self.root / "song.html"
+        self.page_path.write_text("<html><pre>Original</pre></html>", encoding="utf-8")
+        self.password = "senha-administrativa-de-teste"
+        salt = b"0123456789abcdef"
+        password_hash = hashlib.pbkdf2_hmac(
+            "sha256", self.password.encode("utf-8"), salt, server.AUTH_ITERATIONS
+        )
+        self.authenticator = server.LanAuthenticator(salt, password_hash)
+        handler = server.make_handler(
+            self.root,
+            bind_host="127.0.0.1",
+            allowed_network=ipaddress.ip_network("127.0.0.0/8"),
+            authenticator=self.authenticator,
+        )
+        self.http_server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        self.http_server.daemon_threads = True
+        self.thread = threading.Thread(target=self.http_server.serve_forever, daemon=True)
+        self.thread.start()
+        self.addCleanup(self._stop_server)
+        self.base_url = f"http://127.0.0.1:{self.http_server.server_port}"
+
+    def _stop_server(self) -> None:
+        self.http_server.shutdown()
+        self.http_server.server_close()
+        self.thread.join(timeout=2)
+
+    def request(self, path: str, payload: dict[str, object] | None = None, **headers):
+        data = None if payload is None else json.dumps(payload).encode("utf-8")
+        request_headers = dict(headers)
+        if data is not None:
+            request_headers["Content-Type"] = "application/json"
+        request = Request(
+            self.base_url + path,
+            data=data,
+            headers=request_headers,
+            method="GET" if data is None else "POST",
+        )
+        try:
+            with urlopen(request, timeout=2) as response:
+                return response.status, self._decode_response(response.read())
+        except HTTPError as response:
+            with response:
+                return response.code, self._decode_response(response.read())
+
+    @staticmethod
+    def _decode_response(body: bytes):
+        text = body.decode("utf-8")
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            return text
+
+    def test_authentication_file_stores_only_private_hash(self) -> None:
+        auth_path = self.root / "private" / "server-auth.json"
+        with mock.patch(
+            "local_editor_server.getpass.getpass",
+            side_effect=[self.password, self.password],
+        ):
+            authenticator = server.LanAuthenticator.load_or_create(auth_path)
+
+        self.assertTrue(authenticator.verify(self.password))
+        self.assertFalse(authenticator.verify("senha errada"))
+        self.assertNotIn(self.password, auth_path.read_text(encoding="utf-8"))
+        self.assertEqual(auth_path.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(auth_path.parent.stat().st_mode & 0o777, 0o700)
+
+    def test_lan_read_is_open_but_writes_require_password_and_same_origin(self) -> None:
+        status, health = self.request(server.HEALTH_ENDPOINT)
+        self.assertEqual(status, 200)
+        self.assertEqual(health, {"ok": True, "mode": "lan", "adminAuth": True})
+
+        document = self.page_path.read_text(encoding="utf-8")
+        body = {
+            "path": "song.html",
+            "preText": "Alterado",
+            "expectedRevision": hashlib.sha256(document.encode("utf-8")).hexdigest(),
+        }
+        status, result = self.request(server.SAVE_ENDPOINT, body)
+        self.assertEqual(status, 401)
+        self.assertEqual(result["error"]["code"], "authentication_required")
+        self.assertEqual(self.page_path.read_text(encoding="utf-8"), document)
+
+        status, result = self.request(
+            server.SAVE_ENDPOINT,
+            body,
+            **{
+                "X-Editor-Password": base64.b64encode(self.password.encode("utf-8")).decode("ascii"),
+                "Origin": "http://example.com",
+            },
+        )
+        self.assertEqual(status, 403)
+        self.assertEqual(result["error"]["code"], "origin_forbidden")
+        self.assertEqual(self.page_path.read_text(encoding="utf-8"), document)
+
+        status, result = self.request(
+            server.SAVE_ENDPOINT,
+            body,
+            **{
+                "X-Editor-Password": base64.b64encode(self.password.encode("utf-8")).decode("ascii"),
+                "Origin": self.base_url,
+            },
+        )
+        self.assertEqual(status, 200)
+        self.assertTrue(result["ok"])
+        self.assertEqual(self.page_path.read_text(encoding="utf-8"), "<html><pre>Alterado</pre></html>")
+
+    def test_lan_rejects_untrusted_host_and_private_static_files(self) -> None:
+        status, result = self.request(server.HEALTH_ENDPOINT, Host="example.com:8000")
+        self.assertEqual(status, 403)
+        self.assertEqual(result["error"]["code"], "host_forbidden")
+
+        hidden_directory = self.root / ".git"
+        hidden_directory.mkdir()
+        (hidden_directory / "config").write_text("dados privados", encoding="utf-8")
+        status, _ = self.request("/")
+        self.assertEqual(status, 403)
+        status, _ = self.request("/.git/config")
+        self.assertEqual(status, 404)
+        status, _ = self.request("/song.html")
+        self.assertEqual(status, 200)
 
 
 if __name__ == "__main__":

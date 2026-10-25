@@ -158,8 +158,25 @@ body.chords-hidden .line-chord {
 }
 
 .strophe {
+    position: relative;
     margin: 0;
     padding: 0;
+}
+
+.strophe.is-keyboard-selected {
+    border-radius: 2px;
+    background: rgba(255, 119, 0, 0.1);
+}
+
+.strophe.is-keyboard-selected::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -8px;
+    width: 3px;
+    border-radius: 2px;
+    background: #ff7700;
+    content: "";
 }
 
 .strophe .line {

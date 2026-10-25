@@ -1,7 +1,7 @@
 # Servidor do editor local de cifras
 
-O editor grava arquivos somente quando a página é aberta por este servidor,
-vinculado exclusivamente a `127.0.0.1`.
+O editor grava arquivos somente quando a página é aberta por este servidor.
+Por padrão, ele permanece vinculado exclusivamente a `127.0.0.1`.
 
 ## Iniciar
 
@@ -45,6 +45,44 @@ python3 local_editor_server.py --port 8765 --root /caminho/da/copia
 `--port` usa `8000` por padrão. `--root` usa por padrão o diretório em que
 `local_editor_server.py` está localizado. `Ctrl+C` encerra o processo.
 
+## Android e rede Wi-Fi local
+
+No Termux, instale Python e inicie o modo LAN explicitamente:
+
+```sh
+pkg update
+pkg install python iproute2
+cd ~/projetos/cifras-2ipb-caratinga
+bash termux/iniciar_servidor.sh
+```
+
+Na primeira inicialização, defina uma senha administrativa com pelo menos 12
+caracteres. Ela será solicitada sem eco no terminal; o servidor grava somente
+um hash PBKDF2 no arquivo privado
+`~/.config/cifras-2ipb/server-auth.json`, com permissões restritas. O navegador
+solicita a senha na primeira operação de escrita da sessão e a mantém somente
+em memória até a página ser fechada. A senha não deve ser reutilizada em outros
+serviços.
+
+O modo `--lan` detecta a rota IPv4 privada ativa, vincula-se somente ao IP dessa
+interface e rejeita clientes fora da sub-rede detectada, além de validar o
+cabeçalho `Host`. As páginas e leituras ficam abertas aos dispositivos dessa
+sub-rede; todas as operações de criação, edição, exclusão, importação e
+administração exigem autenticação no servidor. O modo padrão do PC continua
+restrito a loopback e não solicita senha.
+
+O servidor imprime a URL com o IP e a porta detectados. Abra essa URL em outro
+aparelho conectado à mesma rede Wi-Fi. Se o IP mudar, encerre e inicie o
+servidor novamente. Se a porta estiver ocupada, escolha outra com
+`PORT=8765 bash termux/iniciar_servidor.sh`. Não configure encaminhamento de
+portas no roteador. Não há TLS: a senha e o conteúdo trafegam sem criptografia;
+use somente uma rede confiável, nunca uma rede pública. A leitura não exige
+senha para os demais clientes da sub-rede.
+
+Android pode suspender ou encerrar o Termux, especialmente com a tela apagada.
+Mantenha o Termux aberto durante o uso e ajuste a otimização de bateria apenas
+se necessário. Não há garantia de execução contínua nem inicialização automática.
+
 ## Contrato HTTP
 
 Todas as respostas da API são JSON UTF-8, têm `Cache-Control: no-store` e usam
@@ -72,6 +110,12 @@ Quando aberto em `127.0.0.1` ou `localhost`, o painel também usa os endpoints
 locais `events`, `songs` e `capos` para criar e excluir eventos, cifras e links
 de capotraste. Esses controles permanecem ocultos fora do servidor local. As
 exclusões de eventos e cifras são movidas para `_lixeira`.
+
+No modo LAN, a página de configurações também disponibiliza os controles de
+gerenciamento após confirmar o modo pelo endpoint `health`. A interface pede a
+senha quando uma operação protegida é solicitada; a API valida o cabeçalho
+`X-Editor-Password` em cada requisição de escrita, independentemente da
+interface.
 
 `PUT /__chord_editor__/songs` edita título, artista e vídeo do YouTube de uma
 cifra. Se o título ou o artista mudar, o arquivo e seus links de capotraste são
@@ -148,8 +192,9 @@ a alteração externa:
   `preText` são escapados; todo o restante do arquivo permanece byte a byte.
 - A troca usa arquivo temporário no mesmo diretório e `os.replace`, preservando
   as permissões do arquivo original.
-- O corpo JSON é limitado a 4 MiB. O servidor não habilita CORS e aceita `Host`
-  apenas para `127.0.0.1` ou `localhost`.
+- O corpo JSON é limitado a 4 MiB. O servidor não habilita CORS. No modo
+  padrão, aceita `Host` apenas para `127.0.0.1` ou `localhost`; no modo LAN,
+  aceita somente o IP e a porta anunciados e clientes da sub-rede selecionada.
 
 Erros usam sempre `{ "ok": false, "error": { "code", "message" } }`.
 Os códigos previstos são:
