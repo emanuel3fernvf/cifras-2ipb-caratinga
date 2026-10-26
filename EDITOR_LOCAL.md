@@ -60,16 +60,19 @@ Na primeira inicialização, defina uma senha administrativa com pelo menos 12
 caracteres. Ela será solicitada sem eco no terminal; o servidor grava somente
 um hash PBKDF2 no arquivo privado
 `~/.config/cifras-2ipb/server-auth.json`, com permissões restritas. O navegador
-solicita a senha na primeira operação de escrita da sessão e a mantém somente
-em memória até a página ser fechada. A senha não deve ser reutilizada em outros
-serviços.
+solicita a senha diretamente na página de configurações. Após a validação, uma
+sessão administrativa HTTP-only fica ativa no servidor até a saída explícita ou
+30 minutos sem atividade administrativa. A senha não é armazenada no navegador
+nem enviada em URLs. A senha não deve ser reutilizada em outros serviços.
 
 O modo `--lan` detecta a rota IPv4 privada ativa, vincula-se somente ao IP dessa
 interface e rejeita clientes fora da sub-rede detectada, além de validar o
 cabeçalho `Host`. As páginas e leituras ficam abertas aos dispositivos dessa
 sub-rede; todas as operações de criação, edição, exclusão, importação e
-administração exigem autenticação no servidor. O modo padrão do PC continua
-restrito a loopback e não solicita senha.
+administração exigem autenticação no servidor. As páginas e endpoints de leitura
+continuam abertos; os scripts das cifras consultam a sessão antes de exibir os
+controles de edição. O modo padrão do PC continua restrito a loopback e não
+solicita senha.
 
 O servidor imprime a URL com o IP e a porta detectados. Abra essa URL em outro
 aparelho conectado à mesma rede Wi-Fi. Se o IP mudar, encerre e inicie o
@@ -78,6 +81,23 @@ servidor novamente. Se a porta estiver ocupada, escolha outra com
 portas no roteador. Não há TLS: a senha e o conteúdo trafegam sem criptografia;
 use somente uma rede confiável, nunca uma rede pública. A leitura não exige
 senha para os demais clientes da sub-rede.
+
+### Acessar de outro dispositivo e diagnosticar erro de protocolo
+
+1. Confirme no Termux que o servidor continua em execução e anote o endereço
+   HTTP impresso na inicialização, incluindo a porta.
+2. No segundo dispositivo, conecte-se à mesma rede Wi-Fi e abra exatamente o
+   endereço no formato `http://IP-DO-SERVIDOR:8000/configuracoes.html`. O modo
+   LAN serve somente HTTP; não use `https://`.
+3. Se o navegador mostrar `ERR_SSL_PROTOCOL_ERROR`, confira se a barra de
+   endereço continua começando com `http://` e não foi atualizada
+   automaticamente para HTTPS. Esse erro ao usar HTTPS é incompatibilidade de
+   protocolo, não certificado ausente.
+4. Se o endereço HTTP também não abrir, verifique se o Termux ainda está ativo,
+   se o IP anunciado continua igual, se os dois dispositivos estão na mesma
+   rede/sub-rede e se a rede não está isolando clientes Wi-Fi. Reinicie o
+   servidor para anunciar o IP atual e tente novamente. Não exponha a porta à
+   internet nem configure encaminhamento no roteador.
 
 Android pode suspender ou encerrar o Termux, especialmente com a tela apagada.
 Mantenha o Termux aberto durante o uso e ajuste a otimização de bateria apenas
@@ -111,11 +131,21 @@ locais `events`, `songs` e `capos` para criar e excluir eventos, cifras e links
 de capotraste. Esses controles permanecem ocultos fora do servidor local. As
 exclusões de eventos e cifras são movidas para `_lixeira`.
 
-No modo LAN, a página de configurações também disponibiliza os controles de
-gerenciamento após confirmar o modo pelo endpoint `health`. A interface pede a
-senha quando uma operação protegida é solicitada; a API valida o cabeçalho
-`X-Editor-Password` em cada requisição de escrita, independentemente da
-interface.
+No modo LAN, a página de configurações disponibiliza controles de leitura sem
+senha e mostra o formulário de autenticação administrativa. O login cria uma
+sessão HTTP-only no servidor, com expiração após 30 minutos sem atividade de
+escrita; a ação de saída revoga a sessão imediatamente. Os endpoints são:
+
+```http
+GET  /__chord_editor__/auth/session
+POST /__chord_editor__/auth/login
+POST /__chord_editor__/auth/logout
+```
+
+As operações de escrita continuam sendo verificadas pelo servidor. O
+`X-Editor-Password` permanece aceito para compatibilidade com clientes locais
+existentes, mas a interface web usa o cookie de sessão. Nunca envie a senha em
+uma URL.
 
 `PUT /__chord_editor__/songs` edita título, artista e vídeo do YouTube de uma
 cifra. Se o título ou o artista mudar, o arquivo e seus links de capotraste são

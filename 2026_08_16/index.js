@@ -2103,7 +2103,7 @@
     if (!pre) return;
     if (!window.__chordEditorLanAuthInstalled) {
       var authScript = document.createElement('script');
-      authScript.src = new URL('../lan-auth.js', window.location.href).href;
+      authScript.src = new URL('../lan-auth.js?v=2', window.location.href).href;
       authScript.onload = initLocalEditor;
       authScript.onerror = function () {
         showLocalEditorNotification('Não foi possível carregar a autenticação do editor.', 'error');
@@ -2118,12 +2118,25 @@
       credentials: 'same-origin'
     }).then(function (response) {
       if (!response.ok) throw new Error('Servidor local do editor indisponível');
-      serverConfirmed = true;
-
+      return response.json().then(function (health) {
+        serverConfirmed = true;
+        if (health.mode !== 'lan') return true;
+        return window.ChordEditorLanAuth.getSession().then(function (session) {
+          if (session.authorized) return true;
+          showLocalEditorNotification(
+            'Para editar esta cifra, valide a senha em configuracoes.html.',
+            'error'
+          );
+          return false;
+        });
+      });
+    }).then(function (authorized) {
+      if (authorized === false) return null;
       localEditor.path = getLocalDocumentPath();
       var query = new URLSearchParams({ path: localEditor.path });
       return fetchEditorJson('/__chord_editor__/document?' + query.toString());
     }).then(function (documentData) {
+      if (documentData === null) return;
       if (typeof documentData.preText !== 'string' || documentData.revision == null) {
         throw new Error('Resposta inválida do servidor local');
       }

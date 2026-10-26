@@ -7,61 +7,62 @@
   var nativeFetch = window.fetch.bind(window);
   var apiPrefix = '/__chord_editor__/';
   var lanMode = false;
-  var password = null;
 
-  function isWrite(method) {
-    return method === 'POST' || method === 'PUT' || method === 'DELETE';
-  }
-
-  function encodePassword(value) {
-    var bytes = new TextEncoder().encode(value);
-    var binary = '';
-    bytes.forEach(function (byte) { binary += String.fromCharCode(byte); });
-    return btoa(binary);
-  }
-
-  function requestUrl(input) {
-    return new URL(input instanceof Request ? input.url : input, window.location.href);
-  }
-
-  async function sendAuthenticated(input, init, retried) {
-    if (password === null) {
-      password = window.prompt('Senha administrativa do servidor local:');
-      if (password === null) throw new Error('Operação cancelada.');
+  async function requestJson(path, options) {
+    var response = await nativeFetch(apiPrefix + path, Object.assign({
+      cache: 'no-store',
+      credentials: 'same-origin'
+    }, options || {}));
+    var payload;
+    try {
+      payload = await response.json();
+    } catch (error) {
+      throw new Error('O servidor devolveu uma resposta inválida (HTTP ' + response.status + ').');
     }
-    var headers = new Headers(
-      (init && init.headers) || (input instanceof Request ? input.headers : undefined)
-    );
-    headers.set('X-Editor-Password', encodePassword(password));
-    var options = Object.assign({}, init || {}, { headers: headers });
-    var response = await nativeFetch(input, options);
-    if (response.status === 401 && !retried) {
-      password = null;
-      return sendAuthenticated(input, init, true);
+    if (!response.ok) {
+      var serverError = payload.error;
+      throw new Error(
+        serverError && serverError.message
+          ? serverError.message
+          : 'Erro HTTP ' + response.status
+      );
     }
-    return response;
+    return payload;
   }
+
+  window.ChordEditorLanAuth = {
+    isLanMode: function () { return lanMode; },
+    getSession: function () { return requestJson('auth/session'); },
+    login: function (password) {
+      return requestJson('auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: password })
+      });
+    },
+    logout: function () {
+      return requestJson('auth/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}'
+      });
+    }
+  };
 
   window.fetch = async function (input, init) {
-    var url = requestUrl(input);
-    var method = ((init && init.method) || (input instanceof Request && input.method) || 'GET').toUpperCase();
-    if (!url.pathname.startsWith(apiPrefix) || !isWrite(method)) {
-      var response = await nativeFetch(input, init);
-      if (url.pathname === apiPrefix + 'health' && response.ok) {
-        try {
-          var health = await response.clone().json();
-          lanMode = health.mode === 'lan';
-        } catch (error) {
-          lanMode = false;
-        }
+    var response = await nativeFetch(input, init);
+    var requestUrl = new URL(
+      input instanceof Request ? input.url : input,
+      window.location.href
+    );
+    if (requestUrl.pathname === apiPrefix + 'health' && response.ok) {
+      try {
+        var health = await response.clone().json();
+        lanMode = health.mode === 'lan';
+      } catch (error) {
+        lanMode = false;
       }
-      return response;
     }
-    if (!lanMode) {
-      var initialResponse = await nativeFetch(input, init);
-      if (initialResponse.status !== 401) return initialResponse;
-      lanMode = true;
-    }
-    return sendAuthenticated(input, init, false);
+    return response;
   };
 })();

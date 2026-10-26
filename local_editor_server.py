@@ -26,6 +26,8 @@ import sys
 import tempfile
 import threading
 import secrets
+import time
+from http.cookies import CookieError, SimpleCookie
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -48,6 +50,11 @@ SAVE_ENDPOINT = f"{API_PREFIX}save"
 INDEXES_ENDPOINT = f"{API_PREFIX}indexes"
 SHORTCUT_ENDPOINT = f"{API_PREFIX}shortcut"
 SHUTDOWN_ENDPOINT = f"{API_PREFIX}shutdown"
+ADMIN_SESSION_ENDPOINT = f"{API_PREFIX}auth/session"
+ADMIN_LOGIN_ENDPOINT = f"{API_PREFIX}auth/login"
+ADMIN_LOGOUT_ENDPOINT = f"{API_PREFIX}auth/logout"
+ADMIN_SESSION_COOKIE = "chord_editor_admin"
+ADMIN_SESSION_TIMEOUT = 30 * 60
 EVENTS_ENDPOINT = f"{API_PREFIX}events"
 SONGS_ENDPOINT = f"{API_PREFIX}songs"
 CAPOS_ENDPOINT = f"{API_PREFIX}capos"
@@ -120,6 +127,41 @@ class LanAuthenticator:
             "sha256", password.encode("utf-8"), self.salt, AUTH_ITERATIONS
         )
         return secrets.compare_digest(candidate, self.password_hash)
+
+
+class LanAdminSessions:
+    """Stores short-lived administrator sessions in server memory."""
+
+    def __init__(self, timeout: int = ADMIN_SESSION_TIMEOUT) -> None:
+        self.timeout = timeout
+        self._sessions: dict[str, float] = {}
+        self._lock = threading.Lock()
+
+    def create(self) -> str:
+        token = secrets.token_urlsafe(32)
+        with self._lock:
+            self._sessions[token] = time.monotonic()
+        return token
+
+    def is_valid(self, token: str | None, *, touch: bool = False) -> bool:
+        if not token:
+            return False
+        now = time.monotonic()
+        with self._lock:
+            last_activity = self._sessions.get(token)
+            if last_activity is None:
+                return False
+            if now - last_activity >= self.timeout:
+                del self._sessions[token]
+                return False
+            if touch:
+                self._sessions[token] = now
+            return True
+
+    def revoke(self, token: str | None) -> None:
+        if token:
+            with self._lock:
+                self._sessions.pop(token, None)
 
 
 def _lan_ipv4_network() -> tuple[str, ipaddress.IPv4Network]:
@@ -806,6 +848,7 @@ def make_handler(
     resolved_root = Path(root).resolve(strict=True)
     service = EditorService(resolved_root)
     api = EditorAPI(service)
+    admin_sessions = LanAdminSessions() if authenticator else None
 
     class ChordEditorRequestHandler(SimpleHTTPRequestHandler):
         server_version = "ChordEditor/1.0"
@@ -814,7 +857,13 @@ def make_handler(
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             super().__init__(*args, directory=str(resolved_root), **kwargs)
 
-        def _send_api(self, response: ApiResponse, *, include_body: bool = True) -> None:
+        def _send_api(
+            self,
+            response: ApiResponse,
+            *,
+            include_body: bool = True,
+            set_cookie: str | None = None,
+        ) -> None:
             encoded = json.dumps(
                 response.body, ensure_ascii=False, separators=(",", ":")
             ).encode("utf-8")
@@ -823,6 +872,8 @@ def make_handler(
             self.send_header("Content-Length", str(len(encoded)))
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
+            if set_cookie:
+                self.send_header("Set-Cookie", set_cookie)
             if response.status == 401:
                 self.send_header("Connection", "close")
                 self.close_connection = True
@@ -919,6 +970,9 @@ def make_handler(
                 return False
             if self._reject_cross_origin_write():
                 return True
+            session_token = self._admin_session_token()
+            if admin_sessions and admin_sessions.is_valid(session_token, touch=True):
+                return False
             encoded_password = self.headers.get("X-Editor-Password")
             try:
                 password = (
@@ -937,8 +991,80 @@ def make_handler(
             )
             return True
 
+        def _admin_session_token(self) -> str | None:
+            cookie_header = self.headers.get("Cookie")
+            if not cookie_header:
+                return None
+            cookies = SimpleCookie()
+            try:
+                cookies.load(cookie_header)
+            except (CookieError, ValueError):
+                return None
+            morsel = cookies.get(ADMIN_SESSION_COOKIE)
+            return morsel.value if morsel else None
+
+        def _handle_admin_auth(self, parsed_path: str) -> bool:
+            if parsed_path not in {ADMIN_LOGIN_ENDPOINT, ADMIN_LOGOUT_ENDPOINT}:
+                return False
+            if not authenticator or not admin_sessions:
+                self._send_api(
+                    _error_response(
+                        EditorError(404, "endpoint_not_found", "Endpoint da API não encontrado.")
+                    )
+                )
+                return True
+            if self._reject_cross_origin_write():
+                return True
+            if parsed_path == ADMIN_LOGOUT_ENDPOINT:
+                try:
+                    self._read_json()
+                except EditorError as error:
+                    self._send_api(_error_response(error))
+                    return True
+                admin_sessions.revoke(self._admin_session_token())
+                self._send_api(
+                    ApiResponse(200, {"ok": True}),
+                    set_cookie=f"{ADMIN_SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0",
+                )
+                return True
+
+            try:
+                payload = self._read_json()
+            except EditorError as error:
+                self._send_api(_error_response(error))
+                return True
+            password = payload.get("password") if isinstance(payload, dict) else None
+            if not isinstance(password, str) or not authenticator.verify(password):
+                self._send_api(
+                    _error_response(
+                        EditorError(401, "authentication_required", "Senha administrativa incorreta ou ausente.")
+                    )
+                )
+                return True
+            token = admin_sessions.create()
+            self._send_api(
+                ApiResponse(200, {"ok": True}),
+                set_cookie=f"{ADMIN_SESSION_COOKIE}={token}; Path=/; HttpOnly; SameSite=Strict",
+            )
+            return True
+
         def do_GET(self) -> None:
             if self._reject_nonlocal_host():
+                return
+            parsed = urlsplit(self.path)
+            if parsed.path == ADMIN_SESSION_ENDPOINT:
+                if parsed.query:
+                    self._send_api(
+                        _error_response(
+                            EditorError(400, "invalid_request", "O endpoint auth/session não aceita parâmetros.")
+                        )
+                    )
+                    return
+                authorized = bool(
+                    admin_sessions
+                    and admin_sessions.is_valid(self._admin_session_token())
+                )
+                self._send_api(ApiResponse(200, {"ok": True, "authorized": authorized}))
                 return
             response = api.get(self.path)
             if response is None:
@@ -1006,9 +1132,19 @@ def make_handler(
         def do_POST(self) -> None:
             if self._reject_nonlocal_host():
                 return
+            parsed = urlsplit(self.path)
+            if parsed.path in {ADMIN_LOGIN_ENDPOINT, ADMIN_LOGOUT_ENDPOINT}:
+                if parsed.query:
+                    self._send_api(
+                        _error_response(
+                            EditorError(404, "endpoint_not_found", "Endpoint da API não encontrado.")
+                        )
+                    )
+                    return
+                if self._handle_admin_auth(parsed.path):
+                    return
             if self._require_write_authentication():
                 return
-            parsed = urlsplit(self.path)
             if parsed.path not in {IMPORT_ENDPOINT, SAVE_ENDPOINT, SHORTCUT_ENDPOINT, SHUTDOWN_ENDPOINT, EVENTS_ENDPOINT, SONGS_ENDPOINT, CAPOS_ENDPOINT} or parsed.query:
                 self._send_api(api.post(self.path, {}))
                 return

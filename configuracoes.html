@@ -25,6 +25,23 @@
       </div>
     </section>
 
+    <section class="card" id="admin-access" aria-labelledby="admin-access-title" hidden>
+      <div class="card-heading">
+        <div><p class="eyebrow">ACESSO ADMINISTRATIVO</p><h2 id="admin-access-title">Edição de cifras</h2></div>
+      </div>
+      <form id="admin-login-form">
+        <p class="detail">Valide a senha para editar cifras e gerenciar repertórios. O acesso expira após 30 minutos sem atividade administrativa.</p>
+        <label class="field" for="admin-password">Senha administrativa
+          <input id="admin-password" name="password" type="password" autocomplete="current-password" required>
+        </label>
+        <div class="actions">
+          <button class="button button-primary" id="admin-login" type="submit">Validar senha</button>
+          <button class="button button-secondary" id="admin-logout" type="button" hidden>Sair do modo administrativo</button>
+        </div>
+      </form>
+      <p class="feedback" id="admin-feedback" role="status" aria-live="polite"></p>
+    </section>
+
     <section class="card" aria-labelledby="shortcut-title">
       <div class="card-heading">
         <div><p class="eyebrow">ACESSO RÁPIDO</p><h2 id="shortcut-title">Atalho</h2></div>
@@ -56,7 +73,7 @@
     </form>
   </dialog>
   <dialog id="manager-dialog"><form method="dialog" id="manager-form"><h2 id="manager-title"></h2><p id="manager-description"></p><div id="manager-fields"></div><p class="feedback error" id="manager-error" role="alert"></p><div class="actions dialog-actions"><button class="button button-secondary" value="cancel" type="button" id="manager-cancel">Cancelar</button><button class="button button-primary" type="submit" id="manager-confirm">Salvar</button></div></form></dialog>
-  <script src="lan-auth.js"></script>
-  <script src="configuracoes.js?v=3"></script>
+  <script src="lan-auth.js?v=2"></script>
+  <script src="configuracoes.js?v=4"></script>
 </body>
 </html>

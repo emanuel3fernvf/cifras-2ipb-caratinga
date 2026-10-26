@@ -525,9 +525,11 @@ class LanAuthenticationTests(unittest.TestCase):
         )
         try:
             with urlopen(request, timeout=2) as response:
+                self.last_response_headers = response.headers
                 return response.status, self._decode_response(response.read())
         except HTTPError as response:
             with response:
+                self.last_response_headers = response.headers
                 return response.code, self._decode_response(response.read())
 
     @staticmethod
@@ -591,6 +593,91 @@ class LanAuthenticationTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertTrue(result["ok"])
         self.assertEqual(self.page_path.read_text(encoding="utf-8"), "<html><pre>Alterado</pre></html>")
+
+    def test_lan_admin_session_authenticates_edits_and_logout_revokes_access(self) -> None:
+        status, session = self.request(server.ADMIN_SESSION_ENDPOINT)
+        self.assertEqual((status, session["authorized"]), (200, False))
+
+        original = self.page_path.read_text(encoding="utf-8")
+        status, result = self.request(
+            server.DOCUMENT_ENDPOINT + "?path=song.html"
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(result["preText"], "Original")
+
+        status, result = self.request(
+            server.ADMIN_LOGIN_ENDPOINT,
+            {"password": "senha incorreta"},
+            Origin=self.base_url,
+        )
+        self.assertEqual(status, 401)
+        self.assertNotIn("senha incorreta", json.dumps(result))
+
+        status, result = self.request(
+            server.ADMIN_LOGIN_ENDPOINT,
+            {"password": self.password},
+            Origin=self.base_url,
+        )
+        self.assertEqual(status, 200)
+        self.assertTrue(result["ok"])
+        cookie = self.last_response_headers["Set-Cookie"]
+        self.assertIn("HttpOnly", cookie)
+        self.assertIn("SameSite=Strict", cookie)
+        cookie = cookie.split(";", 1)[0]
+
+        status, session = self.request(
+            server.ADMIN_SESSION_ENDPOINT, Cookie=cookie
+        )
+        self.assertEqual((status, session["authorized"]), (200, True))
+
+        body = {
+            "path": "song.html",
+            "preText": "Alterado pela sessão",
+            "expectedRevision": hashlib.sha256(original.encode("utf-8")).hexdigest(),
+        }
+        status, result = self.request(
+            server.SAVE_ENDPOINT,
+            body,
+            Cookie=cookie,
+            Origin=self.base_url,
+        )
+        self.assertEqual(status, 200)
+        self.assertTrue(result["ok"])
+
+        status, result = self.request(
+            server.ADMIN_LOGOUT_ENDPOINT,
+            {},
+            Cookie=cookie,
+            Origin=self.base_url,
+        )
+        self.assertEqual(status, 200)
+        self.assertIn("Max-Age=0", self.last_response_headers["Set-Cookie"])
+        status, session = self.request(
+            server.ADMIN_SESSION_ENDPOINT, Cookie=cookie
+        )
+        self.assertEqual((status, session["authorized"]), (200, False))
+
+        updated = self.page_path.read_text(encoding="utf-8")
+        status, result = self.request(
+            server.SAVE_ENDPOINT,
+            body,
+            Cookie=cookie,
+            Origin=self.base_url,
+        )
+        self.assertEqual(status, 401)
+        self.assertEqual(self.page_path.read_text(encoding="utf-8"), updated)
+
+    def test_admin_session_expires_after_inactivity(self) -> None:
+        now = [100.0]
+        sessions = server.LanAdminSessions()
+        with mock.patch("local_editor_server.time.monotonic", side_effect=lambda: now[0]):
+            token = sessions.create()
+            now[0] += server.ADMIN_SESSION_TIMEOUT - 1
+            self.assertTrue(sessions.is_valid(token, touch=True))
+            now[0] += server.ADMIN_SESSION_TIMEOUT - 1
+            self.assertTrue(sessions.is_valid(token))
+            now[0] += 1
+            self.assertFalse(sessions.is_valid(token))
 
     def test_lan_rejects_untrusted_host_and_private_static_files(self) -> None:
         status, result = self.request(server.HEALTH_ENDPOINT, Host="example.com:8000")

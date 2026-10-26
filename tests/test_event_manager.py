@@ -157,6 +157,22 @@ class EventManagerTests(unittest.TestCase):
         self.assertIn('class="dropdown management-only" hidden', markup)
         self.assertNotIn("configuracoes.js", (ROOT / "catalogo.html").read_text(encoding="utf-8"))
 
+    def test_song_editors_require_lan_session_before_enabling_controls(self) -> None:
+        editor_scripts = []
+        for path in ROOT.rglob("index.js"):
+            if "_lixeira" in path.relative_to(ROOT).parts:
+                continue
+            source = path.read_text(encoding="utf-8")
+            if "var serverConfirmed = false;" not in source:
+                continue
+            editor_scripts.append(path)
+            self.assertIn("window.ChordEditorLanAuth.getSession()", source)
+            self.assertLess(
+                source.index("window.ChordEditorLanAuth.getSession()"),
+                source.index("localEditor.enabled = true;"),
+            )
+        self.assertTrue(editor_scripts)
+
     def test_editor_buttons_live_inside_movable_chord_palette(self) -> None:
         for folder in ("_referencia_evento", "2026_08_02", "2026_08_16", "2026_08_30"):
             with self.subTest(folder=folder):
