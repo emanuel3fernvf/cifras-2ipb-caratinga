@@ -1,6 +1,9 @@
 (function () {
   'use strict';
 
+  if (window.__chordEditorLanAuthInstalled) return;
+  window.__chordEditorLanAuthInstalled = true;
+
   var nativeFetch = window.fetch.bind(window);
   var apiPrefix = '/__chord_editor__/';
   var lanMode = false;

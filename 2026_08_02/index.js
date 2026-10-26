@@ -1981,10 +1981,19 @@
       return;
     }
     if (protocol !== 'http:') return;
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') return;
 
     var pre = document.querySelector('body > pre');
     if (!pre) return;
+    if (!window.__chordEditorLanAuthInstalled) {
+      var authScript = document.createElement('script');
+      authScript.src = new URL('../lan-auth.js', window.location.href).href;
+      authScript.onload = initLocalEditor;
+      authScript.onerror = function () {
+        showLocalEditorNotification('Não foi possível carregar a autenticação do editor.', 'error');
+      };
+      document.head.appendChild(authScript);
+      return;
+    }
     var serverConfirmed = false;
 
     fetch('/__chord_editor__/health', {
