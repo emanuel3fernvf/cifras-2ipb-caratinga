@@ -209,6 +209,9 @@
     selectedChord: null,
     editButton: null,
     rewriteButton: null,
+    moveLeftButton: null,
+    moveRightButton: null,
+    pendingPaletteChord: null,
     palette: null,
     paletteGrid: null,
     contextMenu: null,
@@ -427,10 +430,32 @@
       openRewriteModal();
     });
 
+    var moveLeftButton = document.createElement('button');
+    moveLeftButton.type = 'button';
+    moveLeftButton.className = 'video-sticky-toggle icon-btn local-editor-toolbar-btn';
+    moveLeftButton.title = 'Mover acorde para a esquerda';
+    moveLeftButton.setAttribute('aria-label', 'Mover acorde para a esquerda');
+    moveLeftButton.appendChild(createSvgIcon('M15 5 8 12l7 7-1.4 1.4L5.2 12l8.4-8.4L15 5z'));
+    moveLeftButton.hidden = true;
+    moveLeftButton.addEventListener('click', function () { moveSelectedChord(-1); });
+
+    var moveRightButton = document.createElement('button');
+    moveRightButton.type = 'button';
+    moveRightButton.className = 'video-sticky-toggle icon-btn local-editor-toolbar-btn';
+    moveRightButton.title = 'Mover acorde para a direita';
+    moveRightButton.setAttribute('aria-label', 'Mover acorde para a direita');
+    moveRightButton.appendChild(createSvgIcon('m9 5 7 7-7 7 1.4 1.4 8.4-8.4-8.4-8.4L9 5z'));
+    moveRightButton.hidden = true;
+    moveRightButton.addEventListener('click', function () { moveSelectedChord(1); });
+
     localEditor.editButton = editButton;
     localEditor.rewriteButton = rewriteButton;
+    localEditor.moveLeftButton = moveLeftButton;
+    localEditor.moveRightButton = moveRightButton;
     row.appendChild(editButton);
     row.appendChild(rewriteButton);
+    row.appendChild(moveLeftButton);
+    row.appendChild(moveRightButton);
     refreshLocalEditorUi();
   }
 
@@ -1260,6 +1285,7 @@
       selected.element.setAttribute('aria-selected', 'false');
     }
     localEditor.selectedChord = null;
+    updateChordMoveButtons();
   }
 
   function selectEditableChord(chordElement) {
@@ -1283,7 +1309,18 @@
       end: end,
       text: chordElement.textContent || ''
     };
+    updateChordMoveButtons();
     return true;
+  }
+
+  function updateChordMoveButtons() {
+    var selected = !!localEditor.selectedChord;
+    var locked = currentTranspose !== 0 || localEditor.busy;
+    [localEditor.moveLeftButton, localEditor.moveRightButton].forEach(function (button) {
+      if (!button) return;
+      button.hidden = !selected;
+      button.disabled = locked;
+    });
   }
 
   function hideEditorContextMenu() {
@@ -1371,32 +1408,7 @@
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
       event.preventDefault();
       hideEditorContextMenu();
-      var direction = event.key === 'ArrowLeft' ? -1 : 1;
-      var line = getLocalEditorLines()[selected.lineIndex];
-      var targetStart = selected.start + direction;
-      var nextLine = placeChordWithPush(
-        line,
-        selected.text,
-        targetStart,
-        direction,
-        selected.start,
-        selected.end
-      );
-      if (nextLine == null) {
-        showLocalEditorNotification('Não há espaço para mover esse acorde.', 'error');
-        return;
-      }
-      var nextText = buildPreTextWithLine(selected.lineIndex, nextLine);
-      if (nextText !== localEditor.preText) {
-        saveLocalPreText(nextText, {
-          lineElement: selected.lineElement,
-          restoreSelection: {
-            lineIndex: selected.lineIndex,
-            start: targetStart,
-            text: selected.text
-          }
-        }).catch(function () {});
-      }
+      moveSelectedChord(event.key === 'ArrowLeft' ? -1 : 1);
       return;
     }
 
@@ -1404,6 +1416,36 @@
       event.preventDefault();
       hideEditorContextMenu();
       openChordReplacementModal(event.key, false);
+    }
+  }
+
+  function moveSelectedChord(direction) {
+    var selected = localEditor.selectedChord;
+    if (!selected || localEditor.busy || currentTranspose !== 0) return;
+    var line = getLocalEditorLines()[selected.lineIndex];
+    var targetStart = selected.start + direction;
+    var nextLine = placeChordWithPush(
+      line,
+      selected.text,
+      targetStart,
+      direction,
+      selected.start,
+      selected.end
+    );
+    if (nextLine == null) {
+      showLocalEditorNotification('Não há espaço para mover esse acorde.', 'error');
+      return;
+    }
+    var nextText = buildPreTextWithLine(selected.lineIndex, nextLine);
+    if (nextText !== localEditor.preText) {
+      saveLocalPreText(nextText, {
+        lineElement: selected.lineElement,
+        restoreSelection: {
+          lineIndex: selected.lineIndex,
+          start: targetStart,
+          text: selected.text
+        }
+      }).catch(function () {});
     }
   }
 
@@ -1675,6 +1717,45 @@
     }
   }
 
+  function selectPaletteChord(chord, item) {
+    if (localEditor.busy || currentTranspose !== 0) return;
+    localEditor.pendingPaletteChord = chord;
+    localEditor.paletteGrid.querySelectorAll('.chord-palette-item').forEach(function (button) {
+      button.classList.toggle('is-selected', button === item);
+      button.setAttribute('aria-pressed', button === item ? 'true' : 'false');
+    });
+    showLocalEditorNotification(
+      'Acorde ' + chord + ' selecionado. Toque na linha para inserir.',
+      'success'
+    );
+  }
+
+  function insertPaletteChordAtPointer(lineElement, clientX) {
+    var chord = localEditor.pendingPaletteChord;
+    if (!chord || !lineElement || localEditor.busy || currentTranspose !== 0) return false;
+    var lineIndex = parseInt(lineElement.getAttribute('data-line-index'), 10);
+    var line = getLocalEditorLines()[lineIndex];
+    if (typeof line !== 'string') return false;
+    var targetStart = Math.max(0, getLineColumnFromPointer(lineElement, clientX));
+    var nextLine = placeChordWithPush(line, chord, targetStart, 1, null, null);
+    if (nextLine == null) {
+      showLocalEditorNotification('Não foi possível inserir o acorde nessa posição.', 'error');
+      return true;
+    }
+    localEditor.pendingPaletteChord = null;
+    var nextText = buildPreTextWithLine(lineIndex, nextLine);
+    saveLocalPreText(nextText, {
+      lineElement: lineElement,
+      restoreSelection: {
+        lineIndex: lineIndex,
+        start: targetStart,
+        text: chord
+      }
+    }).catch(function () {});
+    renderChordPalette();
+    return true;
+  }
+
   function renderChordPalette() {
     if (!localEditor.paletteGrid) return;
     var chords = getPaletteChordSymbols();
@@ -1697,7 +1778,12 @@
       item.setAttribute('data-chord', chord);
       item.setAttribute('aria-label', locked ?
         'Acorde ' + chord + ' (edição bloqueada durante transposição)' :
-        'Arrastar acorde ' + chord);
+        'Selecionar ou arrastar acorde ' + chord);
+      item.setAttribute('aria-pressed', localEditor.pendingPaletteChord === chord ? 'true' : 'false');
+      item.classList.toggle('is-selected', localEditor.pendingPaletteChord === chord);
+      item.addEventListener('click', function () {
+        selectPaletteChord(chord, item);
+      });
       item.addEventListener('dragstart', function (event) {
         startPaletteChordDrag(event, item, chord);
       });
@@ -1867,6 +1953,13 @@
         event.preventDefault();
         event.stopPropagation();
         openLineEditorModal(editButton.closest('.line'));
+        return;
+      }
+      var targetLine = event.target.closest && event.target.closest('.line-chord');
+      if (localEditor.pendingPaletteChord && targetLine) {
+        event.preventDefault();
+        event.stopPropagation();
+        insertPaletteChordAtPointer(targetLine, event.clientX);
         return;
       }
       var chordElement = event.target.closest && event.target.closest('.editable-chord');

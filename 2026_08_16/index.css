@@ -906,6 +906,17 @@ body.local-editor-busy .chord-palette-item {
     }
 }
 
+@media (hover: none), (pointer: coarse) {
+    .line-edit-button {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .chord-palette-item {
+        touch-action: manipulation;
+    }
+}
+
 @media print {
     body > :not(pre) {
         display: none !important;

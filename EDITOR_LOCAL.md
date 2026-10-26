@@ -153,6 +153,15 @@ renomeados juntos. `PUT /__chord_editor__/events` edita título, subtítulo e no
 da pasta do evento. Essas operações atualizam o catálogo e revertem os arquivos
 se alguma etapa falhar.
 
+### Editar cifras pelo celular
+
+Depois de autenticar nas configurações, abra a página individual da cifra. Na
+paleta flutuante, use **Editar** para abrir o editor completo. Para inserir um
+acorde sem arrastar, toque no acorde da paleta e depois na posição desejada de
+uma linha de acordes; o acorde inserido fica selecionado e pode ser deslocado
+pelas setas esquerda/direita na paleta. Toque no ícone de edição ao fim da linha
+para editar somente aquela linha.
+
 ### Criar atalho e desligar
 
 Os controles da página usam `POST /__chord_editor__/shortcut` para criar um

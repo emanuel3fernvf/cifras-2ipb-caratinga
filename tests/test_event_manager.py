@@ -173,6 +173,31 @@ class EventManagerTests(unittest.TestCase):
             )
         self.assertTrue(editor_scripts)
 
+    def test_song_editors_support_touch_insertion_and_visible_movement_controls(self) -> None:
+        editor_folders = (
+            "_referencia_evento",
+            "17-e-18-de-outubro",
+            "2026_08_02",
+            "2026_08_16",
+            "2026_08_30",
+            "2026_09_06",
+            "2026_09_12",
+            "2026_09_20",
+            "2026_10_04",
+            "pergunte-aos-animais-musical",
+        )
+        for folder in editor_folders:
+            with self.subTest(folder=folder):
+                source = (ROOT / folder / "index.js").read_text(encoding="utf-8")
+                styles = (ROOT / folder / "index.css").read_text(encoding="utf-8")
+                markup = (ROOT / folder / "index.html").read_text(encoding="utf-8")
+                self.assertIn("function insertPaletteChordAtPointer", source)
+                self.assertIn("Mover acorde para a esquerda", source)
+                self.assertIn("Mover acorde para a direita", source)
+                self.assertIn("@media (hover: none), (pointer: coarse)", styles)
+                self.assertIn('index.js?v=', markup)
+                self.assertIn('index.css?v=', markup)
+
     def test_editor_buttons_live_inside_movable_chord_palette(self) -> None:
         for folder in ("_referencia_evento", "2026_08_02", "2026_08_16", "2026_08_30"):
             with self.subTest(folder=folder):
