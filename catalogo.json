@@ -20,6 +20,10 @@
         {
           "title": "4 - O Pecado de Adão — IPALPHA KIDS",
           "path": "pergunte-aos-animais-musical/4 - O Pecado de Adão - IPALPHA KIDS.html"
+        },
+        {
+          "title": "5 Foi Necessário — IPALPHA KIDS",
+          "path": "pergunte-aos-animais-musical/5 Foi Necessário - IPALPHA KIDS.html"
         }
       ]
     },
@@ -63,6 +67,17 @@
         {
           "title": "Autor da Vida - Aline Barros",
           "path": "musical_pascoa_UMP_2026/Autor da Vida - Aline Barros.html"
+        }
+      ]
+    },
+    {
+      "name": "Evento",
+      "directory": "2026_10_29",
+      "index": "2026_10_29/index.html",
+      "songs": [
+        {
+          "title": "Minh'alma Engrandece ao Senhor + Adorado — Rachel Novaes",
+          "path": "2026_10_29/Minh'alma Engrandece ao Senhor + Adorado - Rachel Novaes.html"
         }
       ]
     },
