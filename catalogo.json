@@ -72,6 +72,33 @@
     },
     {
       "name": "Evento",
+      "directory": "2026_11_01",
+      "index": "2026_11_01/index.html",
+      "songs": [
+        {
+          "title": "Hino da Reforma (Cinco Solas) — Gean Carlos de Paiva",
+          "path": "2026_11_01/Hino da Reforma (Cinco Solas) - Gean Carlos de Paiva.html"
+        },
+        {
+          "title": "Castelo Forte — IPALPHA",
+          "path": "2026_11_01/Castelo Forte - IPALPHA.html"
+        },
+        {
+          "title": "74 - Sinceridade — IPALPHA",
+          "path": "2026_11_01/74 - Sinceridade - IPALPHA.html"
+        },
+        {
+          "title": "266 - Rude Cruz — Marcelo Cacilias",
+          "path": "2026_11_01/266 - Rude Cruz - Marcelo Cacilias.html"
+        },
+        {
+          "title": "Porque Ele Vive — Mariana Aguiar",
+          "path": "2026_11_01/Porque Ele Vive - Mariana Aguiar.html"
+        }
+      ]
+    },
+    {
+      "name": "Evento",
       "directory": "2026_10_29",
       "index": "2026_10_29/index.html",
       "songs": [
