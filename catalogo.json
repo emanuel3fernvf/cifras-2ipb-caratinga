@@ -28,6 +28,17 @@
       ]
     },
     {
+      "name": "Nível 1",
+      "directory": "nivel-1",
+      "index": "nivel-1/index.html",
+      "songs": [
+        {
+          "title": "Me Derramar — Vineyard",
+          "path": "nivel-1/Me Derramar - Vineyard.html"
+        }
+      ]
+    },
+    {
       "name": "Musical Páscoa UMP 2026",
       "directory": "musical_pascoa_UMP_2026",
       "index": "musical_pascoa_UMP_2026/index.html",
