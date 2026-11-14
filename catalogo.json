@@ -613,6 +613,33 @@
       ]
     },
     {
+      "name": "2026_11_15 Domingo Culto",
+      "directory": "2026-11-15-domingo-culto",
+      "index": "2026-11-15-domingo-culto/index.html",
+      "songs": [
+        {
+          "title": "Gratidão — fhop music",
+          "path": "2026-11-15-domingo-culto/Gratidão - fhop music.html"
+        },
+        {
+          "title": "Eu Vou Construir — Nívea Soares",
+          "path": "2026-11-15-domingo-culto/Eu Vou Construir - Nívea Soares.html"
+        },
+        {
+          "title": "Ajuntamento — IPALPHA",
+          "path": "2026-11-15-domingo-culto/Ajuntamento - IPALPHA.html"
+        },
+        {
+          "title": "Seja Engrandecido — Arieta Magrini",
+          "path": "2026-11-15-domingo-culto/Seja Engrandecido - Arieta Magrini.html"
+        },
+        {
+          "title": "Castelo Forte — IPALPHA",
+          "path": "2026-11-15-domingo-culto/Castelo Forte - IPALPHA.html"
+        }
+      ]
+    },
+    {
       "name": "17 e 18 de outubro",
       "directory": "17-e-18-de-outubro",
       "index": "17-e-18-de-outubro/index.html",
