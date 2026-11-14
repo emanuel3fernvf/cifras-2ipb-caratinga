@@ -192,7 +192,7 @@ def create_event(root: Path, payload: dict[str, object]) -> dict[str, object]:
     if not reference.is_dir(): raise ManagerError(500, "reference_missing", "A pasta de referência não foi encontrada.")
     temporary = Path(tempfile.mkdtemp(prefix=".novo-evento-", dir=root))
     try:
-        for name in ("index.html", "index.css", "index.js"):
+        for name in ("index.html",):
             source = (reference / name).read_text(encoding="utf-8").replace("{{EVENT_TITLE}}", html.escape(title)).replace("{{EVENT_SUBTITLE}}", html.escape(subtitle))
             (temporary / name).write_text(source, encoding="utf-8")
         os.replace(temporary, target)
@@ -238,13 +238,7 @@ def create_song(root: Path, payload: dict[str, object]) -> dict[str, object]:
             closing = old_index.lower().rfind("</body>")
             if closing < 0:
                 raise ManagerError(422, "invalid_index", "O índice não possui uma área segura para novas cifras.")
-            managed_area = (
-                '\n<style id="managed-songs-style">.managed-song-row{display:flex;gap:8px;margin:10px auto;max-width:460px}'
-                '.managed-song-row a{display:flex;flex:1;align-items:center;justify-content:center;padding:10px 14px;'
-                'border-radius:10px;background:#0068ff;color:#fff;font-weight:bold;text-align:center;text-decoration:none}'
-                '.managed-song-row a.capo-btn{flex:0 0 auto;background:#ff7700}</style>\n'
-                '<div id="managed-songs">' + marker + '</div>\n'
-            )
+            managed_area = '\n<div id="managed-songs">' + marker + '</div>\n'
             old_index = old_index[:closing] + managed_area + old_index[closing:]
         new_index = old_index.replace(marker, _managed_link(filename, f"{title} — {artist}") + marker, 1)
         target.write_text(song_source, encoding="utf-8")

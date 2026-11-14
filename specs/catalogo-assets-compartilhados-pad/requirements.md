@@ -2,15 +2,15 @@
 
 ## Estado
 
-**Fechada pelo usuário — não implementar até receber ordem explícita.**
+**Fechada e implementada após ordem explícita do usuário.**
 Escopo, comportamento e critérios de aceite foram confirmados.
 
 ## Contexto
 
-As páginas de índice e as cifras dentro das pastas do catálogo referenciam
-arquivos `index.js` e `index.css` locais. O CRUD também copia esses arquivos ao
-criar um evento. A página principal `catalogo.html`, por sua vez, possui
-`catalogo.js` e `catalogo.css` próprios e ficará separada.
+Antes da implementação, as páginas de índice e as cifras dentro das pastas do
+catálogo referenciavam arquivos `index.js` e `index.css` locais. O CRUD também
+copiava esses arquivos ao criar um evento. A página principal `catalogo.html`,
+por sua vez, possui `catalogo.js` e `catalogo.css` próprios e ficará separada.
 
 O JavaScript atual cria um botão **Mostrar Pad** e um painel flutuante, não um
 modal. O painel será mantido. O usuário pediu que o controle do Pad apareça nos
@@ -119,6 +119,16 @@ O levantamento encontrou CSS embutido em 21 índices de catálogo, distribuído
 nesses 9 grupos, e nenhum JavaScript embutido nesses índices. As cifras
 individuais não contêm blocos embutidos de CSS/JavaScript na revisão feita.
 
+### RF-08 — Controles compartilhados de leitura das cifras
+
+Todas as cifras atuais e futuras do catálogo devem oferecer os controles de
+leitura que já existiam na variante “Pergunte aos Animais - Musical”. As setas
+↑/↓ navegam entre estrofes, destacam e centralizam a estrofe ativa; a navegação
+para nas extremidades e Escape remove o destaque. O tamanho do texto deve poder
+ser ajustado em passos de 5%, entre 75% e 200%, restaurado a 100% e persistido
+no navegador. Os controles de fonte ficam junto à barra de tom. Índices e outras
+páginas sem cifra não exibem esses controles.
+
 ## Critérios de aceite propostos
 
 1. Índices e cifras de todas as pastas listadas pelo catálogo carregam os
@@ -141,6 +151,9 @@ individuais não contêm blocos embutidos de CSS/JavaScript na revisão feita.
 10. G1–G5, G7–G9 e as regras comuns de G6 estão no CSS central com seletores que
     não alteram páginas sem a estrutura correspondente; somente estilos
     específicos de liturgia/hinos de G6 permanecem embutidos.
+11. Todas as cifras carregam os controles compartilhados de leitura; setas,
+    destaque, rolagem, limites e persistência de fonte mantêm o comportamento
+    existente, enquanto índices não exibem esses controles.
 
 ## Fora de escopo provisório
 
@@ -150,5 +163,5 @@ individuais não contêm blocos embutidos de CSS/JavaScript na revisão feita.
 
 ## Fechamento e implementação
 
-O usuário aprovou o fechamento desta especificação. Parar aqui e não implementar
-até receber uma ordem explícita.
+O usuário aprovou o fechamento desta especificação e posteriormente autorizou a
+implementação, que foi concluída e validada.

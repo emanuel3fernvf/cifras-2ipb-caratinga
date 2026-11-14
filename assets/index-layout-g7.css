@@ -1,0 +1,2 @@
+*{box-sizing:border-box}body{display:flex;justify-content:center;margin:0;font-family:"Roboto Mono",monospace}.box-center{width:100%;max-width:500px;margin:40px 20px;padding:20px;border:2px solid gray;border-radius:10px}.top{text-align:center}.top h2{color:#ff7700}.service-item{margin:10px 0;line-height:1.45}.section-title{margin:24px 0 10px;color:#666;text-align:center}
+  .box-center{position:relative}.top{margin-top:20px}

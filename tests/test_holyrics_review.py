@@ -5,18 +5,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPORTERS = [
-    ROOT / "_referencia_evento/index.js",
-    ROOT / "2026_07_12_DOM/index.js",
-    ROOT / "2026_08_02/index.js",
-    ROOT / "2026_08_16/index.js",
-    ROOT / "2026_08_30/index.js",
-    ROOT / "2026_09_06/index.js",
-    ROOT / "2026_09_12/index.js",
+    ROOT / "assets/index-variant-1.js",
+    ROOT / "assets/index-variant-5.js",
+    ROOT / "assets/index-variant-6.js",
+    ROOT / "assets/index-variant-7.js",
+    ROOT / "assets/index-variant-8.js",
+    ROOT / "assets/index-variant-9.js",
 ]
 
 
 def run_review_helpers(payload):
-    source = (ROOT / "_referencia_evento/index.js").read_text(encoding="utf-8")
+    source = (ROOT / "assets/index-variant-1.js").read_text(encoding="utf-8")
     helpers = []
     for name in (
         "getHolyricsLyricLines",
@@ -87,7 +86,7 @@ def test_applies_same_selection_in_both_modes_without_changing_chord_comments():
 
 
 def test_all_exporters_received_review_flow_and_old_allowlist_is_gone():
-    reference_block = (ROOT / "_referencia_evento/index.js").read_text(encoding="utf-8")
+    reference_block = (ROOT / "assets/index-variant-1.js").read_text(encoding="utf-8")
     reference_block = reference_block[
         reference_block.index("  // --- Exportar para Holyrics (índice) ---") :
         reference_block.index("  function createHomeButton()")

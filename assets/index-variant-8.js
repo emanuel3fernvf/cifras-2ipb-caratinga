@@ -1408,32 +1408,7 @@
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
       event.preventDefault();
       hideEditorContextMenu();
-      var direction = event.key === 'ArrowLeft' ? -1 : 1;
-      var line = getLocalEditorLines()[selected.lineIndex];
-      var targetStart = selected.start + direction;
-      var nextLine = placeChordWithPush(
-        line,
-        selected.text,
-        targetStart,
-        direction,
-        selected.start,
-        selected.end
-      );
-      if (nextLine == null) {
-        showLocalEditorNotification('Não há espaço para mover esse acorde.', 'error');
-        return;
-      }
-      var nextText = buildPreTextWithLine(selected.lineIndex, nextLine);
-      if (nextText !== localEditor.preText) {
-        saveLocalPreText(nextText, {
-          lineElement: selected.lineElement,
-          restoreSelection: {
-            lineIndex: selected.lineIndex,
-            start: targetStart,
-            text: selected.text
-          }
-        }).catch(function () {});
-      }
+      moveSelectedChord(event.key === 'ArrowLeft' ? -1 : 1);
       return;
     }
 
@@ -1441,6 +1416,36 @@
       event.preventDefault();
       hideEditorContextMenu();
       openChordReplacementModal(event.key, false);
+    }
+  }
+
+  function moveSelectedChord(direction) {
+    var selected = localEditor.selectedChord;
+    if (!selected || localEditor.busy || currentTranspose !== 0) return;
+    var line = getLocalEditorLines()[selected.lineIndex];
+    var targetStart = selected.start + direction;
+    var nextLine = placeChordWithPush(
+      line,
+      selected.text,
+      targetStart,
+      direction,
+      selected.start,
+      selected.end
+    );
+    if (nextLine == null) {
+      showLocalEditorNotification('Não há espaço para mover esse acorde.', 'error');
+      return;
+    }
+    var nextText = buildPreTextWithLine(selected.lineIndex, nextLine);
+    if (nextText !== localEditor.preText) {
+      saveLocalPreText(nextText, {
+        lineElement: selected.lineElement,
+        restoreSelection: {
+          lineIndex: selected.lineIndex,
+          start: targetStart,
+          text: selected.text
+        }
+      }).catch(function () {});
     }
   }
 
@@ -1719,7 +1724,10 @@
       button.classList.toggle('is-selected', button === item);
       button.setAttribute('aria-pressed', button === item ? 'true' : 'false');
     });
-    showLocalEditorNotification('Acorde ' + chord + ' selecionado. Toque na linha para inserir.', 'success');
+    showLocalEditorNotification(
+      'Acorde ' + chord + ' selecionado. Toque na linha para inserir.',
+      'success'
+    );
   }
 
   function insertPaletteChordAtPointer(lineElement, clientX) {
@@ -1738,7 +1746,11 @@
     var nextText = buildPreTextWithLine(lineIndex, nextLine);
     saveLocalPreText(nextText, {
       lineElement: lineElement,
-      restoreSelection: { lineIndex: lineIndex, start: targetStart, text: chord }
+      restoreSelection: {
+        lineIndex: lineIndex,
+        start: targetStart,
+        text: chord
+      }
     }).catch(function () {});
     renderChordPalette();
     return true;
@@ -1769,7 +1781,9 @@
         'Selecionar ou arrastar acorde ' + chord);
       item.setAttribute('aria-pressed', localEditor.pendingPaletteChord === chord ? 'true' : 'false');
       item.classList.toggle('is-selected', localEditor.pendingPaletteChord === chord);
-      item.addEventListener('click', function () { selectPaletteChord(chord, item); });
+      item.addEventListener('click', function () {
+        selectPaletteChord(chord, item);
+      });
       item.addEventListener('dragstart', function (event) {
         startPaletteChordDrag(event, item, chord);
       });
@@ -2109,44 +2123,54 @@
 
   // --- Exportar para Holyrics (índice) ---
 
-  function getHolyricsLyricLines(rawText) {
-    var lines = (rawText || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
-    var start = -1;
-    for (var i = 0; i < lines.length; i++) {
-      if (isChordLine(lines[i])) {
-        start = i;
-        break;
+  /**
+   * HOLYRICS_HYPHEN_WORDS — allowlist de hífens ortográficos (export Holyrics).
+   *
+   * IA / agentes: ao criar ou editar cifras nesta pasta (HTMLs com <pre>),
+   * varrer as letras por palavras com hífen único (-) que sejam gramaticalmente
+   * corretas em português (clíticos, compostos, etc.) e ADICIONAR aqui em
+   * minúsculas se ainda não estiverem. Não incluir melismas (Rei--no, tu----a).
+   * Não remover entradas sem motivo.
+   */
+  var HOLYRICS_HYPHEN_WORDS = {
+    'adorá-lo': true,
+    'dá-me': true,
+    'restaurou-me': true,
+    'todo-poderoso': true
+  };
+
+  function cleanLyricHyphensForHolyrics(line) {
+    // 1) Melisma claro: 2+ hífens consecutivos
+    var cleaned = String(line || '').replace(/-{2,}/g, '');
+
+    // 2) Tokens com hífen único: preserva só se estiver no dicionário
+    cleaned = cleaned.replace(/\S+/g, function (token) {
+      if (token.indexOf('-') === -1) return token;
+      // Se ainda houver 2+ hífens (não deveria), remove
+      if (/-{2,}/.test(token)) {
+        token = token.replace(/-{2,}/g, '');
       }
-    }
-    if (start === -1) return [];
-    return lines.slice(start).filter(function (line) {
-      return !/[\[\]]/.test(line) && !isChordLine(line);
-    });
-  }
+      if (token.indexOf('-') === -1) return token;
 
-  function collectHolyricsReviewItems(songs) {
-    var seen = {};
-    var items = [];
-    songs.forEach(function (song) {
-      getHolyricsLyricLines(song.preText).forEach(function (line) {
-        String(line || '').replace(/\S+/g, function (token) {
-          if ((token.indexOf('-') !== -1 || token.indexOf('_') !== -1) && !seen[token]) {
-            seen[token] = true;
-            items.push({ source: token, corrected: token.replace(/[-_]/g, ''), useCorrected: false });
-          }
-          return token;
-        });
-      });
+      // Compara sem pontuação ao redor (mantém pontuação no resultado)
+      var match = token.match(/^([^a-zA-Zà-úÀ-Ú]*)([a-zA-Zà-úÀ-Ú]+(?:-[a-zA-Zà-úÀ-Ú]+)+)([^a-zA-Zà-úÀ-Ú]*)$/);
+      if (!match) {
+        // Hífen residual atípico: remove hífens
+        return token.replace(/-/g, '');
+      }
+      var prefix = match[1];
+      var core = match[2];
+      var suffix = match[3];
+      var key = core.toLowerCase();
+      if (HOLYRICS_HYPHEN_WORDS[key]) {
+        return prefix + core + suffix;
+      }
+      return prefix + core.replace(/-/g, '') + suffix;
     });
-    return items;
-  }
 
-  function applyHolyricsTokenChoices(line, corrections) {
-    return String(line || '').replace(/\S+/g, function (token) {
-      return corrections && Object.prototype.hasOwnProperty.call(corrections, token)
-        ? corrections[token]
-        : token;
-    });
+    // 3) Espaços múltiplos
+    cleaned = cleaned.replace(/ {2,}/g, ' ');
+    return cleaned;
   }
 
   function getSongLinksFromIndex() {
@@ -2166,7 +2190,7 @@
     return urls;
   }
 
-  function processPreTextForHolyrics(rawText, withChords, corrections) {
+  function processPreTextForHolyrics(rawText, withChords) {
     var lines = (rawText || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
     var start = -1;
     for (var i = 0; i < lines.length; i++) {
@@ -2187,9 +2211,7 @@
         }
         continue;
       }
-      var lyricLine = applyHolyricsTokenChoices(line, corrections);
-      if (!withChords) lyricLine = lyricLine.trim().replace(/ {2,}/g, ' ');
-      out.push(lyricLine);
+      out.push(cleanLyricHyphensForHolyrics(line));
     }
 
     // Compacta linhas vazias no início/fim e grupos de vazias em uma só
@@ -2289,92 +2311,8 @@
     return (folder || 'evento') + '_holyrics-';
   }
 
-  var holyricsReviewState = null;
-
-  function setHolyricsReviewOpen(open) {
-    var modal = document.getElementById('holyrics-review-modal');
-    if (!modal) return;
-    modal.hidden = !open;
-    document.body.classList.toggle('holyrics-review-open', open);
-  }
-
-  function closeHolyricsReview() {
-    var opener = holyricsReviewState && holyricsReviewState.opener;
-    holyricsReviewState = null;
-    setHolyricsReviewOpen(false);
-    if (opener && typeof opener.focus === 'function') opener.focus();
-  }
-
-  function renderHolyricsReview(items) {
-    var list = document.getElementById('holyrics-review-list');
-    if (!list) return;
-    list.textContent = '';
-    if (!items.length) {
-      var empty = document.createElement('p');
-      empty.className = 'holyrics-review-empty';
-      empty.textContent = 'Nenhuma palavra com traço ou underline foi encontrada.';
-      list.appendChild(empty);
-      return;
-    }
-    items.forEach(function (item, index) {
-      var card = document.createElement('fieldset');
-      card.className = 'holyrics-review-card';
-      var legend = document.createElement('legend');
-      legend.textContent = 'Palavra ' + (index + 1);
-      card.appendChild(legend);
-      [{ value: 'original', text: item.source }, { value: 'corrected', text: item.corrected }].forEach(function (choice) {
-        var label = document.createElement('label');
-        label.className = 'holyrics-review-choice';
-        var radio = document.createElement('input');
-        radio.type = 'radio';
-        radio.name = 'holyrics-review-' + index;
-        radio.value = choice.value;
-        radio.checked = choice.value === 'original';
-        radio.addEventListener('change', function () {
-          item.useCorrected = this.value === 'corrected';
-        });
-        var text = document.createElement('span');
-        text.textContent = choice.text;
-        label.appendChild(radio);
-        label.appendChild(text);
-        card.appendChild(label);
-      });
-      list.appendChild(card);
-    });
-  }
-
-  function openHolyricsReview(mode, songs, opener) {
-    var items = collectHolyricsReviewItems(songs);
-    holyricsReviewState = { mode: mode, songs: songs, reviewItems: items, opener: opener };
-    renderHolyricsReview(items);
-    setHolyricsReviewOpen(true);
-    var title = document.getElementById('holyrics-review-title');
-    if (title) title.focus();
-  }
-
-  function confirmHolyricsReview() {
-    if (!holyricsReviewState) return;
-    var state = holyricsReviewState;
-    var corrections = {};
-    state.reviewItems.forEach(function (item) {
-      if (item.useCorrected) corrections[item.source] = item.corrected;
-    });
-    var withChords = state.mode === 'cifra';
-    var baseId = Date.now();
-    var output = state.songs.map(function (parsed, idx) {
-      return buildHolyricsSong(
-        baseId + idx,
-        parsed.title || ('Música ' + (idx + 1)),
-        parsed.artist || '',
-        processPreTextForHolyrics(parsed.preText, withChords, corrections)
-      );
-    });
-    var suffix = withChords ? 'cifra' : 'letra';
-    downloadJson(holyricsExportPrefix() + suffix + '.json', output);
-    closeHolyricsReview();
-  }
-
-  function exportHolyrics(mode, opener) {
+  function exportHolyrics(mode) {
+    var withChords = mode === 'cifra';
     var urls = getSongLinksFromIndex();
     if (!urls.length) {
       window.alert('Nenhuma cifra encontrada no índice.');
@@ -2386,16 +2324,25 @@
       return Promise.resolve();
     }
 
+    var baseId = Date.now();
     return Promise.all(urls.map(function (url) {
       return fetch(url).then(function (res) {
         if (!res.ok) throw new Error('Falha ao carregar ' + url);
         return res.text();
       });
     })).then(function (htmls) {
-      var songs = htmls.map(function (html) {
-        return parseSongHtml(html);
+      var songs = htmls.map(function (html, idx) {
+        var parsed = parseSongHtml(html);
+        var fullText = processPreTextForHolyrics(parsed.preText, withChords);
+        return buildHolyricsSong(
+          baseId + idx,
+          parsed.title || ('Música ' + (idx + 1)),
+          parsed.artist || '',
+          fullText
+        );
       });
-      openHolyricsReview(mode, songs, opener);
+      var suffix = withChords ? 'cifra' : 'letra';
+      downloadJson(holyricsExportPrefix() + suffix + '.json', songs);
     }).catch(function (err) {
       console.error(err);
       window.alert('Erro ao exportar: ' + (err && err.message ? err.message : String(err)));
@@ -2421,43 +2368,13 @@
       options[i].addEventListener('click', function () {
         var mode = this.getAttribute('data-mode') || 'letra';
         menu.hidden = true;
-        exportHolyrics(mode, this);
+        exportHolyrics(mode);
       });
     }
 
     document.addEventListener('click', function () {
       menu.hidden = true;
     });
-
-    var modal = document.getElementById('holyrics-review-modal');
-    var cancel = document.getElementById('holyrics-review-cancel');
-    var confirm = document.getElementById('holyrics-review-confirm');
-    if (cancel) cancel.addEventListener('click', closeHolyricsReview);
-    if (confirm) confirm.addEventListener('click', confirmHolyricsReview);
-    if (modal) {
-      modal.addEventListener('click', function (event) {
-        if (event.target === modal) event.preventDefault();
-      });
-      modal.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') {
-          event.preventDefault();
-          closeHolyricsReview();
-          return;
-        }
-        if (event.key !== 'Tab') return;
-        var focusable = modal.querySelectorAll('button:not([disabled]), input:not([disabled]), [tabindex]');
-        if (!focusable.length) return;
-        var first = focusable[0];
-        var last = focusable[focusable.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first.focus();
-        }
-      });
-    }
   }
 
   function createHomeButton() {
@@ -2485,6 +2402,7 @@
     if (!document.querySelector('pre') && !document.getElementById('holyrics-export')) return;
     if (document.getElementById('holyrics-export')) {
       initHolyricsExport();
+      createWarmPadPlayer();
       return;
     }
 

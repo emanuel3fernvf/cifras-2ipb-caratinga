@@ -12,6 +12,52 @@ import local_editor_server as server
 
 
 ROOT = Path(__file__).resolve().parents[1]
+SCRIPT_VARIANTS = {
+    "17-e-18-de-outubro": 1,
+    "2026_03_15_DOM": 2,
+    "2026_04_19": 2,
+    "2026_05_31": 3,
+    "2026_06_21": 3,
+    "2026_06_27": 3,
+    "2026_07_05_DOM": 4,
+    "2026_07_11_UMP": 4,
+    "2026_07_12_DOM": 5,
+    "2026_08_02": 6,
+    "2026_08_16": 7,
+    "2026_08_30": 1,
+    "2026_09_06": 1,
+    "2026_09_12": 1,
+    "2026_09_20": 8,
+    "2026_10_04": 1,
+    "2026_10_29": 1,
+    "2026_11_01": 1,
+    "musical_pascoa_UMP_2026": 2,
+    "nivel-1": 1,
+    "pergunte-aos-animais-musical": 9,
+}
+STYLE_VARIANTS = {
+    "17-e-18-de-outubro": 1,
+    "2026_03_15_DOM": 2,
+    "2026_04_19": 2,
+    "2026_05_31": 2,
+    "2026_06_21": 2,
+    "2026_06_27": 2,
+    "2026_07_05_DOM": 2,
+    "2026_07_11_UMP": 2,
+    "2026_07_12_DOM": 2,
+    "2026_08_02": 1,
+    "2026_08_16": 3,
+    "2026_08_30": 1,
+    "2026_09_06": 1,
+    "2026_09_12": 1,
+    "2026_09_20": 1,
+    "2026_10_04": 1,
+    "2026_10_29": 1,
+    "2026_11_01": 1,
+    "musical_pascoa_UMP_2026": 2,
+    "nivel-1": 1,
+    "pergunte-aos-animais-musical": 4,
+}
 
 
 class EventManagerTests(unittest.TestCase):
@@ -29,7 +75,13 @@ class EventManagerTests(unittest.TestCase):
         self.assertEqual(dated["name"], "2027_01_09")
         self.assertIn("Culto de Ação de Graças", (self.root / named["path"]).read_text(encoding="utf-8"))
         self.assertIn("09/01/2027", (self.root / dated["path"]).read_text(encoding="utf-8"))
-        self.assertTrue((self.root / named["name"] / "index.js").is_file())
+        self.assertFalse((self.root / named["name"] / "index.js").exists())
+        self.assertFalse((self.root / named["name"] / "index.css").exists())
+        generated = (self.root / named["path"]).read_text(encoding="utf-8")
+        self.assertIn("../assets/index-layout-g1.css?v=", generated)
+        self.assertIn("../assets/index.js?v=", generated)
+        self.assertIn('id="holyrics-export-btn"', generated)
+        self.assertNotIn("<style", generated)
         with self.assertRaises(event_manager.ManagerError):
             event_manager.create_event(self.root, {"mode": "name", "name": "x" * 31})
 
@@ -38,10 +90,14 @@ class EventManagerTests(unittest.TestCase):
         song = event_manager.create_song(self.root, {"folder": event["name"], "title": "Canção Ágil", "artist": "Artista"})
         page = self.root / event["name"] / song["filename"]
         self.assertIn('<pre>Canção Ágil — Artista', page.read_text(encoding="utf-8"))
+        self.assertIn("../assets/index.css?v=", page.read_text(encoding="utf-8"))
         event_manager.add_capo(self.root, {"folder": event["name"], "filename": song["filename"], "fret": 2})
         event_manager.add_capo(self.root, {"folder": event["name"], "filename": song["filename"], "fret": 4})
         listed = event_manager.list_events(self.root)[0]["songs"][0]
         self.assertEqual(listed["capos"], [2, 4])
+        index_source = (self.root / event["name"] / "index.html").read_text(encoding="utf-8")
+        self.assertNotIn("managed-songs-style", index_source)
+        self.assertIn("assets/index.css", index_source)
         with self.assertRaises(event_manager.ManagerError):
             event_manager.add_capo(self.root, {"folder": event["name"], "filename": song["filename"], "fret": 4})
         event_manager.delete_capo(self.root, {"folder": event["name"], "filename": song["filename"], "fret": 2})
@@ -159,9 +215,7 @@ class EventManagerTests(unittest.TestCase):
 
     def test_song_editors_require_lan_session_before_enabling_controls(self) -> None:
         editor_scripts = []
-        for path in ROOT.rglob("index.js"):
-            if "_lixeira" in path.relative_to(ROOT).parts:
-                continue
+        for path in (ROOT / "assets").glob("index-variant-*.js"):
             source = path.read_text(encoding="utf-8")
             if "var serverConfirmed = false;" not in source:
                 continue
@@ -188,21 +242,25 @@ class EventManagerTests(unittest.TestCase):
         )
         for folder in editor_folders:
             with self.subTest(folder=folder):
-                source = (ROOT / folder / "index.js").read_text(encoding="utf-8")
-                styles = (ROOT / folder / "index.css").read_text(encoding="utf-8")
+                script_variant = SCRIPT_VARIANTS.get(folder, 1)
+                style_variant = STYLE_VARIANTS.get(folder, 1)
+                source = (ROOT / "assets" / f"index-variant-{script_variant}.js").read_text(encoding="utf-8")
+                styles = (ROOT / "assets" / f"index-style-{style_variant}.css").read_text(encoding="utf-8")
                 markup = (ROOT / folder / "index.html").read_text(encoding="utf-8")
                 self.assertIn("function insertPaletteChordAtPointer", source)
                 self.assertIn("Mover acorde para a esquerda", source)
                 self.assertIn("Mover acorde para a direita", source)
                 self.assertIn("@media (hover: none), (pointer: coarse)", styles)
-                self.assertIn('index.js?v=', markup)
-                self.assertIn('index.css?v=', markup)
+                self.assertIn('../assets/index.js?v=', markup)
+                self.assertIn('../assets/index.css?v=', markup)
 
     def test_editor_buttons_live_inside_movable_chord_palette(self) -> None:
         for folder in ("_referencia_evento", "2026_08_02", "2026_08_16", "2026_08_30"):
             with self.subTest(folder=folder):
-                source = (ROOT / folder / "index.js").read_text(encoding="utf-8")
-                styles = (ROOT / folder / "index.css").read_text(encoding="utf-8")
+                script_variant = SCRIPT_VARIANTS.get(folder, 1)
+                style_variant = STYLE_VARIANTS.get(folder, 1)
+                source = (ROOT / "assets" / f"index-variant-{script_variant}.js").read_text(encoding="utf-8")
+                styles = (ROOT / "assets" / f"index-style-{style_variant}.css").read_text(encoding="utf-8")
                 self.assertIn("actions.className = 'chord-palette-actions'", source)
                 self.assertIn("createLocalEditorToolbarButtons(actions)", source)
                 self.assertNotIn("createLocalEditorToolbarButtons(row);", source)
@@ -220,7 +278,8 @@ class EventManagerTests(unittest.TestCase):
         )
         for folder in folders:
             with self.subTest(folder=folder):
-                source = (ROOT / folder / "index.js").read_text(encoding="utf-8")
+                script_variant = SCRIPT_VARIANTS.get(folder, 1)
+                source = (ROOT / "assets" / f"index-variant-{script_variant}.js").read_text(encoding="utf-8")
                 self.assertIn("Quebrar acorde + letra", source)
                 self.assertIn("function splitChordAndLyricPair()", source)
                 self.assertIn("if (!isChordLine(chordLine))", source)
