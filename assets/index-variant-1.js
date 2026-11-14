@@ -2485,6 +2485,7 @@
     if (!document.querySelector('pre') && !document.getElementById('holyrics-export')) return;
     if (document.getElementById('holyrics-export')) {
       initHolyricsExport();
+      createWarmPadPlayer();
       return;
     }
 

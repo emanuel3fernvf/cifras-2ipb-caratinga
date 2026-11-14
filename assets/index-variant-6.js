@@ -980,31 +980,50 @@
     textarea.setAttribute('aria-label', 'Conteúdo completo da cifra');
     editor.body.appendChild(textarea);
 
-    var searchBar = document.createElement('div'); searchBar.className = 'editor-find-replace';
-    var findInput = document.createElement('input'); findInput.type = 'search'; findInput.className = 'editor-modal-input editor-find-input'; findInput.placeholder = 'Localizar'; findInput.setAttribute('aria-label', 'Localizar na cifra');
-    var replaceInput = document.createElement('input'); replaceInput.type = 'text'; replaceInput.className = 'editor-modal-input editor-replace-input'; replaceInput.placeholder = 'Substituir por'; replaceInput.setAttribute('aria-label', 'Substituir por');
-    var matchStatus = document.createElement('span'); matchStatus.className = 'editor-find-status'; matchStatus.setAttribute('aria-live', 'polite');
-    function searchButton(text, title) { var button = document.createElement('button'); button.type = 'button'; button.className = 'editor-find-button'; button.textContent = text; button.title = title; return button; }
-    var caseButton = searchButton('Aa', 'Diferenciar maiúsculas e minúsculas'); caseButton.setAttribute('aria-pressed', 'false');
-    var previousButton = searchButton('↑', 'Ocorrência anterior'); var nextButton = searchButton('↓', 'Próxima ocorrência');
-    var replaceButton = searchButton('Substituir', 'Substituir ocorrência atual'); var replaceAllButton = searchButton('Todos', 'Substituir todas as ocorrências');
-    searchBar.append(findInput, replaceInput, matchStatus, caseButton, previousButton, nextButton, replaceButton, replaceAllButton); editor.header.appendChild(searchBar);
+    var searchBar = document.createElement('div');
+    searchBar.className = 'editor-find-replace';
+    var findInput = document.createElement('input');
+    findInput.type = 'search';
+    findInput.className = 'editor-modal-input editor-find-input';
+    findInput.placeholder = 'Localizar';
+    findInput.setAttribute('aria-label', 'Localizar na cifra');
+    var replaceInput = document.createElement('input');
+    replaceInput.type = 'text';
+    replaceInput.className = 'editor-modal-input editor-replace-input';
+    replaceInput.placeholder = 'Substituir por';
+    replaceInput.setAttribute('aria-label', 'Substituir por');
+    var matchStatus = document.createElement('span');
+    matchStatus.className = 'editor-find-status';
+    matchStatus.setAttribute('aria-live', 'polite');
+    var caseButton = document.createElement('button');
+    caseButton.type = 'button'; caseButton.className = 'editor-find-button'; caseButton.textContent = 'Aa'; caseButton.title = 'Diferenciar maiúsculas e minúsculas'; caseButton.setAttribute('aria-pressed', 'false');
+    var previousButton = document.createElement('button');
+    previousButton.type = 'button'; previousButton.className = 'editor-find-button'; previousButton.textContent = '↑'; previousButton.title = 'Ocorrência anterior'; previousButton.setAttribute('aria-label', 'Ocorrência anterior');
+    var nextButton = document.createElement('button');
+    nextButton.type = 'button'; nextButton.className = 'editor-find-button'; nextButton.textContent = '↓'; nextButton.title = 'Próxima ocorrência'; nextButton.setAttribute('aria-label', 'Próxima ocorrência');
+    var replaceButton = document.createElement('button');
+    replaceButton.type = 'button'; replaceButton.className = 'editor-find-button'; replaceButton.textContent = 'Substituir';
+    var replaceAllButton = document.createElement('button');
+    replaceAllButton.type = 'button'; replaceAllButton.className = 'editor-find-button'; replaceAllButton.textContent = 'Todos'; replaceAllButton.title = 'Substituir todas as ocorrências';
+    searchBar.append(findInput, replaceInput, matchStatus, caseButton, previousButton, nextButton, replaceButton, replaceAllButton);
+    editor.header.appendChild(searchBar);
     var splitPairButton = searchButton('Quebrar acorde + letra', 'Quebrar simultaneamente a linha de acordes e a linha de letra');
     searchBar.appendChild(splitPairButton);
     var matchPositions = [], currentMatch = -1;
     function isCaseSensitive() { return caseButton.getAttribute('aria-pressed') === 'true'; }
     function updateSearchStatus() { matchStatus.textContent = findInput.value ? (matchPositions.length ? (currentMatch + 1) + ' de ' + matchPositions.length : 'Nenhum') : ''; var disabled = !matchPositions.length; previousButton.disabled = disabled; nextButton.disabled = disabled; replaceButton.disabled = disabled; replaceAllButton.disabled = disabled; }
-    function rebuildMatches(position) { matchPositions = []; var query = findInput.value; if (query) { var source = isCaseSensitive() ? textarea.value : textarea.value.toLocaleLowerCase(); var needle = isCaseSensitive() ? query : query.toLocaleLowerCase(); for (var from = 0; from <= source.length - needle.length;) { var found = source.indexOf(needle, from); if (found < 0) break; matchPositions.push(found); from = found + Math.max(needle.length, 1); } } currentMatch = -1; if (matchPositions.length) { position = typeof position === 'number' ? position : textarea.selectionStart; for (var i = 0; i < matchPositions.length; i++) { if (matchPositions[i] >= position) { currentMatch = i; break; } } if (currentMatch < 0) currentMatch = 0; } updateSearchStatus(); }
+    function rebuildMatches(preferredPosition) { matchPositions = []; var query = findInput.value; if (query) { var source = isCaseSensitive() ? textarea.value : textarea.value.toLocaleLowerCase(); var needle = isCaseSensitive() ? query : query.toLocaleLowerCase(); var from = 0; while (from <= source.length - needle.length) { var found = source.indexOf(needle, from); if (found < 0) break; matchPositions.push(found); from = found + Math.max(needle.length, 1); } } currentMatch = -1; if (matchPositions.length) { var position = typeof preferredPosition === 'number' ? preferredPosition : textarea.selectionStart; for (var i = 0; i < matchPositions.length; i++) { if (matchPositions[i] >= position) { currentMatch = i; break; } } if (currentMatch < 0) currentMatch = 0; } updateSearchStatus(); }
     function scrollMatchIntoView(start) { var styles = window.getComputedStyle(textarea); var lineHeight = parseFloat(styles.lineHeight); if (!isFinite(lineHeight)) lineHeight = parseFloat(styles.fontSize) * 1.35; var line = (textarea.value.slice(0, start).match(/\n/g) || []).length; var matchTop = line * lineHeight; var visibleTop = textarea.scrollTop; var visibleBottom = visibleTop + textarea.clientHeight - lineHeight; if (matchTop < visibleTop || matchTop > visibleBottom) textarea.scrollTop = Math.max(0, matchTop - (textarea.clientHeight - lineHeight) / 2); }
-    function selectCurrentMatch() { if (currentMatch < 0) return; var start = matchPositions[currentMatch]; textarea.focus(); textarea.setSelectionRange(start, start + findInput.value.length); scrollMatchIntoView(start); }
+    function selectCurrentMatch() { if (currentMatch < 0 || !matchPositions.length) return; var start = matchPositions[currentMatch]; textarea.focus(); textarea.setSelectionRange(start, start + findInput.value.length); scrollMatchIntoView(start); }
     function moveMatch(step) { if (!matchPositions.length) return; currentMatch = (currentMatch + step + matchPositions.length) % matchPositions.length; updateSearchStatus(); selectCurrentMatch(); }
-    function replaceCurrent() { if (currentMatch < 0) return; var start = matchPositions[currentMatch]; textarea.setRangeText(replaceInput.value, start, start + findInput.value.length, 'end'); rebuildMatches(start + replaceInput.value.length); selectCurrentMatch(); }
-    function replaceAll() { if (!matchPositions.length) return; var total = matchPositions.length; for (var i = total - 1; i >= 0; i--) textarea.setRangeText(replaceInput.value, matchPositions[i], matchPositions[i] + findInput.value.length, 'preserve'); rebuildMatches(0); showLocalEditorNotification(total + (total === 1 ? ' ocorrência substituída.' : ' ocorrências substituídas.'), 'success'); replaceInput.focus(); }
+    function replaceCurrent() { if (currentMatch < 0 || !matchPositions.length) return; var start = matchPositions[currentMatch]; textarea.setRangeText(replaceInput.value, start, start + findInput.value.length, 'end'); rebuildMatches(start + replaceInput.value.length); selectCurrentMatch(); }
+    function replaceAll() { if (!matchPositions.length) return; var replacement = replaceInput.value; for (var i = matchPositions.length - 1; i >= 0; i--) { var start = matchPositions[i]; textarea.setRangeText(replacement, start, start + findInput.value.length, 'preserve'); } var total = matchPositions.length; rebuildMatches(0); showLocalEditorNotification(total + (total === 1 ? ' ocorrência substituída.' : ' ocorrências substituídas.'), 'success'); replaceInput.focus(); }
     findInput.addEventListener('input', function () { rebuildMatches(0); }); textarea.addEventListener('input', function () { rebuildMatches(textarea.selectionStart); });
     caseButton.addEventListener('click', function () { var active = !isCaseSensitive(); caseButton.setAttribute('aria-pressed', active ? 'true' : 'false'); caseButton.classList.toggle('is-active', active); rebuildMatches(0); });
     previousButton.addEventListener('click', function () { moveMatch(-1); }); nextButton.addEventListener('click', function () { moveMatch(1); }); replaceButton.addEventListener('click', replaceCurrent); replaceAllButton.addEventListener('click', replaceAll);
-    findInput.addEventListener('keydown', function (event) { if (event.key === 'Enter') { event.preventDefault(); moveMatch(event.shiftKey ? -1 : 1); } });
-    textarea.addEventListener('keydown', function (event) { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') { event.preventDefault(); findInput.focus(); findInput.select(); } }); rebuildMatches(0);
+    findInput.addEventListener('keydown', function (event) { if (event.key !== 'Enter') return; event.preventDefault(); moveMatch(event.shiftKey ? -1 : 1); });
+    textarea.addEventListener('keydown', function (event) { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') { event.preventDefault(); findInput.focus(); findInput.select(); } });
+    rebuildMatches(0);
 
     function splitChordAndLyricPair() {
       var start = textarea.selectionStart;
@@ -1408,7 +1427,32 @@
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
       event.preventDefault();
       hideEditorContextMenu();
-      moveSelectedChord(event.key === 'ArrowLeft' ? -1 : 1);
+      var direction = event.key === 'ArrowLeft' ? -1 : 1;
+      var line = getLocalEditorLines()[selected.lineIndex];
+      var targetStart = selected.start + direction;
+      var nextLine = placeChordWithPush(
+        line,
+        selected.text,
+        targetStart,
+        direction,
+        selected.start,
+        selected.end
+      );
+      if (nextLine == null) {
+        showLocalEditorNotification('Não há espaço para mover esse acorde.', 'error');
+        return;
+      }
+      var nextText = buildPreTextWithLine(selected.lineIndex, nextLine);
+      if (nextText !== localEditor.preText) {
+        saveLocalPreText(nextText, {
+          lineElement: selected.lineElement,
+          restoreSelection: {
+            lineIndex: selected.lineIndex,
+            start: targetStart,
+            text: selected.text
+          }
+        }).catch(function () {});
+      }
       return;
     }
 
@@ -1416,36 +1460,6 @@
       event.preventDefault();
       hideEditorContextMenu();
       openChordReplacementModal(event.key, false);
-    }
-  }
-
-  function moveSelectedChord(direction) {
-    var selected = localEditor.selectedChord;
-    if (!selected || localEditor.busy || currentTranspose !== 0) return;
-    var line = getLocalEditorLines()[selected.lineIndex];
-    var targetStart = selected.start + direction;
-    var nextLine = placeChordWithPush(
-      line,
-      selected.text,
-      targetStart,
-      direction,
-      selected.start,
-      selected.end
-    );
-    if (nextLine == null) {
-      showLocalEditorNotification('Não há espaço para mover esse acorde.', 'error');
-      return;
-    }
-    var nextText = buildPreTextWithLine(selected.lineIndex, nextLine);
-    if (nextText !== localEditor.preText) {
-      saveLocalPreText(nextText, {
-        lineElement: selected.lineElement,
-        restoreSelection: {
-          lineIndex: selected.lineIndex,
-          start: targetStart,
-          text: selected.text
-        }
-      }).catch(function () {});
     }
   }
 
@@ -1724,10 +1738,7 @@
       button.classList.toggle('is-selected', button === item);
       button.setAttribute('aria-pressed', button === item ? 'true' : 'false');
     });
-    showLocalEditorNotification(
-      'Acorde ' + chord + ' selecionado. Toque na linha para inserir.',
-      'success'
-    );
+    showLocalEditorNotification('Acorde ' + chord + ' selecionado. Toque na linha para inserir.', 'success');
   }
 
   function insertPaletteChordAtPointer(lineElement, clientX) {
@@ -1746,11 +1757,7 @@
     var nextText = buildPreTextWithLine(lineIndex, nextLine);
     saveLocalPreText(nextText, {
       lineElement: lineElement,
-      restoreSelection: {
-        lineIndex: lineIndex,
-        start: targetStart,
-        text: chord
-      }
+      restoreSelection: { lineIndex: lineIndex, start: targetStart, text: chord }
     }).catch(function () {});
     renderChordPalette();
     return true;
@@ -1781,9 +1788,7 @@
         'Selecionar ou arrastar acorde ' + chord);
       item.setAttribute('aria-pressed', localEditor.pendingPaletteChord === chord ? 'true' : 'false');
       item.classList.toggle('is-selected', localEditor.pendingPaletteChord === chord);
-      item.addEventListener('click', function () {
-        selectPaletteChord(chord, item);
-      });
+      item.addEventListener('click', function () { selectPaletteChord(chord, item); });
       item.addEventListener('dragstart', function (event) {
         startPaletteChordDrag(event, item, chord);
       });
@@ -2123,54 +2128,44 @@
 
   // --- Exportar para Holyrics (índice) ---
 
-  /**
-   * HOLYRICS_HYPHEN_WORDS — allowlist de hífens ortográficos (export Holyrics).
-   *
-   * IA / agentes: ao criar ou editar cifras nesta pasta (HTMLs com <pre>),
-   * varrer as letras por palavras com hífen único (-) que sejam gramaticalmente
-   * corretas em português (clíticos, compostos, etc.) e ADICIONAR aqui em
-   * minúsculas se ainda não estiverem. Não incluir melismas (Rei--no, tu----a).
-   * Não remover entradas sem motivo.
-   */
-  var HOLYRICS_HYPHEN_WORDS = {
-    'adorá-lo': true,
-    'dá-me': true,
-    'restaurou-me': true,
-    'todo-poderoso': true
-  };
-
-  function cleanLyricHyphensForHolyrics(line) {
-    // 1) Melisma claro: 2+ hífens consecutivos
-    var cleaned = String(line || '').replace(/-{2,}/g, '');
-
-    // 2) Tokens com hífen único: preserva só se estiver no dicionário
-    cleaned = cleaned.replace(/\S+/g, function (token) {
-      if (token.indexOf('-') === -1) return token;
-      // Se ainda houver 2+ hífens (não deveria), remove
-      if (/-{2,}/.test(token)) {
-        token = token.replace(/-{2,}/g, '');
+  function getHolyricsLyricLines(rawText) {
+    var lines = (rawText || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+    var start = -1;
+    for (var i = 0; i < lines.length; i++) {
+      if (isChordLine(lines[i])) {
+        start = i;
+        break;
       }
-      if (token.indexOf('-') === -1) return token;
-
-      // Compara sem pontuação ao redor (mantém pontuação no resultado)
-      var match = token.match(/^([^a-zA-Zà-úÀ-Ú]*)([a-zA-Zà-úÀ-Ú]+(?:-[a-zA-Zà-úÀ-Ú]+)+)([^a-zA-Zà-úÀ-Ú]*)$/);
-      if (!match) {
-        // Hífen residual atípico: remove hífens
-        return token.replace(/-/g, '');
-      }
-      var prefix = match[1];
-      var core = match[2];
-      var suffix = match[3];
-      var key = core.toLowerCase();
-      if (HOLYRICS_HYPHEN_WORDS[key]) {
-        return prefix + core + suffix;
-      }
-      return prefix + core.replace(/-/g, '') + suffix;
+    }
+    if (start === -1) return [];
+    return lines.slice(start).filter(function (line) {
+      return !/[\[\]]/.test(line) && !isChordLine(line);
     });
+  }
 
-    // 3) Espaços múltiplos
-    cleaned = cleaned.replace(/ {2,}/g, ' ');
-    return cleaned;
+  function collectHolyricsReviewItems(songs) {
+    var seen = {};
+    var items = [];
+    songs.forEach(function (song) {
+      getHolyricsLyricLines(song.preText).forEach(function (line) {
+        String(line || '').replace(/\S+/g, function (token) {
+          if ((token.indexOf('-') !== -1 || token.indexOf('_') !== -1) && !seen[token]) {
+            seen[token] = true;
+            items.push({ source: token, corrected: token.replace(/[-_]/g, ''), useCorrected: false });
+          }
+          return token;
+        });
+      });
+    });
+    return items;
+  }
+
+  function applyHolyricsTokenChoices(line, corrections) {
+    return String(line || '').replace(/\S+/g, function (token) {
+      return corrections && Object.prototype.hasOwnProperty.call(corrections, token)
+        ? corrections[token]
+        : token;
+    });
   }
 
   function getSongLinksFromIndex() {
@@ -2190,7 +2185,7 @@
     return urls;
   }
 
-  function processPreTextForHolyrics(rawText, withChords) {
+  function processPreTextForHolyrics(rawText, withChords, corrections) {
     var lines = (rawText || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
     var start = -1;
     for (var i = 0; i < lines.length; i++) {
@@ -2211,7 +2206,9 @@
         }
         continue;
       }
-      out.push(cleanLyricHyphensForHolyrics(line));
+      var lyricLine = applyHolyricsTokenChoices(line, corrections);
+      if (!withChords) lyricLine = lyricLine.trim().replace(/ {2,}/g, ' ');
+      out.push(lyricLine);
     }
 
     // Compacta linhas vazias no início/fim e grupos de vazias em uma só
@@ -2311,8 +2308,92 @@
     return (folder || 'evento') + '_holyrics-';
   }
 
-  function exportHolyrics(mode) {
-    var withChords = mode === 'cifra';
+  var holyricsReviewState = null;
+
+  function setHolyricsReviewOpen(open) {
+    var modal = document.getElementById('holyrics-review-modal');
+    if (!modal) return;
+    modal.hidden = !open;
+    document.body.classList.toggle('holyrics-review-open', open);
+  }
+
+  function closeHolyricsReview() {
+    var opener = holyricsReviewState && holyricsReviewState.opener;
+    holyricsReviewState = null;
+    setHolyricsReviewOpen(false);
+    if (opener && typeof opener.focus === 'function') opener.focus();
+  }
+
+  function renderHolyricsReview(items) {
+    var list = document.getElementById('holyrics-review-list');
+    if (!list) return;
+    list.textContent = '';
+    if (!items.length) {
+      var empty = document.createElement('p');
+      empty.className = 'holyrics-review-empty';
+      empty.textContent = 'Nenhuma palavra com traço ou underline foi encontrada.';
+      list.appendChild(empty);
+      return;
+    }
+    items.forEach(function (item, index) {
+      var card = document.createElement('fieldset');
+      card.className = 'holyrics-review-card';
+      var legend = document.createElement('legend');
+      legend.textContent = 'Palavra ' + (index + 1);
+      card.appendChild(legend);
+      [{ value: 'original', text: item.source }, { value: 'corrected', text: item.corrected }].forEach(function (choice) {
+        var label = document.createElement('label');
+        label.className = 'holyrics-review-choice';
+        var radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'holyrics-review-' + index;
+        radio.value = choice.value;
+        radio.checked = choice.value === 'original';
+        radio.addEventListener('change', function () {
+          item.useCorrected = this.value === 'corrected';
+        });
+        var text = document.createElement('span');
+        text.textContent = choice.text;
+        label.appendChild(radio);
+        label.appendChild(text);
+        card.appendChild(label);
+      });
+      list.appendChild(card);
+    });
+  }
+
+  function openHolyricsReview(mode, songs, opener) {
+    var items = collectHolyricsReviewItems(songs);
+    holyricsReviewState = { mode: mode, songs: songs, reviewItems: items, opener: opener };
+    renderHolyricsReview(items);
+    setHolyricsReviewOpen(true);
+    var title = document.getElementById('holyrics-review-title');
+    if (title) title.focus();
+  }
+
+  function confirmHolyricsReview() {
+    if (!holyricsReviewState) return;
+    var state = holyricsReviewState;
+    var corrections = {};
+    state.reviewItems.forEach(function (item) {
+      if (item.useCorrected) corrections[item.source] = item.corrected;
+    });
+    var withChords = state.mode === 'cifra';
+    var baseId = Date.now();
+    var output = state.songs.map(function (parsed, idx) {
+      return buildHolyricsSong(
+        baseId + idx,
+        parsed.title || ('Música ' + (idx + 1)),
+        parsed.artist || '',
+        processPreTextForHolyrics(parsed.preText, withChords, corrections)
+      );
+    });
+    var suffix = withChords ? 'cifra' : 'letra';
+    downloadJson(holyricsExportPrefix() + suffix + '.json', output);
+    closeHolyricsReview();
+  }
+
+  function exportHolyrics(mode, opener) {
     var urls = getSongLinksFromIndex();
     if (!urls.length) {
       window.alert('Nenhuma cifra encontrada no índice.');
@@ -2324,25 +2405,16 @@
       return Promise.resolve();
     }
 
-    var baseId = Date.now();
     return Promise.all(urls.map(function (url) {
       return fetch(url).then(function (res) {
         if (!res.ok) throw new Error('Falha ao carregar ' + url);
         return res.text();
       });
     })).then(function (htmls) {
-      var songs = htmls.map(function (html, idx) {
-        var parsed = parseSongHtml(html);
-        var fullText = processPreTextForHolyrics(parsed.preText, withChords);
-        return buildHolyricsSong(
-          baseId + idx,
-          parsed.title || ('Música ' + (idx + 1)),
-          parsed.artist || '',
-          fullText
-        );
+      var songs = htmls.map(function (html) {
+        return parseSongHtml(html);
       });
-      var suffix = withChords ? 'cifra' : 'letra';
-      downloadJson(holyricsExportPrefix() + suffix + '.json', songs);
+      openHolyricsReview(mode, songs, opener);
     }).catch(function (err) {
       console.error(err);
       window.alert('Erro ao exportar: ' + (err && err.message ? err.message : String(err)));
@@ -2368,13 +2440,43 @@
       options[i].addEventListener('click', function () {
         var mode = this.getAttribute('data-mode') || 'letra';
         menu.hidden = true;
-        exportHolyrics(mode);
+        exportHolyrics(mode, this);
       });
     }
 
     document.addEventListener('click', function () {
       menu.hidden = true;
     });
+
+    var modal = document.getElementById('holyrics-review-modal');
+    var cancel = document.getElementById('holyrics-review-cancel');
+    var confirm = document.getElementById('holyrics-review-confirm');
+    if (cancel) cancel.addEventListener('click', closeHolyricsReview);
+    if (confirm) confirm.addEventListener('click', confirmHolyricsReview);
+    if (modal) {
+      modal.addEventListener('click', function (event) {
+        if (event.target === modal) event.preventDefault();
+      });
+      modal.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          closeHolyricsReview();
+          return;
+        }
+        if (event.key !== 'Tab') return;
+        var focusable = modal.querySelectorAll('button:not([disabled]), input:not([disabled]), [tabindex]');
+        if (!focusable.length) return;
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      });
+    }
   }
 
   function createHomeButton() {
@@ -2402,6 +2504,7 @@
     if (!document.querySelector('pre') && !document.getElementById('holyrics-export')) return;
     if (document.getElementById('holyrics-export')) {
       initHolyricsExport();
+      createWarmPadPlayer();
       return;
     }
 

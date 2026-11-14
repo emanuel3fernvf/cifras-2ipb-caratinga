@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import re
 import unittest
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import gerar_catalogo
 
@@ -56,21 +58,67 @@ class CatalogTests(unittest.TestCase):
         for page in scoped_pages:
             with self.subTest(page=page.relative_to(ROOT)):
                 source = page.read_text(encoding="utf-8")
-                self.assertIn('src="index.js', source)
+                self.assertIn('src="../assets/index.js?v=', source)
+                self.assertIn('href="../assets/index.css?v=', source)
+                self.assertIn("v=20261112-4", source)
+                self.assertNotRegex(source, r"""(?:src|href)=["']index\.(?:js|css)""")
+                self.assertFalse((page.parent / "index.js").exists())
+                self.assertFalse((page.parent / "index.css").exists())
+                asset_urls = re.findall(r"""(?:src|href)=["']([^"']*assets/[^"']+)["']""", source)
+                for asset_url in asset_urls:
+                    asset_path = (page.parent / urlsplit(asset_url).path).resolve()
+                    self.assertTrue(asset_path.is_file(), f"{page}: {asset_url}")
 
-        scripts = [index.parent / "index.js" for index in ROOT.glob("*/index.html") if index.parent.name not in gerar_catalogo.IGNORED_DIRECTORIES]
-        self.assertEqual(len(scripts), len(self.folders))
+        scripts = sorted((ROOT / "assets").glob("index-variant-*.js"))
+        self.assertGreaterEqual(len(scripts), 1)
         for script in scripts:
-            with self.subTest(script=script.relative_to(ROOT)):
+            with self.subTest(script=script.name):
                 source = script.read_text(encoding="utf-8")
                 self.assertIn("window.location.hostname === '127.0.0.1'", source)
                 self.assertIn("window.location.hostname === 'localhost'", source)
                 self.assertIn("'../configuracoes.html' : '../catalogo.html'", source)
                 self.assertEqual(source.count("createHomeButton();"), 1)
 
+    def test_indexes_have_shared_export_and_conditional_review_markup(self) -> None:
+        for folder in self.folders:
+            page = ROOT / folder["directory"] / "index.html"
+            source = page.read_text(encoding="utf-8")
+            with self.subTest(folder=folder["directory"]):
+                self.assertIn('href="../assets/index-layout-', source)
+                self.assertIn('class="index-actions"', source)
+                self.assertIn('id="holyrics-export-btn"', source)
+                self.assertIn('id="holyrics-review-modal"', source)
+                self.assertIn('src="../assets/index.js?v=', source)
+                inline_styles = re.findall(r"""<style\b[^>]*>(.*?)</style\s*>""", source, re.I | re.S)
+                if folder["directory"] == "2026_09_20":
+                    self.assertEqual(len(inline_styles), 1)
+                    self.assertRegex(inline_styles[0], r"""\.service-item|\.hymn-item|\.section-title""")
+                    self.assertNotRegex(inline_styles[0], r"""\.holyrics-|holyrics-review""")
+                else:
+                    self.assertEqual(inline_styles, [])
+
+    def test_reading_controls_are_shared_by_song_pages_only(self) -> None:
+        loader = (ROOT / "assets" / "index.js").read_text(encoding="utf-8")
+        controls = (ROOT / "assets" / "reading-controls.js").read_text(encoding="utf-8")
+        shared_styles = (ROOT / "assets" / "index.css").read_text(encoding="utf-8")
+        musical_variant = (ROOT / "assets" / "index-variant-9.js").read_text(encoding="utf-8")
+
+        self.assertIn("loadScript('pad.js', function () {", loader)
+        self.assertIn("if (!isIndex) loadScript('reading-controls.js');", loader)
+        self.assertIn("event.key === 'ArrowDown'", controls)
+        self.assertIn("event.key !== 'ArrowUp'", controls)
+        self.assertIn("event.key === 'Escape'", controls)
+        self.assertIn("var minFontSizePercent = 75;", controls)
+        self.assertIn("var maxFontSizePercent = 200;", controls)
+        self.assertIn("var fontSizeStep = 5;", controls)
+        self.assertIn("window.localStorage.setItem(fontSizeStorageKey", controls)
+        self.assertIn(".strophe.is-keyboard-selected", shared_styles)
+        self.assertNotIn("handleStropheNavigationKeyDown", musical_variant)
+        self.assertNotIn("createFontSizeControls", musical_variant)
+
     def test_full_editors_offer_find_and_replace(self) -> None:
         editor_scripts = [
-            script for script in ROOT.glob("*/index.js")
+            script for script in (ROOT / "assets").glob("index-variant-*.js")
             if "function openFullEditorModal" in script.read_text(encoding="utf-8")
         ]
         self.assertGreaterEqual(len(editor_scripts), 3)

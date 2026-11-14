@@ -2,10 +2,10 @@
 
 ## Estado
 
-**Plano fechado pelo usuário — não implementar até receber ordem explícita.**
+**Implementação concluída após ordem explícita do usuário.**
 O escopo e o destino das variantes G1–G9 foram decididos.
 
-## Evidências do código atual
+## Evidências do código antes da implementação
 
 - As pastas listadas pelo catálogo possuem ou herdam referências para arquivos
   locais `index.js` e `index.css`, inclusive pastas não nomeadas por data.
@@ -48,6 +48,15 @@ tipo/elementos da página; não ativar em todas as páginas por padrão.
 O catálogo principal deve continuar com seu JavaScript/CSS próprio. Não se deve
 misturar funcionalidades distintas somente para obter um único par de arquivos
 físicos.
+
+Os controles de navegação por estrofes e ajuste da fonte já disponíveis em
+“Pergunte aos Animais - Musical” são recursos de leitura de cifras e devem ser
+compartilhados pelo carregador central. Carregá-los somente após a variante
+renderizar a cifra; não inicializá-los em índices. Remover a implementação
+duplicada da variante 9 e manter no CSS comum o destaque da estrofe selecionada.
+Preservar navegação por ↑/↓ e Escape, limites de 75–200% em passos de 5%,
+persistência da fonte e compatibilidade com a preferência legada da cifra de
+referência.
 
 Conforme decisão registrada em `requirements.md`, mover G1–G5 e G7–G9 para o CSS
 central, mesclando regras sem eliminar diferenças necessárias. Em G6, manter

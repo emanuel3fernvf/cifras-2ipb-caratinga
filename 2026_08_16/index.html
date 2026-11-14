@@ -4,43 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Culto DOM — 16/08/2026</title>
-  <link rel="stylesheet" href="index.css?v=8">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
-    * { font-family: "Roboto Mono", serif; margin: 0; padding: 0; box-sizing: border-box; }
-    body { display: flex; justify-content: center; }
-    .box-center { position: relative; width: 100%; max-width: 500px; margin: 40px 20px; border: 2px solid gray; border-radius: 10px; padding: 20px; }
-    .top { margin-top: 20px; text-align: center; }
-    .top h2 { font-size: 32px; color: #ff7700; }
-    .section-title { margin: 24px 0 8px; font-size: 18px; color: #666; text-align: center; }
-    .service-item { margin-bottom: 10px; line-height: 1.45; }
-    .hymn-item { margin-bottom: 10px; padding: 10px 20px; color: #fff; background: #7b3fb2; border-radius: 10px; font-weight: bold; text-align: center; }
-    #content { margin-top: 12px; width: 100%; }
-    #content a { text-decoration: none; background: #0068ff; padding: 10px 20px; display: flex; font-weight: bold; color: #fff; border-radius: 10px; margin-bottom: 10px; align-items: baseline; justify-content: center; text-align: center; }
-    #content a:hover { background: #0052c9; }
-    .song-link-row { display: flex; gap: 8px; margin-bottom: 10px; }
-    .song-link-row a { flex: 1; margin-bottom: 0; }
-    .song-link-row a.capo-btn { flex: 0 0 auto; background: #ff7700; padding: 10px 14px; white-space: nowrap; }
-    .song-link-row a.capo-btn:hover { background: #e56600; }
-    .holyrics-export { position: absolute; top: 10px; right: 10px; z-index: 300; }
-    .holyrics-export-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 0; background: #ff7700; color: #fff; border-radius: 8px; cursor: pointer; padding: 0; }
-    .holyrics-export-menu { position: absolute; top: calc(100% + 4px); right: 0; min-width: 240px; z-index: 301; background: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,.15); overflow: hidden; }
-    .holyrics-export-menu[hidden] { display: none; }
-    .holyrics-export-option { display: block; width: 100%; border: 0; background: #fff; color: #222; padding: 12px 14px; text-align: left; cursor: pointer; font: 13px inherit; white-space: nowrap; }
-    .holyrics-export-option:hover { background: #fff3e8; }
-  body.holyrics-review-open{overflow:hidden}.holyrics-review-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.58)}.holyrics-review-modal[hidden]{display:none}.holyrics-review-dialog{display:flex;flex-direction:column;width:min(860px,100%);max-height:calc(100vh - 32px);overflow:hidden;background:#fff;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.35)}.holyrics-review-header{padding:20px 20px 10px}.holyrics-review-header h2{margin:0 0 6px;outline:none}.holyrics-review-header p{margin:0;color:#555}.holyrics-review-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:12px;overflow-y:auto;padding:10px 20px 20px}.holyrics-review-card{min-width:0;margin:0;padding:10px;border:1px solid #ccc;border-radius:8px}.holyrics-review-card legend{padding:0 4px;font-size:12px;color:#555}.holyrics-review-choice{display:flex;align-items:flex-start;gap:8px;width:100%;margin-top:6px;padding:9px;border:2px solid transparent;border-radius:7px;background:#f4f4f4;cursor:pointer}.holyrics-review-choice:has(input:checked){border-color:#0068ff;background:#eaf2ff;font-weight:bold}.holyrics-review-choice:has(input:checked)::after{content:'✓';margin-left:auto}.holyrics-review-choice span{min-width:0;overflow-wrap:anywhere}.holyrics-review-actions{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid #ddd}.holyrics-review-actions button{padding:10px 18px;border:1px solid #bbb;border-radius:7px;cursor:pointer;font:inherit}.holyrics-review-confirm{border-color:#0068ff!important;background:#0068ff;color:#fff}.holyrics-review-empty{grid-column:1/-1;margin:8px 0}
-  </style>
+
+  <link rel="stylesheet" href="../assets/index-layout-g8.css?v=20261112-4">
+  <link rel="stylesheet" href="../assets/index.css?v=20261112-4">
 </head>
 <body>
   <div class="box-center">
     <div class="top"><h1>Culto DOM</h1><p>16/08/2026</p><h2>Cifras</h2><p>🦶 em pé · 🪑 sentado</p></div>
-    <div class="holyrics-export" id="holyrics-export">
+    <div class="index-actions"><div class="holyrics-export" id="holyrics-export">
       <button type="button" class="holyrics-export-btn" id="holyrics-export-btn" title="Exportar para o Holyrics" aria-label="Exportar para o Holyrics"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button>
       <div class="holyrics-export-menu" id="holyrics-export-menu" hidden>
         <button type="button" class="holyrics-export-option" data-mode="letra">Exportar somente letras</button>
         <button type="button" class="holyrics-export-option" data-mode="cifra">Exportar com cifras comentadas</button>
       </div>
-    </div>
+    </div></div>
     <div id="content">
       <p class="service-item">🪑 <strong>PRELÚDIO:</strong> cântico até às 19h</p>
       <a href="Alegria%20%2B%20Sou%20Feliz%20-%20Rachel%20Novaes.html">Alegria / Sou Feliz — Rachel Novaes</a>
@@ -92,6 +69,6 @@
     </section>
   </div>
   <script src="../lan-auth.js?v=2"></script>
-  <script src="index.js?v=12"></script>
+  <script src="../assets/index.js?v=20261112-4"></script>
 </body>
 </html>

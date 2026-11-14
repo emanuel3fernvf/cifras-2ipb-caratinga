@@ -1,0 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+    * { font-family: "Roboto Mono", serif; margin: 0; padding: 0; box-sizing: border-box; }
+    body { display: flex; justify-content: center; }
+    .box-center { position: relative; width: 100%; max-width: 500px; margin: 40px 20px; border: 2px solid gray; border-radius: 10px; padding: 20px; }
+    .top { margin-top: 20px; text-align: center; }
+    .top h2 { font-size: 32px; color: #ff7700; }
+    .section-title { margin: 24px 0 8px; font-size: 18px; color: #666; text-align: center; }
+    .service-item { margin-bottom: 10px; line-height: 1.45; }
+    .hymn-item { margin-bottom: 10px; padding: 10px 20px; color: #fff; background: #7b3fb2; border-radius: 10px; font-weight: bold; text-align: center; }
+    #content { margin-top: 12px; width: 100%; }
+    #content a { text-decoration: none; background: #0068ff; padding: 10px 20px; display: flex; font-weight: bold; color: #fff; border-radius: 10px; margin-bottom: 10px; align-items: baseline; justify-content: center; text-align: center; }
+    #content a:hover { background: #0052c9; }
+    .song-link-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .song-link-row a { flex: 1; margin-bottom: 0; }

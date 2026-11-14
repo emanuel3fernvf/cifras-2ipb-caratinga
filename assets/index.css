@@ -1,0 +1,446 @@
+.index-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    position: relative;
+    z-index: 301;
+    margin: 0 0 12px;
+}
+
+.index-actions .holyrics-export {
+    position: relative;
+    inset: auto;
+    z-index: auto;
+}
+
+.tone-toolbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.strophe {
+    position: relative;
+}
+
+.strophe.is-keyboard-selected {
+    border-radius: 2px;
+    background: rgba(255, 119, 0, .1);
+}
+
+.strophe.is-keyboard-selected::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -8px;
+    width: 3px;
+    border-radius: 2px;
+    background: #ff7700;
+    content: "";
+}
+
+.font-size-controls {
+    align-items: center;
+}
+
+.font-size-display {
+    min-width: 42px;
+    text-align: center;
+}
+
+.font-size-controls button:disabled {
+    cursor: not-allowed;
+    opacity: .55;
+}
+
+.index-actions .warm-pad-toggle,
+.tone-toolbar-row .warm-pad-toggle,
+.toolbar-extra-row .warm-pad-toggle,
+.top-tone-controls > .warm-pad-toggle {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    margin: 0;
+    flex: 0 0 auto;
+}
+
+.holyrics-export-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    padding: 0;
+    border-radius: 8px;
+    background: #ff7700;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .18);
+}
+
+.holyrics-export-btn:hover {
+    background: #e56600;
+}
+
+.holyrics-export-btn svg {
+    display: block;
+    pointer-events: none;
+}
+
+.holyrics-export-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 301;
+    min-width: 240px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .15);
+}
+
+.holyrics-export-menu[hidden] {
+    display: none;
+}
+
+.holyrics-export-option {
+    display: block;
+    width: 100%;
+    border: 0;
+    padding: 12px 14px;
+    background: #fff;
+    color: #222;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.holyrics-export-option:hover {
+    background: #fff3e8;
+}
+
+body.holyrics-review-open {
+    overflow: hidden;
+}
+
+.holyrics-review-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, .58);
+}
+
+.holyrics-review-modal[hidden] {
+    display: none;
+}
+
+.holyrics-review-dialog {
+    display: flex;
+    flex-direction: column;
+    width: min(860px, 100%);
+    max-height: calc(100vh - 32px);
+    overflow: hidden;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+}
+
+.holyrics-review-header {
+    padding: 20px 20px 10px;
+}
+
+.holyrics-review-header h2 {
+    margin: 0 0 6px;
+    outline: none;
+}
+
+.holyrics-review-header p {
+    margin: 0;
+    color: #555;
+}
+
+.holyrics-review-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+    gap: 12px;
+    overflow-y: auto;
+    padding: 10px 20px 20px;
+}
+
+.holyrics-review-card {
+    min-width: 0;
+    margin: 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.holyrics-review-card legend {
+    padding: 0 4px;
+    color: #555;
+    font-size: 12px;
+}
+
+.holyrics-review-choice {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+    margin-top: 6px;
+    padding: 9px;
+    border: 2px solid transparent;
+    border-radius: 7px;
+    background: #f4f4f4;
+    cursor: pointer;
+}
+
+.holyrics-review-choice:has(input:checked) {
+    border-color: #0068ff;
+    background: #eaf2ff;
+    font-weight: bold;
+}
+
+.holyrics-review-choice:has(input:checked)::after {
+    content: '✓';
+    margin-left: auto;
+}
+
+.holyrics-review-choice span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.holyrics-review-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid #ddd;
+}
+
+.holyrics-review-actions button {
+    padding: 10px 18px;
+    border: 1px solid #bbb;
+    border-radius: 7px;
+    cursor: pointer;
+    font: inherit;
+}
+
+.holyrics-review-confirm {
+    border-color: #0068ff !important;
+    background: #0068ff;
+    color: #fff;
+}
+
+.holyrics-review-empty {
+    grid-column: 1 / -1;
+    margin: 8px 0;
+}
+
+.managed-song-row,
+.song-link-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.managed-song-row {
+    max-width: 460px;
+    margin: 10px auto;
+}
+
+.managed-song-row a,
+.song-link-row a {
+    display: flex;
+    flex: 1 1 160px;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #0068ff;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+}
+
+.managed-song-row a.capo-btn,
+.song-link-row a.capo-btn,
+a.capo-btn {
+    flex: 0 0 auto;
+    background: #ff7700;
+}
+
+.managed-song-row a.capo-btn:hover,
+.song-link-row a.capo-btn:hover,
+a.capo-btn:hover {
+    background: #e56600;
+}
+
+#content a.revisado {
+    position: relative;
+}
+
+#content a.revisado::after {
+    content: "Revisado";
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    background: #00c853;
+    color: #fff;
+    font-size: 10px;
+    box-shadow: 0 0 4px rgba(0, 0, 0, .3);
+}
+
+.warm-pad-toggle {
+    position: static;
+    z-index: auto;
+    flex: 0 0 auto;
+    border: 0;
+    margin: 0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: #00b8c4;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+}
+
+.warm-pad-toggle:hover {
+    background: #009aa5;
+}
+
+.warm-pad-toggle:focus-visible,
+.holyrics-export-btn:focus-visible {
+    outline: 3px solid #1769e0;
+    outline-offset: 2px;
+}
+
+.warm-pad-panel {
+    position: fixed;
+    z-index: 300;
+    display: none;
+    max-width: calc(100vw - 20px);
+    max-height: calc(100vh - 24px);
+    overflow: auto;
+    transform: none;
+    padding: 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .97);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
+}
+
+.warm-pad-panel.visible {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.warm-pad-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.warm-pad-controls label,
+.warm-pad-custom label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+}
+
+.warm-pad-controls select {
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+    font: inherit;
+    font-size: 13px;
+}
+
+.warm-pad-custom {
+    display: none;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.warm-pad-custom.visible {
+    display: flex;
+}
+
+.warm-pad-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 64px);
+    gap: 8px;
+}
+
+.warm-pad-btn {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    border: 0;
+    border-radius: 8px;
+    background: linear-gradient(145deg, #e8f8fa 0%, #c5eef2 100%);
+    box-shadow: inset 0 0 12px rgba(0, 200, 210, .35), 0 2px 4px rgba(0, 0, 0, .1);
+    cursor: pointer;
+    transition: box-shadow .15s, transform .1s;
+}
+
+.warm-pad-btn:hover {
+    box-shadow: inset 0 0 18px rgba(0, 220, 230, .55), 0 2px 6px rgba(0, 0, 0, .15);
+}
+
+.warm-pad-btn.active {
+    transform: scale(.97);
+    box-shadow: inset 0 0 24px rgba(0, 240, 255, .9), 0 0 12px rgba(0, 200, 210, .6);
+}
+
+.warm-pad-btn .pad-label {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    color: #007a82;
+    font-size: 11px;
+    font-weight: bold;
+    pointer-events: none;
+}
+
+@media (max-width: 420px) {
+    .warm-pad-panel {
+        left: 8px !important;
+        right: 8px !important;
+        max-width: none;
+    }
+
+    .warm-pad-grid {
+        grid-template-columns: repeat(4, minmax(44px, 1fr));
+    }
+
+    .warm-pad-btn {
+        width: 100%;
+        height: 54px;
+    }
+
+    .holyrics-export-option {
+        min-width: 0;
+        white-space: normal;
+    }
+}

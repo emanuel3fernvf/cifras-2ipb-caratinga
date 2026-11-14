@@ -35,6 +35,12 @@ Depois, abra <http://127.0.0.1:8000/configuracoes.html>. Nessa página é
 possível abrir qualquer pasta que contenha `index.html`, criar o atalho na
 área de trabalho, verificar o status e desligar o servidor com segurança.
 
+Os índices e cifras das pastas do catálogo carregam os estilos e scripts
+compartilhados de `assets/`, com versão na URL para atualização de cache. Não
+crie cópias locais de `index.css` ou `index.js`: o gerenciador cria eventos a
+partir do HTML em `_referencia_evento`, e novas cifras também apontam para esses
+recursos centrais. O catálogo principal mantém seus próprios assets.
+
 Para usar outra porta ou
 servir uma cópia isolada em testes:
 
