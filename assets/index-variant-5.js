@@ -142,6 +142,7 @@
   // --- Ocultar cifra ---
   var chordsHidden = false;
   var hideChordsBtnEl = null;
+  var toneToolbarCollapseBtnEl = null;
 
   function stepScroll(timestamp) {
     if (!isScrolling) {
@@ -220,17 +221,39 @@
     });
   }
 
-  // --- Utilidades de ocultar cifra na URL ---
+  // --- Utilidades de ocultar cifra (URL + preferência compartilhada) ---
+  var hideChordsStorageKey = 'catalog-shared-hide-chords';
+
   function getHideChordsFromUrl() {
     try {
       var params = new URLSearchParams(window.location.search);
+      if (!params.has('oc')) return null;
       return params.get('oc') === '1';
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function getHideChordsFromStorage() {
+    try {
+      return window.localStorage.getItem(hideChordsStorageKey) === '1';
     } catch (e) {
       return false;
     }
   }
 
-  function setHideChordsInUrl(hidden) {
+  function getPreferredHideChords() {
+    var fromUrl = getHideChordsFromUrl();
+    if (fromUrl !== null) return fromUrl;
+    return getHideChordsFromStorage();
+  }
+
+  function setHideChordsPreference(hidden) {
+    try {
+      window.localStorage.setItem(hideChordsStorageKey, hidden ? '1' : '0');
+    } catch (e) {
+      // ignore
+    }
     try {
       var url = new URL(window.location.href);
       if (hidden) {
@@ -247,10 +270,22 @@
   function applyHideChords(hidden) {
     chordsHidden = hidden;
     document.body.classList.toggle('chords-hidden', hidden);
-    setHideChordsInUrl(hidden);
+    setHideChordsPreference(hidden);
     if (hideChordsBtnEl) {
       hideChordsBtnEl.classList.toggle('is-active', hidden);
-      hideChordsBtnEl.title = hidden ? 'Mostrar cifra' : 'Ocultar cifra';
+      hideChordsBtnEl.title = hidden ? 'Mostrar acordes' : 'Ocultar acordes';
+      hideChordsBtnEl.setAttribute('aria-label', hideChordsBtnEl.title);
+      hideChordsBtnEl.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+    }
+  }
+
+  function applyToneToolbarCollapsed(collapsed) {
+    document.body.classList.toggle('tone-toolbar-collapsed', collapsed);
+    if (toneToolbarCollapseBtnEl) {
+      toneToolbarCollapseBtnEl.textContent = collapsed ? 'Mostrar barra' : 'Ocultar barra';
+      toneToolbarCollapseBtnEl.title = toneToolbarCollapseBtnEl.textContent;
+      toneToolbarCollapseBtnEl.setAttribute('aria-label', toneToolbarCollapseBtnEl.textContent);
+      toneToolbarCollapseBtnEl.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
     }
   }
 
@@ -371,18 +406,32 @@
 
     hideChordsBtnEl = document.createElement('button');
     hideChordsBtnEl.type = 'button';
-    hideChordsBtnEl.className = 'video-sticky-toggle icon-btn';
-    hideChordsBtnEl.title = chordsHidden ? 'Mostrar cifra' : 'Ocultar cifra';
-    hideChordsBtnEl.appendChild(createSvgIcon(ICON_VISIBILITY_OFF));
+    hideChordsBtnEl.className = 'hide-chords-toggle';
+    hideChordsBtnEl.textContent = 'A';
+    hideChordsBtnEl.title = chordsHidden ? 'Mostrar acordes' : 'Ocultar acordes';
+    hideChordsBtnEl.setAttribute('aria-label', hideChordsBtnEl.title);
+    hideChordsBtnEl.setAttribute('aria-pressed', chordsHidden ? 'true' : 'false');
     if (chordsHidden) hideChordsBtnEl.classList.add('is-active');
 
     hideChordsBtnEl.addEventListener('click', function () {
       applyHideChords(!chordsHidden);
     });
 
+    toneToolbarCollapseBtnEl = document.createElement('button');
+    toneToolbarCollapseBtnEl.type = 'button';
+    toneToolbarCollapseBtnEl.className = 'toolbar-collapse-toggle';
+    toneToolbarCollapseBtnEl.textContent = 'Ocultar barra';
+    toneToolbarCollapseBtnEl.title = 'Ocultar barra';
+    toneToolbarCollapseBtnEl.setAttribute('aria-label', 'Ocultar barra');
+    toneToolbarCollapseBtnEl.setAttribute('aria-expanded', 'true');
+    toneToolbarCollapseBtnEl.addEventListener('click', function () {
+      applyToneToolbarCollapsed(!document.body.classList.contains('tone-toolbar-collapsed'));
+    });
+
     row.appendChild(dropdown);
     row.appendChild(hideChordsBtnEl);
     parent.appendChild(row);
+    parent.appendChild(toneToolbarCollapseBtnEl);
   }
 
   function updateSpeedDisplay(span) {
@@ -921,12 +970,13 @@
       return;
     }
 
-    // Carrega transposição e ocultar cifra da URL
+    // Carrega transposição da URL e preferência de ocultar acordes
     currentTranspose = getTransposeFromUrl();
-    chordsHidden = getHideChordsFromUrl();
+    chordsHidden = getPreferredHideChords();
     if (chordsHidden) {
       document.body.classList.add('chords-hidden');
     }
+    setHideChordsPreference(chordsHidden);
 
     var pres = document.querySelectorAll('body > pre');
     for (var i = 0; i < pres.length; i++) {

@@ -97,6 +97,7 @@
 }
 
 .tone-toolbar {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -155,6 +156,100 @@
 body.chords-hidden .line-chord {
     display: none;
 }
+
+.hide-chords-toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 32px;
+    height: 32px;
+    margin-right: 4px;
+    padding: 0;
+    border: 1px solid #ff7700;
+    border-radius: 6px;
+    background: #fff;
+    color: #ff7700;
+    font-weight: bold;
+    font-size: 16px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.hide-chords-toggle:hover,
+.hide-chords-toggle:focus-visible {
+    background: #fff3e8;
+    outline: none;
+}
+
+.hide-chords-toggle.is-active {
+    background: #fff3e8;
+    box-shadow: inset 0 0 0 1px #ff7700;
+}
+
+.hide-chords-toggle.is-active::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    top: 50%;
+    height: 2px;
+    background: #ff7700;
+    transform: translateY(-50%) rotate(-45deg);
+    pointer-events: none;
+}
+
+
+.toolbar-collapse-toggle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    margin: 0;
+    border: 1px solid #ddd;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 6px 0 0 0;
+    background: #f3f3f3;
+    color: #555;
+    padding: 3px 8px;
+    font-size: 11px;
+    line-height: 1.2;
+    cursor: pointer;
+}
+
+.toolbar-collapse-toggle:hover,
+.toolbar-collapse-toggle:focus-visible {
+    background: #e8e8e8;
+    color: #222;
+    outline: none;
+}
+
+body.tone-toolbar-collapsed .tone-toolbar-row,
+body.tone-toolbar-collapsed .toolbar-extra-row {
+    display: none;
+}
+
+body.tone-toolbar-collapsed .toolbar-collapse-toggle {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    bottom: auto;
+    z-index: 1200;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+body.tone-toolbar-collapsed .tone-toolbar {
+    padding: 0;
+    margin: 0;
+    border: 0;
+    min-height: 0;
+    background: transparent;
+}
+
 
 .strophe {
     margin: 0;
