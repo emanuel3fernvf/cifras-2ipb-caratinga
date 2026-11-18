@@ -30,13 +30,19 @@
 
   var toggleBtn;
   var prefsRow;
+  var bgBtn;
   var bgInput;
+  var bgPickerModal;
   var scrollBtn;
   var slideBtn;
   var modal;
+  var modalBg;
   var stage;
   var digitHint;
   var bgWarning;
+  var touchMoved = false;
+  var touchStartX = 0;
+  var touchStartY = 0;
 
   function loadCss() {
     if (!scriptUrl) return;
@@ -204,15 +210,11 @@
     prefsRow.id = 'presentation-prefs';
     prefsRow.hidden = true;
 
-    var fileLabel = document.createElement('label');
-    fileLabel.className = 'presentation-prefs-file';
-    fileLabel.appendChild(document.createTextNode('fundo'));
-    bgInput = document.createElement('input');
-    bgInput.type = 'file';
-    bgInput.accept = 'image/*';
-    bgInput.setAttribute('aria-label', 'Escolher imagem de fundo');
-    bgInput.addEventListener('change', onBackgroundPicked);
-    fileLabel.appendChild(bgInput);
+    bgBtn = document.createElement('button');
+    bgBtn.type = 'button';
+    bgBtn.className = 'presentation-prefs-btn';
+    bgBtn.textContent = 'fundo';
+    bgBtn.addEventListener('click', openBgPickerModal);
 
     scrollBtn = document.createElement('button');
     scrollBtn.type = 'button';
@@ -234,12 +236,86 @@
       if (modalOpen) renderPresentation();
     });
 
-    prefsRow.append(fileLabel, scrollBtn, slideBtn);
+    var bgGroup = document.createElement('div');
+    bgGroup.className = 'presentation-prefs-group';
+    bgGroup.appendChild(bgBtn);
+
+    var viewGroup = document.createElement('div');
+    viewGroup.className = 'presentation-prefs-group';
+    viewGroup.append(scrollBtn, slideBtn);
+
+    prefsRow.append(bgGroup, viewGroup);
     if (actions.nextSibling) {
       actions.parentNode.insertBefore(prefsRow, actions.nextSibling);
     } else {
       actions.parentNode.appendChild(prefsRow);
     }
+    createBgPickerModal();
+  }
+
+  function createBgPickerModal() {
+    if (bgPickerModal) return;
+    bgPickerModal = document.createElement('div');
+    bgPickerModal.className = 'presentation-bg-picker-modal';
+    bgPickerModal.id = 'presentation-bg-picker-modal';
+    bgPickerModal.hidden = true;
+
+    var dialog = document.createElement('section');
+    dialog.className = 'presentation-bg-picker-dialog';
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.setAttribute('aria-labelledby', 'presentation-bg-picker-title');
+
+    var title = document.createElement('h2');
+    title.id = 'presentation-bg-picker-title';
+    title.textContent = 'Imagem de fundo';
+
+    var hint = document.createElement('p');
+    hint.className = 'presentation-bg-picker-hint';
+    hint.textContent = 'Escolha uma imagem para o fundo da apresentação.';
+
+    bgInput = document.createElement('input');
+    bgInput.type = 'file';
+    bgInput.accept = 'image/*';
+    bgInput.className = 'presentation-bg-picker-input';
+    bgInput.setAttribute('aria-label', 'Escolher imagem de fundo');
+    bgInput.addEventListener('change', onBackgroundPicked);
+
+    var actions = document.createElement('div');
+    actions.className = 'presentation-bg-picker-actions';
+    var clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'presentation-bg-picker-clear';
+    clearBtn.textContent = 'Sem fundo';
+    clearBtn.addEventListener('click', clearBackground);
+    var closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.textContent = 'Fechar';
+    closeBtn.addEventListener('click', closeBgPickerModal);
+    actions.append(clearBtn, closeBtn);
+
+    dialog.append(title, hint, bgInput, actions);
+    bgPickerModal.appendChild(dialog);
+    bgPickerModal.addEventListener('click', function (event) {
+      if (event.target === bgPickerModal) closeBgPickerModal();
+    });
+    document.body.appendChild(bgPickerModal);
+  }
+
+  function openBgPickerModal() {
+    if (!bgPickerModal) createBgPickerModal();
+    bgPickerModal.hidden = false;
+  }
+
+  function closeBgPickerModal() {
+    if (bgPickerModal) bgPickerModal.hidden = true;
+  }
+
+  function clearBackground() {
+    if (bgInput) bgInput.value = '';
+    saveBackground('');
+    applyModalBackground();
+    closeBgPickerModal();
   }
 
   function onBackgroundPicked() {
@@ -251,15 +327,18 @@
       if (!dataUrl) {
         saveBackground('');
         applyModalBackground();
+        closeBgPickerModal();
         return;
       }
       saveBackground(dataUrl);
       applyModalBackground();
+      closeBgPickerModal();
     };
     reader.onerror = function () {
       saveBackground('');
       applyModalBackground();
       showBgWarning();
+      closeBgPickerModal();
     };
     reader.readAsDataURL(file);
   }
@@ -272,6 +351,10 @@
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
     modal.setAttribute('aria-label', 'Apresentação');
+
+    modalBg = document.createElement('div');
+    modalBg.className = 'presentation-modal-bg';
+    modalBg.setAttribute('aria-hidden', 'true');
 
     var escBtn = document.createElement('button');
     escBtn.type = 'button';
@@ -308,6 +391,9 @@
     stage = document.createElement('div');
     stage.className = 'presentation-stage';
     stage.addEventListener('click', onStageClick);
+    stage.addEventListener('touchstart', onStageTouchStart, { passive: true });
+    stage.addEventListener('touchmove', onStageTouchMove, { passive: true });
+    stage.addEventListener('touchend', onStageTouchEnd, { passive: true });
 
     digitHint = document.createElement('div');
     digitHint.className = 'presentation-digit-hint';
@@ -317,12 +403,39 @@
     bgWarning.className = 'presentation-bg-warning';
     bgWarning.hidden = true;
 
-    modal.append(escBtn, fonts, stage, digitHint, bgWarning);
+    modal.append(modalBg, escBtn, fonts, stage, digitHint, bgWarning);
     document.body.appendChild(modal);
+  }
+
+  function onStageTouchStart(event) {
+    touchMoved = false;
+    var touch = event.touches && event.touches[0];
+    if (!touch) return;
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+  }
+
+  function onStageTouchMove(event) {
+    var touch = event.touches && event.touches[0];
+    if (!touch) return;
+    if (
+      Math.abs(touch.clientX - touchStartX) > 10 ||
+      Math.abs(touch.clientY - touchStartY) > 10
+    ) {
+      touchMoved = true;
+    }
+  }
+
+  function onStageTouchEnd() {
+    // touchMoved é consumido no próximo click sintético
   }
 
   function onStageClick(event) {
     if (!modalOpen) return;
+    if (touchMoved) {
+      touchMoved = false;
+      return;
+    }
     if (event.target.closest && (
       event.target.closest('.presentation-modal-esc') ||
       event.target.closest('.presentation-modal-fonts')
@@ -344,13 +457,11 @@
   }
 
   function applyModalBackground() {
-    if (!modal) return;
+    if (!modalBg) return;
     if (bgDataUrl) {
-      modal.style.backgroundImage = 'url("' + bgDataUrl.replace(/"/g, '\\"') + '")';
-      modal.style.backgroundColor = '#000';
+      modalBg.style.backgroundImage = 'url("' + bgDataUrl.replace(/"/g, '\\"') + '")';
     } else {
-      modal.style.backgroundImage = 'none';
-      modal.style.backgroundColor = '#000';
+      modalBg.style.backgroundImage = 'none';
     }
   }
 
@@ -548,16 +659,12 @@
   function navigateToIndex(index, smoothScroll) {
     if (!strophes.length) return;
     var next = Math.max(0, Math.min(index, strophes.length - 1));
+    if (next === currentIndex) return;
     if (viewMode === 'scroll') {
-      if (next === currentIndex) {
-        focusScrollStrophe(!!smoothScroll);
-        return;
-      }
       currentIndex = next;
       focusScrollStrophe(!!smoothScroll);
       return;
     }
-    if (next === currentIndex) return;
     currentIndex = next;
     renderPresentation();
   }
