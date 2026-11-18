@@ -40,7 +40,7 @@
 
   function loadScript(path, onload) {
     var child = document.createElement('script');
-    child.src = new URL(path + '?v=20261117-5', scriptUrl).href;
+    child.src = new URL(path + '?v=20261117-8', scriptUrl).href;
     if (onload) child.addEventListener('load', onload, { once: true });
     child.addEventListener('error', function () {
       console.error('Não foi possível carregar o recurso compartilhado: ' + path);
@@ -50,7 +50,8 @@
 
   loadScript('index-variant-' + variant + '.js', function () {
     loadScript('pad.js', function () {
-      if (!isIndex) loadScript('reading-controls.js');
+      if (isIndex) loadScript('presentation-mode.js');
+      else loadScript('reading-controls.js');
     });
   });
 }());

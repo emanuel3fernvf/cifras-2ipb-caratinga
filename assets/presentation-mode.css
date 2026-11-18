@@ -1,0 +1,322 @@
+/* Modo de apresentação no índice */
+
+.presentation-mode-toggle {
+    flex: 0 0 auto;
+    border: 0;
+    margin: 0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: #5a6472;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .16);
+}
+
+.presentation-mode-toggle:hover,
+.presentation-mode-toggle:focus-visible {
+    background: #47505c;
+}
+
+.presentation-mode-toggle.is-active {
+    background: #c62828;
+    box-shadow: 0 0 0 2px rgba(198, 40, 40, .35), 0 2px 8px rgba(0, 0, 0, .22);
+}
+
+.presentation-mode-toggle.is-active:hover,
+.presentation-mode-toggle.is-active:focus-visible {
+    background: #b71c1c;
+}
+
+.presentation-prefs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin: -4px 0 14px;
+}
+
+.presentation-prefs[hidden] {
+    display: none !important;
+}
+
+.presentation-prefs-btn,
+.presentation-prefs-file {
+    border: 1px solid #c5cad3;
+    border-radius: 6px;
+    padding: 7px 12px;
+    background: #fff;
+    color: #222;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+}
+
+.presentation-prefs-btn.is-active {
+    border-color: #c62828;
+    background: #c62828;
+    color: #fff;
+}
+
+.presentation-prefs-file {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.presentation-prefs-file input {
+    max-width: 11rem;
+    font: inherit;
+    font-size: 12px;
+}
+
+body.presentation-mode-on {
+    background:
+        radial-gradient(ellipse at top, rgba(198, 40, 40, .18), transparent 55%),
+        linear-gradient(180deg, #1a1d24 0%, #12141a 100%);
+    color: #f2f4f7;
+}
+
+body.presentation-mode-on .box-center,
+body.presentation-mode-on .top {
+    color: inherit;
+}
+
+body.presentation-mode-on .top h1,
+body.presentation-mode-on .top h2,
+body.presentation-mode-on .section-title {
+    color: #ffe082;
+}
+
+body.presentation-mode-on .index-actions {
+    padding: 8px;
+    border: 1px solid rgba(255, 224, 130, .35);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, .28);
+}
+
+body.presentation-mode-on .managed-song-row a,
+body.presentation-mode-on .song-link-row a:not(.capo-btn),
+body.presentation-mode-on #content > a[href$=".html"],
+body.presentation-mode-on #content a[href$=".html"]:not(.capo-btn) {
+    background: #263238;
+    box-shadow: inset 0 0 0 2px rgba(255, 224, 130, .45);
+}
+
+body.presentation-mode-on .managed-song-row a:hover,
+body.presentation-mode-on .song-link-row a:not(.capo-btn):hover,
+body.presentation-mode-on #content > a[href$=".html"]:hover,
+body.presentation-mode-on #content a[href$=".html"]:not(.capo-btn):hover {
+    background: #37474f;
+}
+
+body.presentation-mode-on .capo-btn {
+    display: none !important;
+}
+
+body.presentation-mode-on .service-item,
+body.presentation-mode-on .hymn-item {
+    color: #d7dde6;
+}
+
+.presentation-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+    display: flex;
+    flex-direction: column;
+    background: #000 center / cover no-repeat;
+    color: #fff;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.presentation-modal[hidden] {
+    display: none !important;
+}
+
+.presentation-modal-esc {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 5;
+    border: 1px solid rgba(255, 255, 255, .45);
+    border-radius: 8px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, .45);
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+.presentation-modal-fonts {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 5;
+    display: flex;
+    gap: 8px;
+}
+
+.presentation-modal-fonts button {
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(255, 255, 255, .45);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, .45);
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 22px;
+    line-height: 1;
+}
+
+.presentation-stage {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 64px 28px 28px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.presentation-stage.is-scroll {
+    overflow: auto;
+    overscroll-behavior: contain;
+}
+
+.presentation-slide,
+.presentation-scroll-block {
+    color: #fff;
+    font-weight: 700;
+    line-height: 1.25;
+    text-align: center;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    -webkit-text-stroke: 1.5px #000;
+    paint-order: stroke fill;
+    text-shadow:
+        -2px -2px 0 #000,
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000,
+        -2px  0   0 #000,
+         2px  0   0 #000,
+         0   -2px 0 #000,
+         0    2px 0 #000;
+}
+
+.presentation-slide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.presentation-scroll-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 1.4em;
+    width: 100%;
+    max-width: 52rem;
+    margin: 0 auto;
+    padding-top: 40vh;
+    padding-bottom: 40vh;
+}
+
+.presentation-scroll-block {
+    opacity: .45;
+    text-align: left;
+    transition: opacity .2s ease, transform .2s ease, filter .2s ease;
+}
+
+.presentation-scroll-block.is-current {
+    opacity: 1;
+    transform: scale(1.03);
+    filter: drop-shadow(0 0 10px rgba(255, 224, 130, .35));
+    outline: 2px solid rgba(255, 224, 130, .55);
+    outline-offset: 10px;
+    border-radius: 6px;
+}
+
+.presentation-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 24px;
+    color: #fff;
+    font-size: clamp(1.4rem, 4vw, 2.4rem);
+    font-weight: 700;
+    text-align: center;
+    -webkit-text-stroke: 1.5px #000;
+    text-shadow:
+        -2px -2px 0 #000,
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000;
+}
+
+.presentation-digit-hint {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    z-index: 5;
+    transform: translateX(-50%);
+    min-width: 3ch;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, .55);
+    color: #ffe082;
+    font: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-align: center;
+    pointer-events: none;
+}
+
+.presentation-digit-hint:empty,
+.presentation-digit-hint[hidden] {
+    display: none;
+}
+
+.presentation-bg-warning {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    z-index: 5;
+    max-width: 16rem;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, .6);
+    color: #ffcc80;
+    font-size: 12px;
+    pointer-events: none;
+}
+
+@media (max-width: 640px) {
+    .presentation-stage {
+        padding: 56px 16px 20px;
+    }
+
+    .presentation-prefs-file input {
+        max-width: 8rem;
+    }
+}
