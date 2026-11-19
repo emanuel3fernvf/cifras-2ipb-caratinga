@@ -27,6 +27,8 @@ def run_clean_helpers(payload):
         _extract_function(source, "isChordLine"),
         _extract_function(source, "isBracketLine"),
         _extract_function(source, "getPresentationLyricLines"),
+        _extract_function(source, "stripPresentationSeparators"),
+        _extract_function(source, "collapsePresentationJunctionDuplicates"),
         _extract_function(source, "collectPresentationCleanItems"),
         _extract_function(source, "applyPresentationTokenChoices"),
         _extract_function(source, "applyPresentationCleanTokensToRaw"),
@@ -39,7 +41,10 @@ def run_clean_helpers(payload):
             "const changed = applyPresentationTokenChoices(input.line, input.corrections);",
             "const cleanedRaw = applyPresentationCleanTokensToRaw(input.preText || '', input.corrections);",
             "const corrections = {};",
-            "items.forEach((item) => { if (item.useCorrected) corrections[item.source] = item.corrected; });",
+            "items.forEach((item) => {",
+            "  if (item.useCollapsed && item.collapsed) corrections[item.source] = item.collapsed;",
+            "  else if (item.useCorrected) corrections[item.source] = item.corrected;",
+            "});",
             "process.stdout.write(JSON.stringify({ items, changed, cleanedRaw, corrections }));",
         ]
     )
@@ -63,16 +68,90 @@ def test_collects_deduplicates_and_premarks_saved_tokens():
     )
 
     assert result["items"] == [
-        {"source": "Espera----rei", "corrected": "Esperarei", "useCorrected": False},
-        {"source": "amá-lo", "corrected": "amálo", "useCorrected": False},
-        {"source": "Rei--,", "corrected": "Rei,", "useCorrected": False},
-        {"source": "Alelu___ia!", "corrected": "Aleluia!", "useCorrected": True},
-        {"source": "Rei--", "corrected": "Rei", "useCorrected": True},
-        {"source": "espera-rei--", "corrected": "esperarei", "useCorrected": False},
-        {"source": "Rei-_no", "corrected": "Reino", "useCorrected": False},
+        {
+            "source": "Espera----rei",
+            "corrected": "Esperarei",
+            "collapsed": None,
+            "useCorrected": False,
+            "useCollapsed": False,
+        },
+        {
+            "source": "amá-lo",
+            "corrected": "amálo",
+            "collapsed": None,
+            "useCorrected": False,
+            "useCollapsed": False,
+        },
+        {
+            "source": "Rei--,",
+            "corrected": "Rei,",
+            "collapsed": None,
+            "useCorrected": False,
+            "useCollapsed": False,
+        },
+        {
+            "source": "Alelu___ia!",
+            "corrected": "Aleluia!",
+            "collapsed": None,
+            "useCorrected": True,
+            "useCollapsed": False,
+        },
+        {
+            "source": "Rei--",
+            "corrected": "Rei",
+            "collapsed": None,
+            "useCorrected": True,
+            "useCollapsed": False,
+        },
+        {
+            "source": "espera-rei--",
+            "corrected": "esperarei",
+            "collapsed": None,
+            "useCorrected": False,
+            "useCollapsed": False,
+        },
+        {
+            "source": "Rei-_no",
+            "corrected": "Reino",
+            "collapsed": None,
+            "useCorrected": False,
+            "useCollapsed": False,
+        },
     ]
     assert result["changed"] == "Rei Rei--, espera-rei-- Reino amá-lo"
     assert result["corrections"] == {"Alelu___ia!": "Aleluia!", "Rei--": "Rei"}
+
+
+def test_offers_and_restores_collapsed_option_for_joined_equal_letters():
+    result = run_clean_helpers(
+        {
+            "songs": [
+                {"preText": "Título\nC\numbra---ais at---té"},
+            ],
+            "line": "umbra---ais at---té",
+            "corrections": {"umbra---ais": "umbrais"},
+            "saved": {"umbra---ais": "umbrais", "at---té": "atté"},
+        }
+    )
+
+    assert result["items"] == [
+        {
+            "source": "umbra---ais",
+            "corrected": "umbraais",
+            "collapsed": "umbrais",
+            "useCorrected": False,
+            "useCollapsed": True,
+        },
+        {
+            "source": "at---té",
+            "corrected": "atté",
+            "collapsed": "até",
+            "useCorrected": True,
+            "useCollapsed": False,
+        },
+    ]
+    assert result["corrections"] == {"umbra---ais": "umbrais", "at---té": "atté"}
+    assert result["changed"] == "umbrais at---té"
 
 
 def test_applies_corrections_only_on_lyric_lines_and_replaces_map():

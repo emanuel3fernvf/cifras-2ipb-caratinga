@@ -60,7 +60,7 @@ class CatalogTests(unittest.TestCase):
                 source = page.read_text(encoding="utf-8")
                 self.assertIn('src="../assets/index.js?v=', source)
                 self.assertIn('href="../assets/index.css?v=', source)
-                self.assertIn("v=20261118-3", source)
+                self.assertIn("v=20261119-1", source)
                 self.assertNotRegex(source, r"""(?:src|href)=["']index\.(?:js|css)""")
                 self.assertFalse((page.parent / "index.js").exists())
                 self.assertFalse((page.parent / "index.css").exists())
