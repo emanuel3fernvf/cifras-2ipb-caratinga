@@ -2309,6 +2309,27 @@
     });
   }
 
+  function stripHolyricsSeparators(token) {
+    return String(token || '').replace(/[-_]/g, '');
+  }
+
+  function collapseHolyricsJunctionDuplicates(token) {
+    var parts = String(token || '').split(/[-_]+/);
+    if (parts.length < 2) return null;
+    var result = parts[0] || '';
+    for (var i = 1; i < parts.length; i++) {
+      var part = parts[i] || '';
+      if (!part) continue;
+      if (result && part.charAt(0) === result.charAt(result.length - 1)) {
+        result += part.slice(1);
+      } else {
+        result += part;
+      }
+    }
+    var stripped = stripHolyricsSeparators(token);
+    return result && result !== stripped ? result : null;
+  }
+
   function collectHolyricsReviewItems(songs) {
     var seen = {};
     var items = [];
@@ -2317,7 +2338,13 @@
         String(line || '').replace(/\S+/g, function (token) {
           if ((token.indexOf('-') !== -1 || token.indexOf('_') !== -1) && !seen[token]) {
             seen[token] = true;
-            items.push({ source: token, corrected: token.replace(/[-_]/g, ''), useCorrected: false });
+            items.push({
+              source: token,
+              corrected: stripHolyricsSeparators(token),
+              collapsed: collapseHolyricsJunctionDuplicates(token),
+              useCorrected: false,
+              useCollapsed: false
+            });
           }
           return token;
         });
@@ -2507,16 +2534,23 @@
       var legend = document.createElement('legend');
       legend.textContent = 'Palavra ' + (index + 1);
       card.appendChild(legend);
-      [{ value: 'original', text: item.source }, { value: 'corrected', text: item.corrected }].forEach(function (choice) {
+      var choices = [
+        { value: 'original', text: item.source },
+        { value: 'corrected', text: item.corrected }
+      ];
+      if (item.collapsed) choices.push({ value: 'collapsed', text: item.collapsed });
+      var selected = item.useCollapsed ? 'collapsed' : (item.useCorrected ? 'corrected' : 'original');
+      choices.forEach(function (choice) {
         var label = document.createElement('label');
         label.className = 'holyrics-review-choice';
         var radio = document.createElement('input');
         radio.type = 'radio';
         radio.name = 'holyrics-review-' + index;
         radio.value = choice.value;
-        radio.checked = choice.value === 'original';
+        radio.checked = choice.value === selected;
         radio.addEventListener('change', function () {
           item.useCorrected = this.value === 'corrected';
+          item.useCollapsed = this.value === 'collapsed';
         });
         var text = document.createElement('span');
         text.textContent = choice.text;
@@ -2542,7 +2576,8 @@
     var state = holyricsReviewState;
     var corrections = {};
     state.reviewItems.forEach(function (item) {
-      if (item.useCorrected) corrections[item.source] = item.corrected;
+      if (item.useCollapsed && item.collapsed) corrections[item.source] = item.collapsed;
+      else if (item.useCorrected) corrections[item.source] = item.corrected;
     });
     var withChords = state.mode === 'cifra';
     var baseId = Date.now();

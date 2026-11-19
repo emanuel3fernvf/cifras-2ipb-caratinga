@@ -19,6 +19,8 @@ def run_review_helpers(payload):
     helpers = []
     for name in (
         "getHolyricsLyricLines",
+        "stripHolyricsSeparators",
+        "collapseHolyricsJunctionDuplicates",
         "collectHolyricsReviewItems",
         "applyHolyricsTokenChoices",
         "processPreTextForHolyrics",
@@ -60,15 +62,87 @@ def test_collects_deduplicates_and_corrects_only_exact_lyric_tokens():
     )
 
     assert result["items"] == [
-        {"source": "Espera----rei", "corrected": "Esperarei", "useCorrected": False},
-        {"source": "amá-lo", "corrected": "amálo", "useCorrected": False},
-        {"source": "Rei--,", "corrected": "Rei,", "useCorrected": False},
-        {"source": "Alelu___ia!", "corrected": "Aleluia!", "useCorrected": False},
-        {"source": "Rei--", "corrected": "Rei", "useCorrected": False},
-        {"source": "espera-rei--", "corrected": "esperarei", "useCorrected": False},
-        {"source": "Rei-_no", "corrected": "Reino", "useCorrected": False},
+        {
+            "source": "Espera----rei",
+            "corrected": "Esperarei",
+            "collapsed": None,
+            "useCorrected": False,
+            "useCollapsed": False,
+        },
+        {
+            "source": "amá-lo",
+            "corrected": "amálo",
+            "collapsed": None,
+            "useCorrected": False,
+            "useCollapsed": False,
+        },
+        {
+            "source": "Rei--,",
+            "corrected": "Rei,",
+            "collapsed": None,
+            "useCorrected": False,
+            "useCollapsed": False,
+        },
+        {
+            "source": "Alelu___ia!",
+            "corrected": "Aleluia!",
+            "collapsed": None,
+            "useCorrected": False,
+            "useCollapsed": False,
+        },
+        {
+            "source": "Rei--",
+            "corrected": "Rei",
+            "collapsed": None,
+            "useCorrected": False,
+            "useCollapsed": False,
+        },
+        {
+            "source": "espera-rei--",
+            "corrected": "esperarei",
+            "collapsed": None,
+            "useCorrected": False,
+            "useCollapsed": False,
+        },
+        {
+            "source": "Rei-_no",
+            "corrected": "Reino",
+            "collapsed": None,
+            "useCorrected": False,
+            "useCollapsed": False,
+        },
     ]
     assert result["changed"] == "Rei Rei--, espera-rei-- Reino amá-lo"
+
+
+def test_offers_collapsed_option_when_removal_joins_equal_letters():
+    result = run_review_helpers(
+        {
+            "songs": [
+                {"preText": "Título\nC\numbra---ais at---té"},
+            ],
+            "line": "umbra---ais at---té",
+            "corrections": {"umbra---ais": "umbrais", "at---té": "até"},
+        }
+    )
+
+    assert result["items"] == [
+        {
+            "source": "umbra---ais",
+            "corrected": "umbraais",
+            "collapsed": "umbrais",
+            "useCorrected": False,
+            "useCollapsed": False,
+        },
+        {
+            "source": "at---té",
+            "corrected": "atté",
+            "collapsed": "até",
+            "useCorrected": False,
+            "useCollapsed": False,
+        },
+    ]
+    assert result["changed"] == "umbrais até"
 
 
 def test_applies_same_selection_in_both_modes_without_changing_chord_comments():
