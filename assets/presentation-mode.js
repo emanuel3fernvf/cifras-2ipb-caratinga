@@ -11,12 +11,20 @@
   var STORAGE_VIEW = 'catalog-presentation-view';
   var STORAGE_BG = 'catalog-presentation-bg';
   var STORAGE_FONT = 'catalog-presentation-font';
+  var STORAGE_CLEAN_TOKENS_PREFIX = 'catalog-presentation-clean-tokens:';
 
   var MIN_FONT = 75;
   var MAX_FONT = 200;
   var FONT_STEP = 5;
   var BASE_FONT_PX = 42;
   var EMPTY_MESSAGE = 'Sem letra apresentável';
+
+  var DEFAULT_REVIEW_TITLE = 'Revisar palavras da exportação';
+  var DEFAULT_REVIEW_DESCRIPTION = 'Escolha quais palavras devem ser exportadas sem traços ou underlines.';
+  var DEFAULT_REVIEW_CONFIRM = 'Baixar';
+  var CLEAN_REVIEW_TITLE = 'Revisar palavras para limpar';
+  var CLEAN_REVIEW_DESCRIPTION = 'Escolha quais palavras devem aparecer sem traços ou underlines nas apresentações.';
+  var CLEAN_REVIEW_CONFIRM = 'Salvar';
 
   var modeOn = false;
   var viewMode = 'slide';
@@ -27,6 +35,8 @@
   var digitBuffer = '';
   var modalOpen = false;
   var loading = false;
+  var cleanReviewState = null;
+  var cleanLoading = false;
 
   var toggleBtn;
   var prefsRow;
@@ -35,6 +45,9 @@
   var bgPickerModal;
   var scrollBtn;
   var slideBtn;
+  var cleanWrap;
+  var cleanBtn;
+  var cleanMenu;
   var modal;
   var modalBg;
   var stage;
@@ -57,8 +70,16 @@
     document.head.appendChild(link);
   }
 
+  function stripInvisibleChars(line) {
+    return String(line || '').replace(/[\u200B-\u200D\uFEFF]/g, '');
+  }
+
+  function isBlankLine(line) {
+    return stripInvisibleChars(line).trim() === '';
+  }
+
   function isChordLine(line) {
-    var trimmed = String(line || '').trim();
+    var trimmed = stripInvisibleChars(line).trim();
     if (!trimmed) return false;
     var withoutChords = trimmed.replace(CHORD_REGEX, '');
     var withoutSpaces = withoutChords.replace(/\s/g, '');
@@ -68,7 +89,7 @@
   }
 
   function isBracketLine(line) {
-    return /[\[\]]/.test(String(line || ''));
+    return /[\[\]]/.test(stripInvisibleChars(line));
   }
 
   function readStorage(key, fallback) {
@@ -178,6 +199,324 @@
     return actions;
   }
 
+  function getIndexFolder() {
+    var parts = (window.location.pathname || '').split('/').filter(Boolean);
+    if (!parts.length) return '';
+    var last = parts[parts.length - 1];
+    if (/index\.html?$/i.test(last)) {
+      return decodeURIComponent(parts[parts.length - 2] || '');
+    }
+    return decodeURIComponent(last);
+  }
+
+  function getCleanTokensStorageKey() {
+    return STORAGE_CLEAN_TOKENS_PREFIX + (getIndexFolder() || 'evento');
+  }
+
+  function loadCleanTokenCorrections() {
+    var raw = readStorage(getCleanTokensStorageKey(), '');
+    if (!raw) return {};
+    try {
+      var parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+      var out = {};
+      Object.keys(parsed).forEach(function (key) {
+        if (typeof parsed[key] === 'string') out[key] = parsed[key];
+      });
+      return out;
+    } catch (err) {
+      return {};
+    }
+  }
+
+  function saveCleanTokenCorrections(corrections) {
+    var key = getCleanTokensStorageKey();
+    var map = corrections && typeof corrections === 'object' ? corrections : {};
+    var keys = Object.keys(map);
+    if (!keys.length) {
+      try { window.localStorage.removeItem(key); } catch (err) { /* ignore */ }
+      return true;
+    }
+    return writeStorage(key, JSON.stringify(map));
+  }
+
+  function getPresentationLyricLines(rawText) {
+    var lines = (rawText || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+    var start = -1;
+    for (var i = 0; i < lines.length; i++) {
+      if (isChordLine(lines[i])) {
+        start = i;
+        break;
+      }
+    }
+    if (start === -1) return [];
+    return lines.slice(start).filter(function (line) {
+      return !isBracketLine(line) && !isChordLine(line);
+    });
+  }
+
+  function collectPresentationCleanItems(songs, savedCorrections) {
+    var saved = savedCorrections && typeof savedCorrections === 'object' ? savedCorrections : {};
+    var seen = {};
+    var items = [];
+    (songs || []).forEach(function (song) {
+      getPresentationLyricLines(song && song.preText).forEach(function (line) {
+        String(line || '').replace(/\S+/g, function (token) {
+          if ((token.indexOf('-') !== -1 || token.indexOf('_') !== -1) && !seen[token]) {
+            seen[token] = true;
+            items.push({
+              source: token,
+              corrected: token.replace(/[-_]/g, ''),
+              useCorrected: Object.prototype.hasOwnProperty.call(saved, token)
+            });
+          }
+          return token;
+        });
+      });
+    });
+    return items;
+  }
+
+  function applyPresentationTokenChoices(line, corrections) {
+    return String(line || '').replace(/\S+/g, function (token) {
+      return corrections && Object.prototype.hasOwnProperty.call(corrections, token)
+        ? corrections[token]
+        : token;
+    });
+  }
+
+  function applyPresentationCleanTokensToRaw(rawText, corrections) {
+    if (!corrections || !Object.keys(corrections).length) return String(rawText || '');
+    var lines = String(rawText || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+    return lines.map(function (line) {
+      if (isBlankLine(line) || isChordLine(line) || isBracketLine(line)) return line;
+      return applyPresentationTokenChoices(line, corrections);
+    }).join('\n');
+  }
+
+  function insertCleanControl(group) {
+    if (!group || document.getElementById('presentation-clean')) return;
+
+    cleanWrap = document.createElement('div');
+    cleanWrap.className = 'presentation-clean';
+    cleanWrap.id = 'presentation-clean';
+
+    cleanBtn = document.createElement('button');
+    cleanBtn.type = 'button';
+    cleanBtn.className = 'presentation-prefs-btn presentation-clean-btn';
+    cleanBtn.id = 'presentation-clean-btn';
+    cleanBtn.textContent = 'Limpar';
+    cleanBtn.title = 'Limpar traços e underlines nas apresentações';
+    cleanBtn.setAttribute('aria-label', 'Limpar traços e underlines nas apresentações');
+    cleanBtn.setAttribute('aria-haspopup', 'true');
+    cleanBtn.setAttribute('aria-expanded', 'false');
+
+    cleanMenu = document.createElement('div');
+    cleanMenu.className = 'presentation-clean-menu';
+    cleanMenu.id = 'presentation-clean-menu';
+    cleanMenu.hidden = true;
+
+    var option = document.createElement('button');
+    option.type = 'button';
+    option.className = 'presentation-clean-option';
+    option.setAttribute('data-action', 'clean-tokens');
+    option.textContent = 'Limpar traços e underlines';
+    cleanMenu.appendChild(option);
+
+    cleanWrap.appendChild(cleanBtn);
+    cleanWrap.appendChild(cleanMenu);
+    group.appendChild(cleanWrap);
+
+    cleanBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = !!cleanMenu.hidden;
+      cleanMenu.hidden = !open;
+      cleanBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
+    cleanMenu.addEventListener('click', function (e) {
+      e.stopPropagation();
+    });
+
+    option.addEventListener('click', function () {
+      cleanMenu.hidden = true;
+      cleanBtn.setAttribute('aria-expanded', 'false');
+      startCleanTokensReview(option);
+    });
+
+    document.addEventListener('click', function () {
+      if (!cleanMenu) return;
+      cleanMenu.hidden = true;
+      if (cleanBtn) cleanBtn.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  function setCleanReviewOpen(open) {
+    var reviewModal = document.getElementById('holyrics-review-modal');
+    if (!reviewModal) return;
+    reviewModal.hidden = !open;
+    document.body.classList.toggle('holyrics-review-open', open);
+  }
+
+  function restoreCleanReviewTexts() {
+    var title = document.getElementById('holyrics-review-title');
+    var description = document.getElementById('holyrics-review-description');
+    var confirm = document.getElementById('holyrics-review-confirm');
+    if (title) title.textContent = DEFAULT_REVIEW_TITLE;
+    if (description) description.textContent = DEFAULT_REVIEW_DESCRIPTION;
+    if (confirm) confirm.textContent = DEFAULT_REVIEW_CONFIRM;
+  }
+
+  function closeCleanReview() {
+    var opener = cleanReviewState && cleanReviewState.opener;
+    cleanReviewState = null;
+    restoreCleanReviewTexts();
+    setCleanReviewOpen(false);
+    if (opener && typeof opener.focus === 'function') opener.focus();
+  }
+
+  function renderCleanReview(items) {
+    var list = document.getElementById('holyrics-review-list');
+    if (!list) return;
+    list.textContent = '';
+    if (!items.length) {
+      var empty = document.createElement('p');
+      empty.className = 'holyrics-review-empty';
+      empty.textContent = 'Nenhuma palavra com traço ou underline foi encontrada.';
+      list.appendChild(empty);
+      return;
+    }
+    items.forEach(function (item, index) {
+      var card = document.createElement('fieldset');
+      card.className = 'holyrics-review-card';
+      var legend = document.createElement('legend');
+      legend.textContent = 'Palavra ' + (index + 1);
+      card.appendChild(legend);
+      [{ value: 'original', text: item.source }, { value: 'corrected', text: item.corrected }].forEach(function (choice) {
+        var label = document.createElement('label');
+        label.className = 'holyrics-review-choice';
+        var radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'presentation-clean-review-' + index;
+        radio.value = choice.value;
+        radio.checked = choice.value === (item.useCorrected ? 'corrected' : 'original');
+        radio.addEventListener('change', function () {
+          item.useCorrected = this.value === 'corrected';
+        });
+        var text = document.createElement('span');
+        text.textContent = choice.text;
+        label.appendChild(radio);
+        label.appendChild(text);
+        card.appendChild(label);
+      });
+      list.appendChild(card);
+    });
+  }
+
+  function openCleanReview(songs, opener) {
+    var saved = loadCleanTokenCorrections();
+    var items = collectPresentationCleanItems(songs, saved);
+    cleanReviewState = { songs: songs, reviewItems: items, opener: opener };
+    var title = document.getElementById('holyrics-review-title');
+    var description = document.getElementById('holyrics-review-description');
+    var confirm = document.getElementById('holyrics-review-confirm');
+    if (title) title.textContent = CLEAN_REVIEW_TITLE;
+    if (description) description.textContent = CLEAN_REVIEW_DESCRIPTION;
+    if (confirm) confirm.textContent = CLEAN_REVIEW_CONFIRM;
+    renderCleanReview(items);
+    setCleanReviewOpen(true);
+    if (title) title.focus();
+  }
+
+  function confirmCleanReview() {
+    if (!cleanReviewState) return;
+    var corrections = {};
+    cleanReviewState.reviewItems.forEach(function (item) {
+      if (item.useCorrected) corrections[item.source] = item.corrected;
+    });
+    saveCleanTokenCorrections(corrections);
+    closeCleanReview();
+  }
+
+  function getSongLinksFromIndex() {
+    var content = document.getElementById('content');
+    if (!content) return [];
+    var anchors = content.querySelectorAll('a[href]');
+    var seen = {};
+    var urls = [];
+    for (var i = 0; i < anchors.length; i++) {
+      var href = anchors[i].getAttribute('href') || '';
+      if (!/\.html/i.test(href)) continue;
+      var path = href.split('?')[0];
+      if (seen[path]) continue;
+      seen[path] = true;
+      urls.push(path);
+    }
+    return urls;
+  }
+
+  function parseSongPreText(html) {
+    var doc = new DOMParser().parseFromString(html, 'text/html');
+    var pre = doc.querySelector('body > pre') || doc.querySelector('pre');
+    return { preText: pre ? (pre.textContent || '') : '' };
+  }
+
+  function startCleanTokensReview(opener) {
+    if (cleanLoading || cleanReviewState) return;
+    var urls = getSongLinksFromIndex();
+    if (!urls.length) {
+      window.alert('Nenhuma cifra encontrada no índice.');
+      return;
+    }
+    if (window.location.protocol === 'file:') {
+      window.alert('Abra o índice via servidor HTTP local (ex.: python -m http.server) para limpar.');
+      return;
+    }
+
+    cleanLoading = true;
+    Promise.all(urls.map(function (url) {
+      return fetch(url).then(function (res) {
+        if (!res.ok) throw new Error('Falha ao carregar ' + url);
+        return res.text();
+      });
+    })).then(function (htmls) {
+      var songs = htmls.map(parseSongPreText);
+      openCleanReview(songs, opener);
+    }).catch(function (err) {
+      console.error(err);
+      window.alert('Erro ao limpar: ' + (err && err.message ? err.message : String(err)));
+    }).then(function () {
+      cleanLoading = false;
+    });
+  }
+
+  function bindCleanReviewModal() {
+    var reviewModal = document.getElementById('holyrics-review-modal');
+    var cancel = document.getElementById('holyrics-review-cancel');
+    var confirm = document.getElementById('holyrics-review-confirm');
+    if (cancel) {
+      cancel.addEventListener('click', function () {
+        if (!cleanReviewState) return;
+        closeCleanReview();
+      });
+    }
+    if (confirm) {
+      confirm.addEventListener('click', function () {
+        if (!cleanReviewState) return;
+        confirmCleanReview();
+      });
+    }
+    if (reviewModal) {
+      reviewModal.addEventListener('keydown', function (event) {
+        if (!cleanReviewState) return;
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          closeCleanReview();
+        }
+      });
+    }
+  }
+
   function insertToggle(actions) {
     toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
@@ -239,6 +578,7 @@
     var bgGroup = document.createElement('div');
     bgGroup.className = 'presentation-prefs-group';
     bgGroup.appendChild(bgBtn);
+    insertCleanControl(bgGroup);
 
     var viewGroup = document.createElement('div');
     viewGroup.className = 'presentation-prefs-group';
@@ -478,14 +818,23 @@
     return false;
   }
 
+  function cleanVerseLine(line) {
+    return stripInvisibleChars(line)
+      .replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, ' ')
+      .replace(/^\s+|\s+$/g, '')
+      .replace(/ {2,}/g, ' ');
+  }
+
   function filterStropheLines(lines) {
     var kept = [];
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i];
-      if (!String(line).trim()) continue;
+      if (isBlankLine(line)) continue;
       if (isChordLine(line)) continue;
       if (isBracketLine(line)) continue;
-      kept.push(String(line).trim().replace(/ {2,}/g, ' '));
+      var cleaned = cleanVerseLine(line);
+      if (!cleaned) continue;
+      kept.push(cleaned);
     }
     return kept;
   }
@@ -503,7 +852,8 @@
     }
 
     for (var i = 0; i < lines.length; i++) {
-      if (lines[i].trim() === '') flush();
+      // Linha só com ZWSP/espaço conta como separador de estrofe
+      if (isBlankLine(lines[i])) flush();
       else current.push(lines[i]);
     }
     flush();
@@ -735,7 +1085,10 @@
     var url = resolveSongUrl(anchor);
     var fallbackTitle = normalizeTitle(anchor.textContent);
     loading = true;
-    fetch(url, { credentials: 'same-origin' })
+    // Evita HTML antigo em cache depois de editar/separar estrofes na cifra.
+    var fetchUrl = new URL(url);
+    fetchUrl.searchParams.set('_presentation', String(Date.now()));
+    fetch(fetchUrl.href, { credentials: 'same-origin', cache: 'no-store' })
       .then(function (response) {
         if (!response.ok) throw new Error('fetch failed');
         return response.text();
@@ -745,7 +1098,8 @@
         var pre = doc.querySelector('body > pre') || doc.querySelector('pre');
         var raw = pre ? (pre.textContent || '') : '';
         var title = extractTitleFromDoc(doc, fallbackTitle);
-        strophes = parsePresentableStrophes(raw, title);
+        var cleanedRaw = applyPresentationCleanTokensToRaw(raw, loadCleanTokenCorrections());
+        strophes = parsePresentableStrophes(cleanedRaw, title);
         currentIndex = 0;
         openModal();
       })
@@ -834,6 +1188,7 @@
     var actions = ensureActions();
     insertToggle(actions);
     insertPrefs(actions);
+    bindCleanReviewModal();
     createModal();
     applyIndexAppearance();
     applyModalBackground();

@@ -1,5 +1,45 @@
 /* Modo de apresentação no índice */
 
+.presentation-clean {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.presentation-clean-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 301;
+    min-width: 240px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .15);
+}
+
+.presentation-clean-menu[hidden] {
+    display: none;
+}
+
+.presentation-clean-option {
+    display: block;
+    width: 100%;
+    border: 0;
+    padding: 12px 14px;
+    background: #fff;
+    color: #222;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.presentation-clean-option:hover {
+    background: #fff3e8;
+}
+
 .presentation-mode-toggle {
     flex: 0 0 auto;
     border: 0;
@@ -150,6 +190,42 @@ body.presentation-mode-on {
         radial-gradient(ellipse at top, rgba(198, 40, 40, .18), transparent 55%),
         linear-gradient(180deg, #1a1d24 0%, #12141a 100%);
     color: #f2f4f7;
+}
+
+/* O modal de revisão fica com fundo claro; não herda o texto claro do modo apresentação. */
+body.presentation-mode-on .holyrics-review-modal,
+body.presentation-mode-on .holyrics-review-dialog {
+    color: #222;
+}
+
+body.presentation-mode-on .holyrics-review-header h2 {
+    color: #111;
+}
+
+body.presentation-mode-on .holyrics-review-header p,
+body.presentation-mode-on .holyrics-review-card legend,
+body.presentation-mode-on .holyrics-review-empty {
+    color: #555;
+}
+
+body.presentation-mode-on .holyrics-review-choice {
+    color: #222;
+    background: #f4f4f4;
+}
+
+body.presentation-mode-on .holyrics-review-choice:has(input:checked) {
+    background: #eaf2ff;
+    color: #111;
+}
+
+body.presentation-mode-on .holyrics-review-actions button {
+    color: #222;
+    background: #fff;
+}
+
+body.presentation-mode-on .holyrics-review-confirm {
+    color: #fff;
+    background: #0068ff;
 }
 
 body.presentation-mode-on .box-center,

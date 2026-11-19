@@ -40,7 +40,7 @@
 
   function loadScript(path, onload) {
     var child = document.createElement('script');
-    child.src = new URL(path + '?v=20261117-13', scriptUrl).href;
+    child.src = new URL(path + '?v=20261118-3', scriptUrl).href;
     if (onload) child.addEventListener('load', onload, { once: true });
     child.addEventListener('error', function () {
       console.error('Não foi possível carregar o recurso compartilhado: ' + path);
