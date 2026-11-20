@@ -86,6 +86,29 @@
       ]
     },
     {
+      "name": "Culto 20_11_2026",
+      "directory": "culto-20-11-2026",
+      "index": "culto-20-11-2026/index.html",
+      "songs": [
+        {
+          "title": "É o Teu Povo — IPALPHA",
+          "path": "culto-20-11-2026/É o Teu Povo - IPALPHA.html"
+        },
+        {
+          "title": "Te Agradeço — Diante do Trono",
+          "path": "culto-20-11-2026/Te Agradeço - Diante do Trono.html"
+        },
+        {
+          "title": "Grande é o Senhor — Adhemar de Campos",
+          "path": "culto-20-11-2026/Grande é o Senhor - Adhemar de Campos.html"
+        },
+        {
+          "title": "Gratidão — fhop music",
+          "path": "culto-20-11-2026/Gratidão - fhop music.html"
+        }
+      ]
+    },
+    {
       "name": "Evento",
       "directory": "2026_11_01",
       "index": "2026_11_01/index.html",
