@@ -86,6 +86,17 @@
       ]
     },
     {
+      "name": "EBD 22_11_2026",
+      "directory": "ebd-22-11-2026",
+      "index": "ebd-22-11-2026/index.html",
+      "songs": [
+        {
+          "title": "Tudo É Perda — Felipe Rodrigues",
+          "path": "ebd-22-11-2026/Tudo É Perda - Felipe Rodrigues.html"
+        }
+      ]
+    },
+    {
       "name": "Culto 20_11_2026",
       "directory": "culto-20-11-2026",
       "index": "culto-20-11-2026/index.html",
@@ -113,6 +124,10 @@
         {
           "title": "Arado — Logos",
           "path": "culto-20-11-2026/Arado - Logos.html"
+        },
+        {
+          "title": "6 — --",
+          "path": "culto-20-11-2026/6 - --.html"
         }
       ]
     },
