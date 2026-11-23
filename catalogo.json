@@ -97,6 +97,33 @@
       ]
     },
     {
+      "name": "Culto 22_11_2026",
+      "directory": "culto-22-11-2026",
+      "index": "culto-22-11-2026/index.html",
+      "songs": [
+        {
+          "title": "Alegria — ---",
+          "path": "culto-22-11-2026/Alegria - ---.html"
+        },
+        {
+          "title": "Ele e exaltado — ---",
+          "path": "culto-22-11-2026/Ele e exaltado - ---.html"
+        },
+        {
+          "title": "63 — --",
+          "path": "culto-22-11-2026/63 - --.html"
+        },
+        {
+          "title": "Tudo é perda — --",
+          "path": "culto-22-11-2026/Tudo é perda - --.html"
+        },
+        {
+          "title": "Digno é o senhor — --",
+          "path": "culto-22-11-2026/Digno é o senhor - --.html"
+        }
+      ]
+    },
+    {
       "name": "Culto 20_11_2026",
       "directory": "culto-20-11-2026",
       "index": "culto-20-11-2026/index.html",
